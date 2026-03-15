@@ -1,90 +1,35 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { BaseModel } from '../base.entity';
-// Import only the type to avoid circular dependency
-import type { Producto } from './producto.entity';
-import type { Codigo } from './codigo.entity';
-import type { PrecioVenta } from './precio-venta.entity';
-import type { PresentacionSabor } from './presentacion-sabor.entity';
-import type { ComboItem } from './combo-item.entity';
-import { ProductoAdicional } from './producto-adicional.entity';
+import { Producto } from './producto.entity';
+import { CodigoBarra } from './codigo-barra.entity';
+import { PrecioVenta } from './precio-venta.entity';
 
-/**
- * Tipo de medida para la presentación de un producto
- */
-export enum TipoMedida {
-  UNIDAD = 'UNIDAD',
-  PAQUETE = 'PAQUETE',
-  GRAMO = 'GRAMO',
-  LITRO = 'LITRO'
-}
-
-/**
- * Método de cálculo de precios para presentaciones con sabores
- */
-export enum MetodoCalculo {
-  PROMEDIO = 'PROMEDIO',
-  MAYOR_PRECIO = 'MAYOR_PRECIO',
-  MENOR_PRECIO = 'MENOR_PRECIO',
-  FIJO = 'FIJO'
-}
-
-/**
- * Entity representing a product presentation
- */
-@Entity('producto_presentaciones')
+@Entity('presentacion')
 export class Presentacion extends BaseModel {
-  @Column({ name: 'producto_id' })
-  productoId!: number;
+  @Column({ type: 'varchar', length: 255 })
+  nombre!: string;
 
-  // add onDelete: 'CASCADE'
-  @ManyToOne('Producto', 'presentaciones', { onDelete: 'CASCADE' })
+  @Column({ type: 'decimal', precision: 10, scale: 3 })
+  cantidad!: number;
+
+  @Column({ type: 'boolean', default: false, comment: 'Indica si esta es la presentación por defecto para el producto.' })
+  principal!: boolean;
+
+  @Column({ type: 'boolean', default: true })
+  activo!: boolean;
+
+  // Relationships
+  @ManyToOne(() => Producto, producto => producto.presentaciones)
   @JoinColumn({ name: 'producto_id' })
   producto!: Producto;
 
-  @Column({ nullable: true })
-  descripcion?: string;
+  @OneToMany(() => CodigoBarra, codigoBarra => codigoBarra.presentacion)
+  codigosBarras?: CodigoBarra[];
 
-  @Column({
-    type: 'varchar',
-    name: 'tipo_medida',
-    enum: TipoMedida,
-    default: TipoMedida.UNIDAD
-  })
-  tipoMedida!: TipoMedida;
+  @OneToMany(() => PrecioVenta, precioVenta => precioVenta.presentacion)
+  preciosVenta?: PrecioVenta[];
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 1 })
-  cantidad!: number;
-
-  @Column({ default: false })
-  principal!: boolean;
-
-  @Column({ default: true })
-  activo!: boolean;
-
-  @Column({ name: 'is_sabores', default: false })
-  isSabores!: boolean;
-
-  @Column({
-    type: 'varchar',
-    name: 'metodo_calculo',
-    enum: MetodoCalculo,
-    default: MetodoCalculo.PROMEDIO,
-    nullable: true
-  })
-  metodoCalculo?: MetodoCalculo;
-
-  @OneToMany('Codigo', 'presentacion')
-  codigos!: Codigo[];
-
-  @OneToMany('PrecioVenta', 'presentacion')
-  preciosVenta!: PrecioVenta[];
-
-  @OneToMany('PresentacionSabor', 'presentacion')
-  presentacionesSabores!: PresentacionSabor[];
-
-  @OneToMany('ComboItem', 'presentacion')
-  comboItems!: ComboItem[];
-
-  @OneToMany('ProductoAdicional', 'presentacion')
-  productosAdicionales!: ProductoAdicional[];
-}
+  // Virtual properties (not mapped to database)
+  precioPrincipal?: number | null;
+  codigoPrincipal?: string | null;
+} 

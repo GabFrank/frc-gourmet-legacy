@@ -1,41 +1,80 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany, ManyToOne, JoinColumn, OneToOne, ManyToMany, JoinTable, Index } from 'typeorm';
 import { BaseModel } from '../base.entity';
-import type { RecetaItem } from './receta-item.entity';
-import type { RecetaVariacion } from './receta-variacion.entity';
-import { TipoMedida } from './ingrediente.entity';
+import type { RecetaIngrediente } from './receta-ingrediente.entity';
+import { Producto } from './producto.entity';
+import { PrecioVenta } from './precio-venta.entity';
+import { PrecioCosto } from './precio-costo.entity';
+import { Adicional } from './adicional.entity';
+import { RecetaAdicionalVinculacion } from './receta-adicional-vinculacion.entity';
+import type { RecetaPresentacion } from './receta-presentacion.entity';
 
-/**
- * Entity representing a product recipe
- */
-@Entity('producto_recetas')
+@Entity('receta')
 export class Receta extends BaseModel {
-  @Column()
+
+  @Index() // Index para búsquedas rápidas por categoría (sabor)
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  categoria?: string; // Ej: "PIZZA CALABRESA", "HAMBURGUESA CLASICA"
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  subcategoria?: string; // Ej: "GRANDE", "MEDIANA", "DOBLE CARNE"
+
+  @Column({ type: 'varchar', length: 255 })
   nombre!: string;
 
   @Column({ type: 'text', nullable: true })
-  modo_preparo?: string;
-
-  @Column({ default: true })
-  activo!: boolean;
-
-  @Column({
-    type: 'varchar',
-    name: 'tipo_medida',
-    enum: TipoMedida,
-    default: TipoMedida.UNIDAD
-  })
-  tipoMedida!: TipoMedida;
-
-  @Column({ name: 'calcular_cantidad', default: false })
-  calcularCantidad!: boolean;
+  descripcion?: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  cantidad!: number;
+  costoCalculado!: number;
 
-  @OneToMany('RecetaItem', 'receta')
-  items!: RecetaItem[];
+  // ✅ NUEVO: Campos para rendimiento de la receta
+  @Column({ type: 'decimal', precision: 10, scale: 4, default: 1 })
+  rendimiento!: number; // Cantidad que produce la receta
 
-  // delete all receta variaciones when the receta is deleted
-  @OneToMany('RecetaVariacion', 'receta')
-  variaciones!: RecetaVariacion[];
+  @Column({ type: 'varchar', length: 50, default: 'UNIDADES' })
+  unidadRendimiento!: string; // Unidad de la cantidad producida
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  unidadRendimientoOriginal?: string; // Unidad original seleccionada
+
+  @Column({ type: 'boolean', default: true })
+  activo!: boolean;
+
+  // Virtual property for principal sale price
+  precioPrincipal?: number;
+
+  // Relationships
+  @OneToOne(() => Producto, producto => producto.receta)
+  @JoinColumn({ name: 'producto_id' })
+  producto?: Producto;
+
+  // ✅ NUEVA RELACIÓN: Una receta puede pertenecer a un adicional
+  @OneToOne(() => Adicional, adicional => adicional.receta)
+  adicional?: Adicional;
+
+  @OneToMany('RecetaIngrediente', 'receta')
+  ingredientes?: RecetaIngrediente[];
+
+  @OneToMany(() => PrecioVenta, precioVenta => precioVenta.receta)
+  preciosVenta?: PrecioVenta[];
+
+  @OneToMany(() => PrecioCosto, precioCosto => precioCosto.receta)
+  preciosCosto?: PrecioCosto[];
+
+  // Adicionales disponibles (muchos a muchos)
+  @ManyToMany(() => Adicional, adicional => adicional.recetas)
+  @JoinTable({
+    name: 'receta_adicional',
+    joinColumn: { name: 'receta_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'adicional_id', referencedColumnName: 'id' }
+  })
+  adicionalesDisponibles?: Adicional[];
+
+  // Adicionales vinculados con precios específicos
+  @OneToMany(() => RecetaAdicionalVinculacion, vinculacion => vinculacion.receta)
+  adicionalesVinculados?: RecetaAdicionalVinculacion[];
+
+  // ✅ NUEVA RELACIÓN: Una receta puede pertenecer a una variación
+  @OneToOne('RecetaPresentacion', 'receta')
+  variacion?: RecetaPresentacion;
 }

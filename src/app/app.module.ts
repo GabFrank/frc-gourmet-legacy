@@ -29,6 +29,16 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 import { AppRoutingModule } from './app-routing.module';
 
@@ -38,6 +48,23 @@ import { TabContainerComponent } from './components/tab-container/tab-container.
 // Services
 import { DatabaseService } from './services/database.service';
 import { TabsService } from './services/tabs.service';
+import { GestionarProductoComponent } from './pages/productos/gestionar-producto/gestionar-producto.component';
+import { ProductoInformacionGeneralComponent } from './pages/productos/gestionar-producto/components/producto-informacion-general/producto-informacion-general.component';
+import { ProductoPresentacionesPreciosComponent } from './pages/productos/gestionar-producto/components/producto-presentaciones-precios/producto-presentaciones-precios.component';
+import { ProductoPreciosCostoComponent } from './pages/productos/gestionar-producto/components/producto-precios-costo/producto-precios-costo.component';
+import { ProductoStockComponent } from './pages/productos/gestionar-producto/components/producto-stock/producto-stock.component';
+import { ProductoRecetaComponent } from './pages/productos/gestionar-producto/components/producto-receta/producto-receta.component';
+import { ProductoResumenComponent } from './pages/productos/gestionar-producto/components/producto-resumen/producto-resumen.component';
+import { ProductoPreciosVentaComponent } from './pages/productos/gestionar-producto/components/producto-precios-venta/producto-precios-venta.component';
+// Nuevos componentes de variaciones/sabores
+import { ProductoSaboresComponent } from './pages/productos/gestionar-producto/components/producto-sabores/producto-sabores.component';
+
+import { SaborDialogComponent } from './pages/productos/gestionar-producto/dialogs/sabor-dialog/sabor-dialog.component';
+import { VariacionDialogComponent } from './pages/productos/gestionar-producto/dialogs/variacion-dialog/variacion-dialog.component';
+import { PrecioVentaDialogComponent } from './pages/productos/gestionar-producto/components/precio-venta-dialog/precio-venta-dialog.component';
+
+// Gestion Recetas Module
+import { GestionRecetasModule } from './pages/gestion-recetas/gestion-recetas.module';
 
 @NgModule({
   imports: [
@@ -68,11 +95,36 @@ import { TabsService } from './services/tabs.service';
     MatBadgeModule,
     MatDividerModule,
     MatTabsModule,
+    MatCheckboxModule,
+    MatRadioModule,
+    MatTooltipModule,
+    MatProgressSpinnerModule,
+    MatMenuModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatSnackBarModule,
+    MatChipsModule,
+    MatProgressBarModule,
     AppRoutingModule,
-    TabContainerComponent
+    TabContainerComponent,
+    GestionRecetasModule
   ],
   declarations: [
     // No declarations since all components are standalone
+
+    GestionarProductoComponent,
+    ProductoInformacionGeneralComponent,
+    ProductoPresentacionesPreciosComponent,
+    ProductoPreciosCostoComponent,
+    ProductoStockComponent,
+    ProductoRecetaComponent,
+    ProductoResumenComponent,
+    ProductoPreciosVentaComponent,
+    // Declaraciones nuevas
+    ProductoSaboresComponent,
+    SaborDialogComponent,
+    VariacionDialogComponent,
+    PrecioVentaDialogComponent
   ],
   providers: [
     DatabaseService,

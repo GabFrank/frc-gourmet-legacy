@@ -1,0 +1,125 @@
+.dialog-content {
+  min-width: 800px;
+  max-width: 1000px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.sabor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.section-card {
+  margin-bottom: 1rem;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.table-container {
+  margin-bottom: 1rem;
+}
+
+.ingredients-table {
+  width: 100%;
+}
+
+.empty-state {
+  text-align: center;
+  color: #666;
+  padding: 2rem;
+  font-style: italic;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.variacion-item {
+  margin-bottom: 1rem;
+}
+
+.variacion-card {
+  border: 1px solid #e0e0e0;
+}
+
+.variacion-card mat-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.variacion-fields {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ingredientes-especificos {
+  border-top: 1px solid #e0e0e0;
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+.ingredientes-especificos h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.ingredientes-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.ingrediente-chip {
+  display: flex;
+  align-items: center;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 16px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.ingrediente-chip button {
+  margin-left: 4px;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+}
+
+.ingrediente-chip button mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dialog-content {
+    min-width: 90vw;
+    max-width: 95vw;
+  }
+
+  .variacion-fields {
+    grid-template-columns: 1fr;
+  }
+}

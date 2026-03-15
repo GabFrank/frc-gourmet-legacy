@@ -1,98 +1,68 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
-import type { Subcategoria } from './subcategoria.entity';
+import { Entity, Column, ManyToOne, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 import { BaseModel } from '../base.entity';
-import type { ProductoImage } from './producto-image.entity';
-import type { Presentacion } from './presentacion.entity';
+import { ProductoTipo } from './producto-tipo.enum';
+import { Subfamilia } from './subfamilia.entity';
 import type { Receta } from './receta.entity';
-import type { IntercambioIngrediente } from './intercambio-ingrediente.entity';
-import type { ObservacionProducto } from './observacion-producto.entity';
-import type { ProductoAdicional } from './producto-adicional.entity';
-import type { CostoPorProducto } from './costo-por-producto.entity';
-import { RecetaVariacion } from './receta-variacion.entity';
+import type { Presentacion } from './presentacion.entity';
+import { PrecioCosto } from './precio-costo.entity';
+import type { Sabor } from './sabor.entity';
 
-/**
- * Entity representing a product
- */
-@Entity('productos')
+@Entity('producto')
 export class Producto extends BaseModel {
-  @Column()
+  @Column({ type: 'varchar', length: 255 })
   nombre!: string;
 
-  @Column({ nullable: true, name: 'nombre_alternativo' })
-  nombreAlternativo?: string;
+  @Column({ type: 'varchar', length: 50 })
+  tipo!: ProductoTipo;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 10 })
-  iva!: number;
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  unidadBase?: string;
 
-  @Column({ default: false, name: 'is_pesable' })
-  isPesable!: boolean;
-
-  @Column({ default: false, name: 'is_combo' })
-  isCombo!: boolean;
-
-  @Column({ default: false, name: 'is_compuesto' })
-  isCompuesto!: boolean;
-
-  @Column({ default: false, name: 'is_ingrediente' })
-  isIngrediente!: boolean;
-
-  @Column({ default: false, name: 'is_promocion' })
-  isPromocion!: boolean;
-
-  @Column({ default: true, name: 'is_vendible' })
-  isVendible!: boolean;
-
-  @Column({ default: false, name: 'has_vencimiento' })
-  hasVencimiento!: boolean;
-
-  @Column({ default: false, name: 'has_stock' })
-  hasStock!: boolean;
-
-  @Column({ default: false, name: 'has_variaciones' })
-  hasVariaciones!: boolean;
-
-  @Column({ nullable: true, type: 'text' })
-  observacion?: string;
-
-  @Column({ nullable: true })
-  imageUrl?: string;
-
-  @Column({ nullable: true, name: 'alertar_vencimiento_dias' })
-  alertarVencimientoDias?: number;
-
-  @Column({ default: true })
+  @Column({ type: 'boolean', default: true })
   activo!: boolean;
 
-  @Column({ name: 'subcategoria_id' })
-  subcategoriaId!: number;
+  @Column({ type: 'boolean', default: true, comment: 'Indica si el producto se muestra en el punto de venta.' })
+  esVendible!: boolean;
 
-  @ManyToOne('Subcategoria', 'productos')
-  @JoinColumn({ name: 'subcategoria_id' })
-  subcategoria!: Subcategoria;
+  @Column({ type: 'boolean', default: false, comment: 'Indica si el producto puede ser comprado a proveedores.' })
+  esComprable!: boolean;
 
-  // replace receta with recetaVariacion
-  @ManyToOne('RecetaVariacion', { nullable: true })
-  @JoinColumn({ name: 'receta_variacion_id' })
-  recetaVariacion?: RecetaVariacion;
+  @Column({ type: 'boolean', default: true, comment: 'Indica si se controla el stock del producto.' })
+  controlaStock!: boolean;
 
-  @Column({ name: 'receta_variacion_id', nullable: true })
-  recetaVariacionId?: number;
+  @Column({ type: 'boolean', default: false, comment: 'Indica si el producto puede ser usado como ingrediente en recetas.' })
+  esIngrediente!: boolean;
 
-  @OneToMany('ProductoImage', 'producto')
-  images!: ProductoImage[];
+  // --- Campos de Control de Stock ---
+  @Column({ type: 'decimal', precision: 10, scale: 3, nullable: true, comment: 'Stock mínimo para alertas' })
+  stockMinimo?: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 3, nullable: true, comment: 'Stock máximo para control' })
+  stockMaximo?: number;
+
+  // Relationships
+  @ManyToOne(() => Subfamilia, subfamilia => subfamilia.productos)
+  @JoinColumn({ name: 'subfamilia_id' })
+  subfamilia!: Subfamilia;
+
+  // ⚠️ LEGACY: Mantener por compatibilidad durante migración
+  @OneToOne('Receta', { nullable: true })
+  @JoinColumn({ name: 'receta_id' })
+  receta?: Receta;
 
   @OneToMany('Presentacion', 'producto')
-  presentaciones!: Presentacion[];
+  presentaciones?: Presentacion[];
 
-  @OneToMany('IntercambioIngrediente', 'producto')
-  intercambioIngredientes!: IntercambioIngrediente[];
-  
-  @OneToMany('ObservacionProducto', 'producto')
-  observacionesProductos!: ObservacionProducto[];
-  
-  @OneToMany('ProductoAdicional', 'producto')
-  productosAdicionales!: ProductoAdicional[];
+  @OneToMany(() => PrecioCosto, precioCosto => precioCosto.producto)
+  preciosCosto?: PrecioCosto[];
 
-  @OneToMany('CostoPorProducto', 'producto')
-  costos!: CostoPorProducto[];
+  // ✅ NUEVAS RELACIONES PARA ARQUITECTURA CON VARIACIONES
+
+  // Sabores disponibles para este producto (solo para ELABORADO_CON_VARIACION)
+  @OneToMany('Sabor', 'producto')
+  sabores?: Sabor[];
+
+  // Recetas base asociadas (una por sabor para productos con variaciones)
+  @OneToMany('Receta', 'productoVariacion')
+  recetas?: Receta[];
 }

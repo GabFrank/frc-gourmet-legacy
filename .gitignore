@@ -6,6 +6,13 @@
 /out-tsc
 /bazel-out
 
+# Compiled TypeScript (auto-generated from .ts files)
+*.js.map
+electron/**/*.js
+src/app/database/**/*.js
+main.js
+preload.js
+
 # Node
 /node_modules
 npm-debug.log

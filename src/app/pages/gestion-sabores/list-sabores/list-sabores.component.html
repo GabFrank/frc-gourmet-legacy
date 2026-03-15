@@ -1,0 +1,45 @@
+<div class="list-sabores-container">
+  <mat-toolbar color="primary">
+    <span>Gestión de Sabores</span>
+    <span class="toolbar-spacer"></span>
+    <button mat-fab extended (click)="crearSabor()">
+      <mat-icon>add</mat-icon>
+      Nuevo Sabor
+    </button>
+  </mat-toolbar>
+
+  <div class="content">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Sabores Registrados</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div *ngIf="loading; else list" class="spinner-container">
+          <mat-spinner></mat-spinner>
+        </div>
+
+        <ng-template #list>
+          <div *ngIf="sabores.length > 0; else empty">
+            <mat-list>
+              <mat-list-item *ngFor="let sabor of sabores">
+                <span matListItemTitle>{{ sabor }}</span>
+                <span matListItemLine>Gestione las variaciones de este sabor</span>
+                <div class="list-item-actions">
+                  <button mat-icon-button (click)="editarSabor(sabor)" matTooltip="Editar Sabor">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                </div>
+              </mat-list-item>
+            </mat-list>
+          </div>
+          <ng-template #empty>
+            <div class="empty-state">
+              <p>No se encontraron sabores.</p>
+              <p>Haga clic en "Nuevo Sabor" para comenzar a crear uno.</p>
+            </div>
+          </ng-template>
+        </ng-template>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

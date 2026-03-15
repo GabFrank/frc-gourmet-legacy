@@ -1,0 +1,61 @@
+@import 'src/app/styles/dialog-form-styles.scss';
+
+.page-container {
+  height: 100%;
+  background-color: #404040;
+}
+
+.page-wrapper-grid {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+}
+
+.summary-panel {
+  /* Estilos para el panel de resumen */
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  background-color: #363636;
+  height: calc(100% - 20px);
+  margin: 10px 5px;
+}
+
+.content-panel {
+  /* Estilos para el panel de contenido con pestañas */
+  flex: 8;
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 20px);
+  background-color: #363636;
+  margin: 10px 5px;
+}
+
+.toggles-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.stepper-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding: 0 24px;
+}
+
+.step-content-wrapper, .tab-content-wrapper {
+  padding: 24px;
+}
+
+.h-100 {
+  height: 100%;
+}
+
+.content-section {
+  height: 100%;
+}
+
+
+

@@ -1,22 +1,21 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { BaseModel } from '../base.entity';
-import type { ComboItem } from './combo-item.entity';
-import type { PrecioVenta } from './precio-venta.entity';
+import { Producto } from './producto.entity';
+import { ComboProducto } from './combo-producto.entity';
 
-/**
- * Entity representing a product combo
- */
-@Entity('producto_combos')
+@Entity('combo')
 export class Combo extends BaseModel {
-  @Column()
+  @Column({ type: 'varchar', length: 255 })
   nombre!: string;
 
-  @Column({ default: true })
+  @Column({ type: 'boolean', default: true })
   activo!: boolean;
 
-  @OneToMany('ComboItem', 'combo')
-  items!: ComboItem[];
+  // Relationships
+  @ManyToOne(() => Producto)
+  @JoinColumn({ name: 'producto_id' })
+  producto!: Producto;
 
-  @OneToMany('PrecioVenta', 'combo')
-  preciosVenta!: PrecioVenta[];
-}
+  @OneToMany(() => ComboProducto, comboProducto => comboProducto.combo)
+  productos?: ComboProducto[];
+} 

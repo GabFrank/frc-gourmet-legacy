@@ -1,5 +1,5 @@
 // Use ES Module import syntax
-import { app, BrowserWindow, ipcMain, protocol, dialog, shell } from 'electron';
+import { app, BrowserWindow, protocol } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
 import * as fs from 'fs';
@@ -15,7 +15,7 @@ import 'reflect-metadata';
 // const imageHandler = require('./electron/utils/image-handler');
 
 // Import TypeORM-related code
-import { DataSource } from 'typeorm'; // Remove Not if unused here
+// import { DataSource } from 'typeorm'; // not used here
 import { DatabaseService } from './src/app/database/database.service';
 // Keep Usuario import for currentUser type
 import { Usuario } from './src/app/database/entities/personas/usuario.entity';
@@ -30,8 +30,11 @@ import { registerFinancieroHandlers } from './electron/handlers/financiero.handl
 import { registerComprasHandlers } from './electron/handlers/compras.handler';
 import { registerSystemHandlers } from './electron/handlers/system.handler';
 import { registerVentasHandlers } from './electron/handlers/ventas.handler';
+import { registerRecetasHandlers } from './electron/handlers/recetas.handler';
+// ✅ NUEVOS HANDLERS PARA ARQUITECTURA CON VARIACIONES
+// Unificado en recetas.handler: sabores y variaciones
 
-let win: any;
+let win: BrowserWindow | null;
 let dbService: DatabaseService;
 
 // Remove JWT constants as they are moved
@@ -69,6 +72,7 @@ function initializeDatabase() {
       registerComprasHandlers(dataSource, getCurrentUser);
       registerSystemHandlers(); // system handler doesn't need dataSource or user
       registerVentasHandlers(dataSource, getCurrentUser); // Register ventas handlers
+      registerRecetasHandlers(dataSource, getCurrentUser); // Recetas + Sabores + Variaciones (unificado)
     })
     .catch((error) => {
       console.error('Failed to initialize database:', error);
@@ -111,7 +115,7 @@ function createWindow(): void {
 
   // Register the app:// protocol for serving local files
   // This part remains here
-  protocol.registerFileProtocol('app', (request: any, callback: any) => {
+  protocol.registerFileProtocol('app', (request: { url: string }, callback: (response: any) => void) => {
     const urlPath = request.url.substring(6); // Remove 'app://'
 
     // Handle profile images
@@ -161,7 +165,7 @@ app.on('ready', () => {
   // The protocol registration needs to happen before createWindow in 'ready'
   // Ensure it only happens once
   if (!protocol.isProtocolRegistered('app')) {
-      protocol.registerFileProtocol('app', (request: any, callback: any) => {
+      protocol.registerFileProtocol('app', (request: { url: string }, callback: (response: any) => void) => {
         const urlPath = request.url.substring(6); // Remove 'app://'
 
         // Handle profile images

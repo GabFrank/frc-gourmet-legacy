@@ -64,6 +64,7 @@
 
 ::ng-deep .mat-mdc-tab-body-wrapper {
   display: none; /* Hide the default tab content area */
+  height: 100%;
 }
 
 .active-tab {
@@ -118,6 +119,7 @@
     .mat-tab-labels {
       display: inline-flex !important;
     }
+    
 
     .mat-tab-label {
       min-width: unset !important;

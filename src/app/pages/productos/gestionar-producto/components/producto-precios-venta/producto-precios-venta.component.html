@@ -1,0 +1,328 @@
+<div class="precios-venta-container">
+  
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Cargando precios de venta...</p>
+  </div>
+
+  <!-- Content when not loading -->
+  <div *ngIf="!loading" class="content-container">
+    
+    <!-- Mensaje cuando no hay receta vinculada -->
+    <div *ngIf="mostrarMensajeSinReceta" class="no-recipe-message">
+      <mat-card class="info-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon class="warning-icon">restaurant</mat-icon>
+            Receta Requerida
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="recipe-required-info">
+            <h3>Para productos elaborados, primero debe crear una receta</h3>
+            <p>
+              Los precios de venta para productos elaborados se vinculan directamente a la receta. 
+              Esto permite calcular automáticamente los costos y gestionar los precios de manera eficiente.
+            </p>
+            <div class="steps-info">
+              <h4>Pasos requeridos:</h4>
+              <ol>
+                <li><strong>Crear/Vincular Receta:</strong> En la pestaña "Receta"</li>
+                <li><strong>Configurar Ingredientes:</strong> Definir los ingredientes de la receta</li>
+                <li><strong>Crear Precios de Venta:</strong> Una vez con receta, podrá gestionar precios</li>
+              </ol>
+            </div>
+            <div class="actions">
+              <button mat-raised-button color="primary" (click)="irAReceta()">
+                <mat-icon>restaurant</mat-icon>
+                Ir a Pestaña Receta
+              </button>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Contenido cuando hay receta vinculada -->
+    <div *ngIf="hayReceta" class="recipe-content">
+      
+      <!-- Header con título y descripción -->
+      <div class="header-section">
+        <h3>Precios de Venta</h3>
+        <p class="description">
+          Gestiona los precios de venta del producto elaborado. Los precios se vinculan directamente a la receta
+          y permiten calcular automáticamente los márgenes de ganancia.
+        </p>
+      </div>
+
+      <!-- Información de la receta en row con cards -->
+      <div class="recipe-info-row">
+        <mat-card class="recipe-info-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>restaurant</mat-icon>
+              Receta
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="recipe-details">
+              <p class="recipe-name">{{ receta?.nombre }}</p>
+              <p class="recipe-label">Nombre de la Receta</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="recipe-cost-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>calculate</mat-icon>
+              Costo Calculado
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="cost-details">
+              <p class="cost-value">{{monedaPrincipal?.simbolo}} {{ (receta?.costoCalculado || 0) | number:'1.0-2' }}</p>
+              <p class="cost-label">Costo Total de Receta</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="suggested-price-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>trending_up</mat-icon>
+              Precio Sugerido
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="suggested-price-details">
+              <p class="suggested-price-value">{{monedaPrincipal?.simbolo}} {{ precioSugerido | number:'1.0-2' }}</p>
+              <p class="suggested-price-label">CMV al 35%</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Formulario para nuevo precio de venta -->
+      <mat-card class="form-card" [class.editing-mode]="isEditing">
+        <mat-card-header>
+          <mat-card-title class="titulo">
+            <mat-icon *ngIf="isEditing">edit</mat-icon>
+            {{ isEditing ? 'Editar Precio de Venta con ID: ' + editingPrecioVentaId : 'Nuevo Precio de Venta' }}
+          </mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <form [formGroup]="precioVentaForm" (ngSubmit)="isEditing ? actualizarPrecioVenta() : crearPrecioVenta()">
+            <!-- Primera fila: moneda, tipo precio, valor, principal, activo -->
+            <div class="form-row">
+              <!-- Moneda -->
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Moneda</mat-label>
+                <mat-select formControlName="monedaId" required>
+                  <mat-option *ngFor="let moneda of monedas" [value]="moneda.id">
+                    {{ moneda.denominacion }} ({{ moneda.simbolo }})
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="precioVentaForm.get('monedaId')?.hasError('required')">
+                  La moneda es requerida
+                </mat-error>
+              </mat-form-field>
+
+              <!-- Tipo de Precio -->
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Tipo de Precio</mat-label>
+                <mat-select formControlName="tipoPrecioId" required>
+                  <mat-option *ngFor="let tipoPrecio of tiposPrecio" [value]="tipoPrecio.id">
+                    {{ tipoPrecio.descripcion }}
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="precioVentaForm.get('tipoPrecioId')?.hasError('required')">
+                  El tipo de precio es requerido
+                </mat-error>
+              </mat-form-field>
+
+              <!-- Valor -->
+              <mat-form-field appearance="outline" class="form-field">
+                <mat-label>Valor</mat-label>
+                <input matInput type="number" formControlName="valor" min="0.01" step="0.01" required>
+                <mat-error *ngIf="precioVentaForm.get('valor')?.hasError('required')">
+                  El valor es requerido
+                </mat-error>
+                <mat-error *ngIf="precioVentaForm.get('valor')?.hasError('min')">
+                  El valor debe ser mayor a 0
+                </mat-error>
+              </mat-form-field>
+
+              <!-- Principal y Activo (checkboxes) -->
+              <div class="checkbox-fields">
+                <mat-checkbox formControlName="principal" color="primary">
+                  Principal
+                </mat-checkbox>
+                <mat-checkbox formControlName="activo" color="primary">
+                  Activo
+                </mat-checkbox>
+              </div>
+            </div>
+
+            <!-- Segunda fila: Botones de acción -->
+            <div class="form-actions">
+              <button type="submit" mat-raised-button color="primary"
+                [disabled]="precioVentaForm.invalid || isLoading" class="action-button">
+                <mat-icon>{{ isEditing ? 'update' : 'add' }}</mat-icon>
+                {{ isEditing ? 'Actualizar' : 'Guardar' }}
+              </button>
+
+              <button type="button" mat-button (click)="cancelarEdicion()" *ngIf="isEditing"
+                class="action-button">
+                <mat-icon>cancel</mat-icon>
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Tabla de precios de venta -->
+      <mat-card class="table-card">
+        <mat-card-header>
+          <mat-card-title class="titulo">Precios de Venta del Producto</mat-card-title>
+        </mat-card-header>
+        <mat-card-content style="flex: 1;display: flex; flex-direction: column; gap: 10px;">
+          <div class="filtro-container">
+            <mat-radio-group [formControl]="filtroActivoControl" class="filtro-radio-group">
+              <mat-radio-button value="activos" class="filtro-radio">
+                Activos
+              </mat-radio-button>
+              <mat-radio-button value="inactivos" class="filtro-radio">
+                Inactivos
+              </mat-radio-button>
+              <mat-radio-button value="todos" class="filtro-radio">
+                Todos
+              </mat-radio-button>
+            </mat-radio-group>
+          </div>
+          <div class="table-container">
+            <div class="loading-shade" *ngIf="isLoading">
+              <mat-spinner diameter="50"></mat-spinner>
+            </div>
+
+            <table mat-table [dataSource]="preciosVenta" class="data-table">
+              <!-- ID -->
+              <ng-container matColumnDef="id">
+                <th mat-header-cell *matHeaderCellDef>ID</th>
+                <td mat-cell *matCellDef="let precio">{{ precio.id }}</td>
+              </ng-container>
+
+              <!-- Moneda -->
+              <ng-container matColumnDef="moneda">
+                <th mat-header-cell *matHeaderCellDef>Moneda</th>
+                <td mat-cell *matCellDef="let precio">
+                  {{ precio.moneda?.denominacion }}
+                </td>
+              </ng-container>
+
+              <!-- Tipo de Precio -->
+              <ng-container matColumnDef="tipoPrecio">
+                <th mat-header-cell *matHeaderCellDef>Tipo de Precio</th>
+                <td mat-cell *matCellDef="let precio">
+                  {{ precio.tipoPrecio?.descripcion }}
+                </td>
+              </ng-container>
+
+              <!-- Valor -->
+              <ng-container matColumnDef="valor">
+                <th mat-header-cell *matHeaderCellDef>Valor</th>
+                <td mat-cell *matCellDef="let precio">
+                  {{ precio.valor | number:'1.0-2' }}
+                </td>
+              </ng-container>
+
+              <!-- CMV -->
+              <ng-container matColumnDef="cmv">
+                <th mat-header-cell *matHeaderCellDef matTooltip="Costo Marginal de Venta - Porcentaje del costo sobre el precio de venta" matTooltipPosition="above">
+                  CMV
+                </th>
+                <td mat-cell *matCellDef="let precio" 
+                    [ngClass]="{
+                      'cmv-verde': precio.cmv >= 0 && precio.cmv < 35,
+                      'cmv-amarillo': precio.cmv >= 35 && precio.cmv < 45,
+                      'cmv-naranja': precio.cmv >= 45 && precio.cmv < 55,
+                      'cmv-rojo': precio.cmv >= 55
+                    }"
+                    [matTooltip]="getCmvTooltip(precio.cmv)"
+                    matTooltipPosition="above">
+                  {{ precio.cmv | number:'1.0-2' }}%
+                </td>
+              </ng-container>
+
+              <!-- Principal -->
+              <ng-container matColumnDef="principal">
+                <th mat-header-cell *matHeaderCellDef>Principal</th>
+                <td mat-cell *matCellDef="let precio">
+                  <mat-checkbox [checked]="precio.principal" (change)="marcarComoPrincipal(precio)"
+                    [disabled]="isLoading"
+                    [matTooltip]="precio.principal ? 'Quitar como principal' : 'Marcar como principal'"
+                    class="principal-checkbox">
+                  </mat-checkbox>
+                </td>
+              </ng-container>
+
+              <!-- Activo -->
+              <ng-container matColumnDef="activo">
+                <th mat-header-cell *matHeaderCellDef>Estado</th>
+                <td mat-cell *matCellDef="let precio">
+                  <mat-checkbox [checked]="precio.activo" (change)="toggleActivo(precio)"
+                    [disabled]="isLoading"
+                    [matTooltip]="precio.activo ? 'Desactivar precio de venta' : 'Activar precio de venta'"
+                    class="activo-checkbox">
+                  </mat-checkbox>
+                </td>
+              </ng-container>
+
+              <!-- Acciones -->
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef>Acciones</th>
+                <td mat-cell *matCellDef="let precio" style="width: 100%;
+                display: flex;
+                justify-content: center;">
+                  <button mat-icon-button [matMenuTriggerFor]="menu" matTooltip="Acciones">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #menu="matMenu">
+                    <button mat-menu-item (click)="editarPrecioVenta(precio)">
+                      <mat-icon>edit</mat-icon>
+                      <span>Editar</span>
+                    </button>
+                    <button mat-menu-item (click)="eliminarPrecioVenta(precio)" class="delete-action">
+                      <mat-icon>delete</mat-icon>
+                      <span>Desactivar</span>
+                    </button>
+                  </mat-menu>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+
+            <!-- Mensaje cuando no hay datos -->
+            <div class="no-data" *ngIf="!isLoading && preciosVenta.length === 0">
+              <mat-icon>info</mat-icon>
+              <p>No hay precios de venta registrados para este producto.</p>
+            </div>
+          </div>
+
+          <!-- Paginación -->
+          <mat-paginator [length]="totalPreciosVenta" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"
+            [pageIndex]="currentPage" (page)="onPageChange($event)" showFirstLastButtons>
+          </mat-paginator>
+        </mat-card-content>
+      </mat-card>
+
+    </div>
+
+  </div>
+
+</div> 

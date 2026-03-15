@@ -1,14 +1,11 @@
-import { Column, Entity } from 'typeorm';
+import { Entity, Column } from 'typeorm';
 import { BaseModel } from '../base.entity';
 
-/**
- * Entity representing an observation
- */
-@Entity('observaciones')
+@Entity('observacion')
 export class Observacion extends BaseModel {
-  @Column()
-  nombre!: string;
+  @Column({ type: 'varchar', length: 255, unique: true })
+  descripcion!: string;
 
-  @Column({ default: true })
+  @Column({ type: 'boolean', default: true })
   activo!: boolean;
 } 

@@ -1,0 +1,345 @@
+.dialog-container {
+  height: 100%;
+  width: 100%;
+  background: var(--background-color);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+
+  .dialog-header {
+    background: linear-gradient(135deg, #9c27b0 0%, #e91e63 100%);
+    border-radius: 8px 8px 0 0;
+
+    .dialog-main-title {
+      margin: 0;
+      color: white;
+      font-weight: 500;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+
+  .dialog-content {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    .info-card {
+      margin-bottom: 20px;
+      background: var(--card-background);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+
+      .card-title {
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+      }
+
+      .codigo-form-container {
+        padding: 16px;
+
+        .codigo-form {
+          .form-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            align-items: flex-start;
+
+            .form-field {
+              flex: 1;
+              min-width: 0;
+            }
+
+            .checkbox-container {
+              flex: 1;
+              margin-bottom: 0;
+
+              .checkbox-label {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                color: var(--text-primary);
+                font-weight: 500;
+
+                mat-icon {
+                  font-size: 16px;
+                  width: 16px;
+                  height: 16px;
+                }
+              }
+
+              .checkbox-hint {
+                margin-top: 4px;
+                color: var(--text-secondary);
+                font-size: 12px;
+              }
+            }
+
+            &.form-actions {
+              margin-bottom: 0;
+              justify-content: flex-end;
+
+              .actions-container {
+                display: flex;
+                gap: 12px;
+                align-items: center;
+
+                button {
+                  min-width: 120px;
+                }
+              }
+            }
+          }
+
+          .full-width {
+            width: 100%;
+            margin-bottom: 16px;
+          }
+
+          .checkbox-container {
+            margin-bottom: 16px;
+
+            .checkbox-label {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              color: var(--text-primary);
+              font-weight: 500;
+
+              mat-icon {
+                font-size: 16px;
+                width: 16px;
+                height: 16px;
+              }
+            }
+
+            .checkbox-hint {
+              margin-top: 4px;
+              color: var(--text-secondary);
+              font-size: 12px;
+            }
+          }
+
+          .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+
+            button {
+              min-width: 120px;
+            }
+          }
+        }
+      }
+    }
+
+    .codigos-card {
+      flex: 1;
+      background: var(--card-background);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+
+      .card-title {
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+      }
+
+      mat-card-subtitle {
+        color: var(--text-secondary);
+        font-size: 14px;
+        margin-top: 4px;
+      }
+
+      .filter-section {
+        margin: 16px 0;
+        padding: 12px;
+        background: var(--background-color);
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+
+        .filter-controls {
+          .filter-radio-group {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+
+            .filter-radio {
+              margin-right: 16px;
+
+              ::ng-deep .mat-radio-label {
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--text-primary);
+              }
+
+              ::ng-deep .mat-radio-checked .mat-radio-label {
+                color: var(--primary-color);
+              }
+
+              ::ng-deep .mat-radio-outer-circle {
+                border-color: var(--border-color);
+              }
+
+              ::ng-deep .mat-radio-checked .mat-radio-outer-circle {
+                border-color: var(--primary-color);
+              }
+
+              ::ng-deep .mat-radio-inner-circle {
+                background-color: var(--primary-color);
+              }
+            }
+          }
+        }
+      }
+
+      .codigos-table-container {
+        margin-top: 12px;
+
+        .codigos-table {
+          width: 100%;
+          background: transparent;
+
+          th {
+            background: var(--table-header-background);
+            color: var(--text-primary);
+            font-weight: 500;
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--border-color);
+          }
+
+          td {
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+          }
+
+          .codigo-id {
+            font-weight: 500;
+            color: var(--primary-color);
+            font-size: 14px;
+          }
+
+          .codigo-valor {
+            font-family: 'Courier New', monospace;
+            font-weight: 500;
+            color: var(--text-primary);
+          }
+
+          .principal-radio {
+            ::ng-deep .mat-radio-outer-circle {
+              border-color: var(--border-color);
+            }
+
+            ::ng-deep .mat-radio-checked .mat-radio-outer-circle {
+              border-color: var(--primary-color);
+            }
+
+            ::ng-deep .mat-radio-inner-circle {
+              background-color: var(--primary-color);
+            }
+          }
+
+          .activo-checkbox {
+            ::ng-deep .mat-checkbox-frame {
+              border-color: var(--border-color);
+            }
+
+            ::ng-deep .mat-checkbox-checked .mat-checkbox-background {
+              background-color: var(--primary-color);
+            }
+          }
+
+          // Row highlighting
+          .codigo-principal {
+            background-color: rgba(156, 39, 176, 0.1);
+            border-left: 3px solid var(--primary-color);
+          }
+
+          .codigo-inactivo {
+            opacity: 0.6;
+            background-color: rgba(158, 158, 158, 0.1);
+          }
+        }
+      }
+
+      .no-codigos {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-secondary);
+
+        mat-icon {
+          font-size: 48px;
+          width: 48px;
+          height: 48px;
+          margin-bottom: 16px;
+          opacity: 0.5;
+        }
+
+        p {
+          margin: 8px 0;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  .dialog-actions {
+    background: var(--card-background);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+
+    button {
+      min-width: 120px;
+    }
+  }
+}
+
+// CSS Variables for theming
+:host {
+  --background-color: #1a1a1a;
+  --card-background: #2a2a2a;
+  --text-primary: #ffffff;
+  --text-secondary: #cccccc;
+  --border-color: #404040;
+  --primary-color: #9c27b0;
+  --accent-color: #e91e63;
+  --success-color: #4caf50;
+  --warn-color: #f44336;
+  --table-header-background: #333333;
+} 

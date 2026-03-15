@@ -11,7 +11,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { RepositoryService } from '../../../database/repository.service';
 import { Producto } from '../../../database/entities/productos/producto.entity';
-import { Codigo, TipoCodigo } from '../../../database/entities/productos/codigo.entity';
 import { firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Presentacion } from 'src/app/database/entities/productos/presentacion.entity';
@@ -116,56 +115,56 @@ export class ProductoSearchDialogComponent implements OnInit {
   // Perform the search
   async performSearch(): Promise<void> {
     // Get search term and ensure it's a string
-    const rawSearchTerm = this.searchForm.get('searchTerm')?.value;
-    const searchTerm = (typeof rawSearchTerm === 'string') ? rawSearchTerm.trim() : '';
+    // const rawSearchTerm = this.searchForm.get('searchTerm')?.value;
+    // const searchTerm = (typeof rawSearchTerm === 'string') ? rawSearchTerm.trim() : '';
     
-    if (!searchTerm) {
-      this.searchResults = [];
-      this.totalItems = 0;
-      this.hasSearched = true;
-      return;
-    }
+    // if (!searchTerm) {
+    //   this.searchResults = [];
+    //   this.totalItems = 0;
+    //   this.hasSearched = true;
+    //   return;
+    // }
     
-    this.isLoading = true;
-    this.hasSearched = true;
+    // this.isLoading = true;
+    // this.hasSearched = true;
 
-    try {
-      // First try to find by exact code match
-      const exactCodeResult = await firstValueFrom(
-        this.repositoryService.searchProductosByCode(searchTerm)
-      );
+    // try {
+    //   // First try to find by exact code match
+    //   const exactCodeResult = await firstValueFrom(
+    //     this.repositoryService.searchProductosByCode(searchTerm)
+    //   );
 
-      if (exactCodeResult) {
-        // extract the principalPrecio from the presentacion
-        const principalPrecio = (exactCodeResult.presentacion as any)?.principalPrecio;
-        this.dialogRef.close({
-          producto: exactCodeResult.product,
-          presentacion: exactCodeResult.presentacion,
-          cantidad: this.cantidadFormControl.value,
-          precioVenta: principalPrecio
-        });
-        return;
-      }
+    //   if (exactCodeResult) {
+    //     // extract the principalPrecio from the presentacion
+    //     const principalPrecio = (exactCodeResult.presentacion as any)?.principalPrecio;
+    //     this.dialogRef.close({
+    //       producto: exactCodeResult.product,
+    //       presentacion: exactCodeResult.presentacion,
+    //       cantidad: this.cantidadFormControl.value,
+    //       precioVenta: principalPrecio
+    //     });
+    //     return;
+    //   }
 
-      // Otherwise, do a regular search
-      const searchResults = await firstValueFrom(
-        this.repositoryService.searchProductos({
-          searchTerm: searchTerm,
-          page: this.pageIndex + 1, // Convert to 1-based for backend
-          pageSize: this.pageSize,
-          exactMatch: false
-        })
-      );
-      console.log(searchResults);
-      this.searchResults = searchResults.items;
-      this.totalItems = searchResults.total;
-    } catch (error) {
-      console.error('Error searching products:', error);
-      this.searchResults = [];
-      this.totalItems = 0;
-    } finally {
-      this.isLoading = false;
-    }
+    //   // Otherwise, do a regular search
+    //   const searchResults = await firstValueFrom(
+    //     this.repositoryService.searchProductos({
+    //       searchTerm: searchTerm,
+    //       page: this.pageIndex + 1, // Convert to 1-based for backend
+    //       pageSize: this.pageSize,
+    //       exactMatch: false
+    //     })
+    //   );
+    //   console.log(searchResults);
+    //   this.searchResults = searchResults.items;
+    //   this.totalItems = searchResults.total;
+    // } catch (error) {
+    //   console.error('Error searching products:', error);
+    //   this.searchResults = [];
+    //   this.totalItems = 0;
+    // } finally {
+    //   this.isLoading = false;
+    // }
   }
   
   get searchTerm(): string {

@@ -1,0 +1,131 @@
+<mat-card class="info-card h-100">
+  <mat-card-header>
+    <mat-card-title class="titulo-center">Resumen del Producto</mat-card-title>
+  </mat-card-header>
+  <mat-card-content *ngIf="productoService.informacionPrincipalForm as form" class="info-card-content">
+    
+    <div class="product-carousel">
+      <div class="carousel-container">
+        <img [src]="mockImages[currentImageIndex]" 
+             [alt]="productoNombre" 
+             class="product-image">
+        
+        <button class="carousel-btn prev-btn" (click)="previousImage()">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        
+        <button class="carousel-btn next-btn" (click)="nextImage()">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+      
+      <div class="carousel-indicators">
+        <button 
+          *ngFor="let image of mockImages; let i = index"
+          class="indicator-btn"
+          [class.active]="i === currentImageIndex"
+          (click)="goToImage(i)">
+        </button>
+      </div>
+    </div>
+    
+    <div class="product-info">
+      <div class="product-name">{{ productoNombre || 'Sin nombre' }}</div>
+      <div class="product-code">{{ productoCodigoBarra || 'Sin código' }}</div>
+      <div class="product-status">
+        <span class="status-badge" [class.active]="productoActivo">
+          {{ productoActivo ? 'ACTIVO' : 'INACTIVO' }}
+        </span>
+      </div>
+    </div>
+    
+    <div class="form-details">
+      <div class="details-grid">
+        <div class="detail-row">
+          <span class="detail-label">Familia:</span>
+          <span class="detail-value">{{ familiaNombre || 'Sin familia' }}</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="detail-label">Subfamilia:</span>
+          <span class="detail-value">{{ subfamiliaNombre || 'Sin subfamilia' }}</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="detail-label">Tipo:</span>
+          <span class="detail-value">{{ tipoProducto || 'Sin tipo' }}</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="detail-label">Unidad Base:</span>
+          <span class="detail-value">{{ unidadBase || 'Sin unidad' }}</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="detail-label">Es Vendible:</span>
+          <span class="detail-value">{{ productoEsVendible ? 'Sí' : 'No' }}</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="detail-label">Es Comprable:</span>
+          <span class="detail-value">{{ productoEsComprable ? 'Sí' : 'No' }}</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="detail-label">Controla Stock:</span>
+          <span class="detail-value">{{ productoControlaStock ? 'Sí' : 'No' }}</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="detail-label">Es Ingrediente:</span>
+          <span class="detail-value">{{ productoEsIngrediente ? 'Sí' : 'No' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <mat-card class="stock-card" *ngIf="productoControlaStock">
+      <mat-card-header>
+        <mat-card-title>Información de Stock</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stock-detail">
+          <span class="stock-label titulo">Stock Mínimo:</span>
+          <span class="stock-value">{{ productoStockMinimo | number:'1.0-2' }}</span>
+        </div>
+        
+        <div class="stock-detail">
+          <span class="stock-label titulo">Stock Máximo:</span>
+          <span class="stock-value">{{ productoStockMaximo | number:'1.0-2' }}</span>
+        </div>
+        
+        <div class="stock-detail">
+          <span class="stock-label titulo">Stock Actual:</span>
+          <span class="stock-value current">{{ productoStockActual | number:'1.0-2' }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="costs-card">
+      <mat-card-header>
+        <mat-card-title>Información Económica</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="cost-detail">
+          <span class="cost-label titulo">Costo:</span>
+          <span class="cost-value">Gs. {{ productoPrecioCosto | number:'1.0-2' }}</span>
+        </div>
+        
+        <div class="cost-detail">
+          <span class="cost-label titulo">Precio de Venta:</span>
+          <span class="cost-value price">Gs. {{ productoPrecioVenta | number:'1.0-2' }}</span>
+        </div>
+        
+        <div class="cost-detail" *ngIf="productoMargenGanancia > 0">
+          <span class="cost-label titulo">Margen de Ganancia:</span>
+          <span class="cost-value margin">{{ productoMargenGanancia | number:'1.0-2' }}%</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+  </mat-card-content>
+</mat-card>

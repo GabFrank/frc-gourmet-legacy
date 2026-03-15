@@ -1,0 +1,478 @@
+.producto-variaciones-container {
+  padding: 0 16px; /* sin padding top/bottom */
+  min-height: 100%;
+}
+
+// ✅ HEADER SECTION
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+
+  .title-section {
+    .section-title {
+      display: flex;
+      align-items: center;
+      margin: 0 0 8px 0;
+      font-size: 24px;
+      font-weight: 500;
+
+      .section-icon {
+        margin-right: 12px;
+        font-size: 28px;
+      }
+    }
+
+    .section-subtitle {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 400;
+    }
+  }
+
+  .summary-stats {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    .stat-chip {
+      mat-chip {
+        font-size: 12px;
+        height: 28px;
+      }
+    }
+  }
+}
+
+// ✅ FILTERS AND ACTIONS
+.filters-actions-card {
+  margin-bottom: 24px;
+  border-radius: 12px;
+
+  .filters-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+
+    .search-field {
+      flex: 1;
+      min-width: 300px;
+    }
+
+    .filter-field {
+      min-width: 140px;
+    }
+
+    .clear-filters {
+      .clear-btn {
+        mat-icon {
+          margin-right: 4px;
+          font-size: 18px;
+        }
+      }
+    }
+  }
+
+  .actions-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--mat-divider-color, rgba(0,0,0,0.12));
+
+    .individual-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .bulk-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+
+      .selection-info {
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      button {
+        mat-icon {
+          margin-right: 4px;
+          font-size: 18px;
+        }
+      }
+    }
+  }
+
+  .results-info {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--mat-divider-color, rgba(0,0,0,0.12));
+
+      .results-text {
+      font-size: 14px;
+    }
+  }
+}
+
+// ✅ STATES (Loading, Error, Empty, No Results)
+.loading-card,
+.error-card,
+.empty-card,
+.no-results-card {
+  border-radius: 12px;
+  text-align: center;
+
+  .loading-content,
+  .error-content,
+  .empty-content,
+  .no-results-content {
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+
+    .error-icon,
+    .empty-icon,
+    .no-results-icon {
+      font-size: 64px;
+      width: 64px;
+      height: 64px;
+      opacity: 0.6;
+    }
+
+    .error-icon { color: var(--mdc-theme-error, #f44336); }
+
+    h3 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    p {
+      margin: 0;
+      text-align: center;
+      max-width: 400px;
+    }
+
+    button {
+      mat-icon {
+        margin-right: 6px;
+      }
+    }
+  }
+}
+
+// ✅ TABLE
+.table-card {
+  border-radius: 12px;
+  overflow: hidden;
+
+  .table-content {
+    padding: 0 !important;
+  }
+
+  .table-container {
+    overflow-x: auto;
+    max-height: 60vh;
+  }
+}
+
+.variaciones-table {
+  width: 100%;
+  min-width: 0; /* Permitir que se adapte al ancho disponible */
+
+  // Header
+  .mat-mdc-header-row {
+    .mat-mdc-header-cell {
+      font-weight: 600;
+      border-bottom: 2px solid var(--mat-table-row-item-outline-color, rgba(0,0,0,0.12));
+    }
+  }
+
+  // Rows
+  .mat-mdc-row {
+    &.selected-row {
+      /* usa estilos por tema */
+    }
+  }
+
+  // Column Widths
+  .select-column { width: 50px; text-align: center; }
+  .nombre-column { min-width: 250px; }
+  .sku-column { width: 120px; }
+  .sabor-column { width: 140px; }
+  .presentacion-column { width: 120px; }
+  .multiplicador-column { width: 100px; text-align: center; }
+  .costo-column { width: 100px; text-align: right; }
+  .precio-column { width: 100px; text-align: right; }
+  .margen-column { width: 120px; text-align: right; }
+  .estado-column { width: 80px; text-align: center; }
+  .actions-column { display: none; }
+
+  // Cell Content
+  .nombre-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .nombre-principal {
+      font-weight: 500;
+      line-height: 1.2;
+    }
+
+    .status-chip {
+      align-self: flex-start;
+      font-size: 11px;
+      height: 20px;
+    }
+  }
+
+  .sku-value {
+    font-family: monospace;
+    font-size: 13px;
+  }
+
+  .sabor-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .sabor-nombre {
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .sabor-categoria {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  .presentacion-nombre {
+    font-weight: 500;
+    font-size: 13px;
+  }
+
+  .multiplicador-value {
+    font-weight: 600;
+  }
+
+  .costo-value,
+  .precio-value {
+    font-weight: 600;
+    font-family: monospace;
+  }
+
+  .costo-value { }
+  .precio-value { }
+
+  .margen-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+
+    .margen-valor {
+      font-weight: 600;
+      font-family: monospace;
+      font-size: 13px;
+    }
+
+    .margen-porcentaje {
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .margen-success {}
+    .margen-warning {}
+    .margen-danger {}
+  }
+
+  .margen-na {
+    font-style: italic;
+  }
+
+  .row-actions {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+
+    button {
+      width: 32px;
+      height: 32px;
+      line-height: 32px;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+
+  .estado-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+}
+
+// ✅ PAGINATOR
+.mat-mdc-paginator {
+  border-top: 1px solid var(--mat-divider-color, rgba(0,0,0,0.12));
+}
+
+// ✅ RESPONSIVE
+@media (max-width: 1024px) {
+  .producto-variaciones-container {
+    padding: 12px;
+  }
+
+  .header-section {
+    flex-direction: column;
+    gap: 16px;
+
+    .summary-stats {
+      align-self: flex-start;
+    }
+  }
+
+  .filters-row {
+    .search-field {
+      min-width: 100%;
+      order: -1;
+    }
+
+    .filter-field {
+      flex: 1;
+      min-width: 100px;
+    }
+  }
+
+  .actions-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+
+    .individual-actions {
+      order: 1;
+      justify-content: flex-end;
+    }
+
+    .bulk-actions {
+      order: 2;
+      justify-content: space-between;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .filters-row {
+    .filter-field {
+      min-width: 48%;
+    }
+  }
+
+  .bulk-actions {
+    button {
+      flex: 1;
+      min-width: 0;
+
+      .mat-button-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+
+        mat-icon {
+          margin: 0;
+          font-size: 16px;
+        }
+
+        span {
+          font-size: 10px;
+        }
+      }
+    }
+  }
+
+  .variaciones-table {
+    .nombre-column { min-width: 200px; }
+    .sabor-column { width: 100px; }
+    .presentacion-column { width: 100px; }
+    .actions-column { width: 120px; }
+  }
+}
+
+@media (max-width: 480px) {
+  .filters-row {
+    .filter-field {
+      min-width: 100%;
+    }
+  }
+
+  .bulk-actions {
+    .selection-info {
+      width: 100%;
+      text-align: center;
+      font-size: 12px;
+    }
+  }
+}
+
+// ✅ ACCESSIBILITY
+@media (prefers-reduced-motion: reduce) {
+  .mat-mdc-row {
+    transition: none;
+  }
+}
+
+// ✅ HIGH CONTRAST
+@media (prefers-contrast: high) {
+  .variaciones-table {
+    .mat-mdc-header-row {
+      border-bottom: 3px solid #000;
+    }
+
+    .mat-mdc-row {
+      border-bottom: 1px solid #000;
+
+      &.selected-row {
+        background-color: #000;
+        color: #fff;
+      }
+    }
+  }
+
+  .filters-actions-card,
+  .table-card {
+    border: 2px solid #000;
+  }
+}
+
+// ✅ PRINT STYLES
+@media print {
+  .filters-actions-card,
+  .actions-column,
+  .estado-column {
+    display: none;
+  }
+
+  .variaciones-table {
+    .select-column {
+      display: none;
+    }
+  }
+
+  .table-container {
+    max-height: none;
+  }
+}

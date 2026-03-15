@@ -1,0 +1,188 @@
+<div class="ingrediente-dialog-container">
+  <h2 mat-dialog-title>
+    <mat-icon>restaurant</mat-icon>
+    {{isEditMode ? 'Editar' : 'Agregar'}} Ingrediente
+  </h2>
+
+  <mat-dialog-content>
+    <form [formGroup]="ingredienteForm" class="ingrediente-form">
+
+      <!-- Selección de Producto -->
+      <div class="producto-selection">
+        <label class="form-label">Producto Ingrediente *</label>
+
+        <!-- Producto Seleccionado -->
+        <div *ngIf="productoSeleccionado" class="selected-product">
+          <div class="product-info">
+            <span class="product-name">{{getProductoNombre()}}</span>
+            <span class="product-type">({{getProductoTipo()}})</span>
+            <span class="product-unit">Unidad Base: {{getUnidadBaseProducto()}}</span>
+          </div>
+          <div class="cost-origin" *ngIf="getOrigenCosto()">
+            <mat-icon>info</mat-icon>
+            <span>{{getOrigenCosto()}}</span>
+          </div>
+          <button mat-icon-button
+                  color="warn"
+                  (click)="productoSeleccionado = null; ingredienteForm.patchValue({ingredienteId: null})"
+                  matTooltip="Cambiar producto">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <!-- Botón para seleccionar producto -->
+        <button *ngIf="!productoSeleccionado"
+                mat-stroked-button
+                type="button"
+                (click)="openProductSearch()"
+                class="select-product-btn">
+          <mat-icon>search</mat-icon>
+          Seleccionar Producto
+        </button>
+
+        <div *ngIf="!productoSeleccionado && ingredienteForm.get('ingredienteId')?.hasError('required')" class="error-message">
+          Debes seleccionar un producto
+        </div>
+      </div>
+
+      <!-- Cantidad, Aprovechamiento y Unidad -->
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="cantidad-field">
+          <mat-label>Cantidad</mat-label>
+          <input matInput
+                 type="number"
+                 formControlName="cantidad"
+                 placeholder="0.00"
+                 step="0.01"
+                 min="0.01"
+                 required>
+          <mat-error *ngIf="ingredienteForm.get('cantidad')?.hasError('required')">
+            La cantidad es requerida
+          </mat-error>
+          <mat-error *ngIf="ingredienteForm.get('cantidad')?.hasError('min')">
+            La cantidad debe ser mayor a 0
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="porcentaje-field">
+          <mat-label>Aprovechamiento</mat-label>
+          <input matInput
+                 type="number"
+                 formControlName="porcentajeAprovechamiento"
+                 placeholder="100.00"
+                 step="0.01"
+                 min="0.01"
+                 max="100.00"
+                 required>
+          <span matSuffix>%</span>
+          <mat-error *ngIf="ingredienteForm.get('porcentajeAprovechamiento')?.hasError('required')">
+            El porcentaje es requerido
+          </mat-error>
+          <mat-error *ngIf="ingredienteForm.get('porcentajeAprovechamiento')?.hasError('min')">
+            El porcentaje debe ser mayor a 0
+          </mat-error>
+          <mat-error *ngIf="ingredienteForm.get('porcentajeAprovechamiento')?.hasError('max')">
+            El porcentaje no puede ser mayor a 100
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="unidad-field">
+          <mat-label>Unidad</mat-label>
+          <mat-select formControlName="unidad" required>
+            <mat-option *ngFor="let unidad of getUnidadesDisponibles()" [value]="unidad.valor">
+              {{unidad.texto}}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="ingredienteForm.get('unidad')?.hasError('required')">
+            Debes seleccionar una unidad
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Costo Unitario y Total -->
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Costo Unitario</mat-label>
+          <input matInput
+                 type="number"
+                 formControlName="costoUnitario"
+                 placeholder="0.00"
+                 step="0.01"
+                 min="0"
+                 required>
+          <span matSuffix>USD</span>
+          <mat-error *ngIf="ingredienteForm.get('costoUnitario')?.hasError('required')">
+            El costo unitario es requerido
+          </mat-error>
+          <mat-error *ngIf="ingredienteForm.get('costoUnitario')?.hasError('min')">
+            El costo debe ser mayor o igual a 0
+          </mat-error>
+
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Costo Total</mat-label>
+          <input matInput
+                 type="number"
+                 formControlName="costoTotal"
+                 placeholder="0.00"
+                 readonly>
+          <span matSuffix>USD</span>
+        </mat-form-field>
+      </div>
+
+      <!-- Opciones Adicionales -->
+      <div class="opciones-section">
+        <h4>Opciones Adicionales</h4>
+
+        <div class="checkboxes-row">
+          <mat-checkbox formControlName="esExtra" color="primary">
+            Es Extra
+          </mat-checkbox>
+          <mat-checkbox formControlName="esOpcional" color="primary">
+            Es Opcional
+          </mat-checkbox>
+          <mat-checkbox formControlName="esCambiable" color="primary">
+            Es Cambiable
+          </mat-checkbox>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width" *ngIf="ingredienteForm.get('esExtra')?.value">
+          <mat-label>Costo Extra</mat-label>
+          <input matInput
+                 type="number"
+                 formControlName="costoExtra"
+                 placeholder="0.00"
+                 step="0.01"
+                 min="0">
+          <span matSuffix>USD</span>
+          <mat-error *ngIf="ingredienteForm.get('costoExtra')?.hasError('min')">
+            El costo extra debe ser mayor o igual a 0
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Estado -->
+      <div class="estado-section">
+        <mat-checkbox formControlName="activo" color="primary">
+          Ingrediente Activo
+        </mat-checkbox>
+        <p class="help-text">Los ingredientes inactivos no se considerarán en los cálculos</p>
+      </div>
+
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">
+      Cancelar
+    </button>
+    <button mat-raised-button
+            color="primary"
+            (click)="onSubmit()"
+            [disabled]="!ingredienteForm.valid || loading">
+      <mat-icon>save</mat-icon>
+      {{isEditMode ? 'Actualizar' : 'Agregar'}} Ingrediente
+    </button>
+  </mat-dialog-actions>
+</div>

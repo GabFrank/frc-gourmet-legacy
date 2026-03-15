@@ -1,0 +1,227 @@
+<div class="dialog-container">
+  <div class="dialog-header">
+    <h2 mat-dialog-title class="dialog-main-title">
+      <mat-icon>{{ (data.isEdit || isNewlyCreated) ? 'edit' : 'add' }}</mat-icon>
+      {{ dialogTitle }}
+    </h2>
+  </div>
+
+  <mat-progress-bar mode="indeterminate" *ngIf="isLoading"></mat-progress-bar>
+
+  <mat-dialog-content class="dialog-content">
+    
+    <!-- Familia Information Card -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title class="card-title">Información de la Familia</mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="familia-form-container">
+        <form [formGroup]="familiaForm" (ngSubmit)="onSubmit()" class="familia-form">
+          
+          <!-- Nombre Field -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nombre de la Familia</mat-label>
+            <input matInput 
+                   formControlName="nombre"
+                   placeholder="Ingrese el nombre de la familia"
+                   maxlength="255"
+                   required>
+            <mat-icon matSuffix>category</mat-icon>
+            <mat-hint align="end">{{familiaForm.get('nombre')?.value?.length || 0}}/255</mat-hint>
+            <mat-error *ngIf="familiaForm.get('nombre')?.invalid && familiaForm.get('nombre')?.touched">
+              {{ getErrorMessage('nombre') }}
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Status and Audit Information Row -->
+          <div class="audit-row" *ngIf="(data.isEdit && data.familia) || (isNewlyCreated && currentFamilia)">
+            <div class="status-section">
+              <mat-checkbox formControlName="activo" color="primary">
+                <span class="checkbox-label">
+                  <mat-icon>{{ familiaForm.get('activo')?.value ? 'visibility' : 'visibility_off' }}</mat-icon>
+                  Familia activa
+                </span>
+              </mat-checkbox>
+              <mat-hint class="checkbox-hint">
+                Las familias inactivas no aparecerán en los listados de productos
+              </mat-hint>
+            </div>
+            
+            <div class="audit-info">
+              <div class="audit-item">
+                <mat-icon>schedule</mat-icon>
+                <span>Creado: {{ (data.familia || currentFamilia)?.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="audit-item" *ngIf="(data.familia || currentFamilia)?.updatedAt">
+                <mat-icon>update</mat-icon>
+                <span>Actualizado: {{ (data.familia || currentFamilia)?.updatedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status for new familia -->
+          <div class="checkbox-container" *ngIf="!data.isEdit">
+            <mat-checkbox formControlName="activo" color="primary">
+              <span class="checkbox-label">
+                <mat-icon>{{ familiaForm.get('activo')?.value ? 'visibility' : 'visibility_off' }}</mat-icon>
+                Familia activa
+              </span>
+            </mat-checkbox>
+            <mat-hint class="checkbox-hint">
+              Las familias inactivas no aparecerán en los listados de productos
+            </mat-hint>
+          </div>
+
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Subfamilias Management Card -->
+    <mat-card *ngIf="(data.isEdit && data.familia) || (isNewlyCreated && currentFamilia)" class="subfamilias-card">
+      <mat-card-header>
+        <mat-card-title class="card-title">
+          <mat-icon>subdirectory_arrow_right</mat-icon>
+          Subfamilias ({{ subfamilias.length }})
+        </mat-card-title>
+        <mat-card-subtitle>Gestionar subfamilias de esta familia</mat-card-subtitle>
+        <div class="card-header-actions">
+          <button mat-raised-button 
+                  color="primary" 
+                  size="small"
+                  (click)="startAddingSubfamilia()"
+                  *ngIf="!isAddingSubfamilia && editingSubfamiliaId === null"
+                  matTooltip="Agregar nueva subfamilia">
+            <mat-icon>add</mat-icon>
+            Adicionar
+          </button>
+        </div>
+      </mat-card-header>
+      <mat-card-content>
+
+        <!-- Add/Edit Subfamilia Form -->
+        <div *ngIf="isAddingSubfamilia || editingSubfamiliaId !== null" class="subfamilia-form-container">
+          <form [formGroup]="subfamiliaForm" class="subfamilia-form">
+            <div class="subfamilia-form-row">
+              <mat-form-field appearance="outline" class="subfamilia-name-field">
+                <mat-label>Nombre de la Subfamilia</mat-label>
+                <input matInput 
+                       formControlName="nombre"
+                       placeholder="Ingrese el nombre de la subfamilia"
+                       maxlength="255">
+                <mat-icon matSuffix>subdirectory_arrow_right</mat-icon>
+                <mat-error *ngIf="subfamiliaForm.get('nombre')?.invalid && subfamiliaForm.get('nombre')?.touched">
+                  Nombre es obligatorio (mín. 2 caracteres)
+                </mat-error>
+              </mat-form-field>
+
+              <mat-checkbox formControlName="activo" color="primary" class="subfamilia-checkbox">
+                Activa
+              </mat-checkbox>
+
+              <div class="subfamilia-form-actions">
+                <button mat-raised-button 
+                        color="primary"
+                        (click)="saveSubfamilia()"
+                        [disabled]="subfamiliaForm.invalid || isLoadingSubfamilias">
+                  <mat-icon>save</mat-icon>
+                  {{ editingSubfamiliaId ? 'ACTUALIZAR' : 'GUARDAR' }}
+                </button>
+                <button mat-button 
+                        (click)="cancelSubfamiliaEdit()">
+                  <mat-icon>cancel</mat-icon>
+                  CANCELAR
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Subfamilias Table -->
+        <div class="subfamilias-table-container" *ngIf="subfamilias.length > 0">
+          <table mat-table [dataSource]="subfamiliaDataSource" class="subfamilias-table">
+            <!-- Nombre Column -->
+            <ng-container matColumnDef="nombre">
+              <th mat-header-cell *matHeaderCellDef>Nombre</th>
+              <td mat-cell *matCellDef="let subfamilia">{{ subfamilia.nombre }}</td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="activo" style="width: 20%">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+              <td mat-cell *matCellDef="let subfamilia" style="width: 20%">
+                <span class="status-badge" 
+                      [ngClass]="{'active': subfamilia.activo, 'inactive': !subfamilia.activo}">
+                  {{ subfamilia.activo ? 'ACTIVA' : 'INACTIVA' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions" style="width: 15%">
+              <th mat-header-cell *matHeaderCellDef>Acciones</th>
+              <td mat-cell *matCellDef="let subfamilia" style="width: 15%">
+                <button mat-icon-button [matMenuTriggerFor]="subfamiliaMenu">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #subfamiliaMenu="matMenu">
+                  <button mat-menu-item 
+                          (click)="editSubfamilia(subfamilia)"
+                          [disabled]="isAddingSubfamilia || editingSubfamiliaId !== null">
+                    <mat-icon>edit</mat-icon>
+                    <span>Editar</span>
+                  </button>
+                  <button mat-menu-item 
+                          (click)="toggleSubfamiliaStatus(subfamilia)"
+                          [disabled]="isLoadingSubfamilias">
+                    <mat-icon>{{ subfamilia.activo ? 'visibility_off' : 'visibility' }}</mat-icon>
+                    <span>{{ subfamilia.activo ? 'Desactivar' : 'Activar' }}</span>
+                  </button>
+                  <mat-divider></mat-divider>
+                  <button mat-menu-item 
+                          (click)="deleteSubfamilia(subfamilia)"
+                          [disabled]="isLoadingSubfamilias"
+                          class="delete-action">
+                    <mat-icon>delete</mat-icon>
+                    <span>Eliminar</span>
+                  </button>
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="subfamiliaDisplayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: subfamiliaDisplayedColumns;"></tr>
+          </table>
+        </div>
+
+        <!-- No Subfamilias Message -->
+        <div *ngIf="subfamilias.length === 0 && !isLoadingSubfamilias && !isAddingSubfamilia" class="no-subfamilias">
+          <mat-icon>subdirectory_arrow_right</mat-icon>
+          <p>Ninguna subfamilia registrada</p>
+        </div>
+
+        <!-- Loading indicator -->
+        <mat-progress-bar mode="indeterminate" *ngIf="isLoadingSubfamilias"></mat-progress-bar>
+      </mat-card-content>
+    </mat-card>
+
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="dialog-actions">
+    <button mat-button 
+            type="button" 
+            (click)="onCancel()"
+            [disabled]="isLoading">
+      <mat-icon>cancel</mat-icon>
+      CANCELAR
+    </button>
+    
+    <button mat-raised-button 
+            color="primary"
+            type="submit"
+            (click)="onSubmit()"
+            [disabled]="familiaForm.invalid || isLoading">
+      <mat-icon>{{ (data.isEdit || isNewlyCreated) ? 'save' : 'add' }}</mat-icon>
+      {{ (data.isEdit || isNewlyCreated) ? 'ACTUALIZAR' : 'CREAR' }}
+    </button>
+  </mat-dialog-actions>
+</div> 

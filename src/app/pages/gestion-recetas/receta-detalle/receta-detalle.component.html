@@ -1,0 +1,126 @@
+<div class="receta-detalle-container">
+  <!-- Loading Spinner -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Cargando receta...</p>
+  </div>
+
+  <!-- Receta Details -->
+  <div *ngIf="!loading && receta" class="receta-content">
+    <!-- Header -->
+    <div class="header">
+      <div class="title-section">
+        <h1>{{receta.nombre}}</h1>
+        <p class="subtitle">{{receta.descripcion || 'Sin descripción'}}</p>
+      </div>
+
+      <div class="actions-section">
+        <button mat-raised-button color="primary" (click)="editReceta()">
+          <mat-icon>edit</mat-icon>
+          Editar Receta
+        </button>
+
+        <button mat-stroked-button (click)="backToList()">
+          <mat-icon>arrow_back</mat-icon>
+          Volver a la Lista
+        </button>
+      </div>
+    </div>
+
+    <!-- Receta Information -->
+    <div class="receta-info">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Información General</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Nombre:</label>
+              <span>{{receta.nombre}}</span>
+            </div>
+
+            <div class="info-item">
+              <label>Descripción:</label>
+              <span>{{receta.descripcion || 'Sin descripción'}}</span>
+            </div>
+
+            <div class="info-item">
+              <label>Costo Calculado:</label>
+              <span class="costo">{{receta.costoCalculado | number: '1.0-2'}}</span>
+            </div>
+
+            <div class="info-item">
+              <label>Estado:</label>
+              <span class="estado-chip" [class.activo]="receta.activo" [class.inactivo]="!receta.activo">
+                {{receta.activo ? 'Activo' : 'Inactivo'}}
+              </span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Ingredients Section -->
+    <div class="ingredients-section">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Ingredientes</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div *ngIf="receta.ingredientes && receta.ingredientes.length > 0; else noIngredients">
+            <div class="ingredient-item" *ngFor="let ingrediente of receta.ingredientes">
+              <div class="ingredient-info">
+                <span class="ingredient-name">{{ingrediente.ingrediente.nombre}}</span>
+                <span class="ingredient-quantity">{{ingrediente.cantidad}} {{ingrediente.unidad}}</span>
+              </div>
+              <div class="ingredient-cost">
+                <span class="cost-label">Costo:</span>
+                <span class="cost-value">{{ingrediente.costoTotal | number: '1.0-2'}}</span>
+              </div>
+            </div>
+          </div>
+          <ng-template #noIngredients>
+            <p class="no-data">No hay ingredientes agregados</p>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Adicionales Section -->
+    <div class="adicionales-section">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Adicionales</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div *ngIf="receta.adicionalesVinculados && receta.adicionalesVinculados.length > 0; else noAdicionales">
+            <div class="adicional-item" *ngFor="let adicional of receta.adicionalesVinculados">
+              <div class="adicional-info">
+                <span class="adicional-name">{{adicional.adicional.nombre}}</span>
+              </div>
+              <div class="adicional-price">
+                <span class="price-label">Precio:</span>
+                <span class="price-value">{{adicional.precioAdicional | number: '1.0-2'}}</span>
+              </div>
+            </div>
+          </div>
+          <ng-template #noAdicionales>
+            <p class="no-data">No hay adicionales configurados</p>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="!loading && !receta" class="error-state">
+    <mat-icon>error</mat-icon>
+    <h3>Receta no encontrada</h3>
+    <p>La receta que buscas no existe o ha sido eliminada</p>
+    <button mat-raised-button color="primary" (click)="backToList()">
+      <mat-icon>arrow_back</mat-icon>
+      Volver a la Lista
+    </button>
+  </div>
+</div>

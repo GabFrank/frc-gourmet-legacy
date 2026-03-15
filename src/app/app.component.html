@@ -68,7 +68,7 @@
 
       <mat-nav-list>
         <!-- Dashboard item - Simple list item with proper alignment -->
-        <a mat-list-item (click)="openHomeTab(); expandMenu($event)" class="nav-list-item">
+        <a mat-list-item (click)="openHomeTab()" class="nav-list-item">
           <div class="menu-item-content" [ngClass]="{'centered': !isMenuExpanded}">
             <mat-icon class="nav-icon">dashboard</mat-icon>
             <span class="nav-title" *ngIf="isMenuExpanded">Dashboard</span>
@@ -89,7 +89,7 @@
           </mat-expansion-panel-header>
           <!-- open venta dashboard instead of pdv -->
           <div class="submenu-container">
-            <a mat-list-item (click)="openVentasDashTab(); expandMenu($event, 'ventas')">
+            <a mat-list-item (click)="openVentasDashTab()">
               <mat-icon matListItemIcon>dashboard</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Dashboard</span>
             </a>
@@ -109,19 +109,19 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div class="submenu-container">
-            <a mat-list-item (click)="openRrhhDashTab(); expandMenu($event, 'rrhh')">
+            <a mat-list-item (click)="openRrhhDashTab()">
               <mat-icon matListItemIcon>dashboard</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">RRHHDash</span>
             </a>
-            <a mat-list-item (click)="openPersonasTab(); expandMenu($event, 'rrhh')">
+            <a mat-list-item (click)="openPersonasTab()">
               <mat-icon matListItemIcon>person</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Personas</span>
             </a>
-            <a mat-list-item (click)="openUsuariosTab(); expandMenu($event, 'rrhh')">
+            <a mat-list-item (click)="openUsuariosTab()">
               <mat-icon matListItemIcon>account_circle</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Usuarios</span>
             </a>
-            <a mat-list-item (click)="openClientesTab(); expandMenu($event, 'rrhh')">
+            <a mat-list-item (click)="openClientesTab()">
               <mat-icon matListItemIcon>business</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Clientes</span>
             </a>
@@ -141,27 +141,35 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div class="submenu-container">
-            <a mat-list-item (click)="openProductoDashboardTab(); expandMenu($event, 'productos')">
+            <a mat-list-item (click)="openProductoDashboardTab()">
               <mat-icon matListItemIcon>dashboard</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Dashboard</span>
             </a>
-            <a mat-list-item (click)="openCategoriasTab(); expandMenu($event, 'productos')">
+            <a mat-list-item (click)="openCategoriasTab()">
               <mat-icon matListItemIcon>category</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Categorías</span>
             </a>
-            <a mat-list-item (click)="openProductosTab(); expandMenu($event, 'productos')">
+            <a mat-list-item (click)="openProductosTab()">
               <mat-icon matListItemIcon>restaurant</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Productos</span>
             </a>
-            <a mat-list-item (click)="openRecetasTab(); expandMenu($event, 'productos')">
+            <a mat-list-item (click)="openRecetasTab()">
               <mat-icon matListItemIcon>menu_book</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Recetas</span>
             </a>
-            <a mat-list-item (click)="openIngredientesTab(); expandMenu($event, 'productos')">
+            <a mat-list-item (click)="openSaboresTab()">
+              <mat-icon matListItemIcon>auto_awesome</mat-icon>
+              <span matListItemTitle *ngIf="isMenuExpanded">Gestión de Sabores</span>
+            </a>
+            <a mat-list-item (click)="openAdicionalesTab()">
+              <mat-icon matListItemIcon>add_circle</mat-icon>
+              <span matListItemTitle *ngIf="isMenuExpanded">Adicionales</span>
+            </a>
+            <a mat-list-item (click)="openIngredientesTab()">
               <mat-icon matListItemIcon>egg</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Ingredientes</span>
             </a>
-            <a mat-list-item (click)="openMovimientosStockTab(); expandMenu($event, 'productos')">
+            <a mat-list-item (click)="openMovimientosStockTab()">
               <mat-icon matListItemIcon>inventory</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Movimientos de Stock</span>
             </a>
@@ -181,11 +189,11 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div class="submenu-container">
-            <a mat-list-item (click)="openComprasDashTab(); expandMenu($event, 'compras')">
+            <a mat-list-item (click)="openComprasDashTab()">
               <mat-icon matListItemIcon>dashboard</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Dashboard</span>
             </a>
-            <a mat-list-item (click)="openComprasTab(); expandMenu($event, 'compras')">
+            <a mat-list-item (click)="openComprasTab()">
               <mat-icon matListItemIcon>shopping_cart</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Compras</span>
             </a>
@@ -205,19 +213,19 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div class="submenu-container">
-            <a mat-list-item (click)="openFinancieroDashTab(); expandMenu($event, 'financiero')">
+            <a mat-list-item (click)="openFinancieroDashTab()">
               <mat-icon matListItemIcon>dashboard</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Dashboard</span>
             </a>
-            <a mat-list-item (click)="openCajasTab(); expandMenu($event, 'financiero')">
+            <a mat-list-item (click)="openCajasTab()">
               <mat-icon matListItemIcon>point_of_sale</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Cajas</span>
             </a>
-            <a mat-list-item (click)="openMonedasTab(); expandMenu($event, 'financiero')">
+            <a mat-list-item (click)="openMonedasTab()">
               <mat-icon matListItemIcon>monetization_on</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Monedas</span>
             </a>
-            <a mat-list-item (click)="openTipoPrecioTab(); expandMenu($event, 'financiero')">
+            <a mat-list-item (click)="openTipoPrecioTab()">
               <mat-icon matListItemIcon>sell</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Tipos de Precio</span>
             </a>
@@ -237,11 +245,11 @@
             </mat-panel-title>
           </mat-expansion-panel-header>
           <div class="submenu-container">
-            <a mat-list-item (click)="openPrinterSettings(); expandMenu($event, 'config')">
+            <a mat-list-item (click)="openPrinterSettings()">
               <mat-icon matListItemIcon>print</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Impresoras</span>
             </a>
-            <a mat-list-item (click)="openDispositivosTab(); expandMenu($event, 'config')">
+            <a mat-list-item (click)="openDispositivosTab()">
               <mat-icon matListItemIcon>devices</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Dispositivos y puntos de venta</span>
             </a>

@@ -41,20 +41,16 @@ import { Usuario } from './database/entities/personas/usuario.entity';
 import { LoginSession } from './database/entities/auth/login-session.entity';
 import { firstValueFrom } from 'rxjs';
 import { ListPersonasComponent } from './pages/personas/personas/list-personas.component';
-import { ListCategoriasComponent } from './pages/productos/categorias/list-categorias/list-categorias.component';
 import { ListMonedasComponent } from './pages/financiero/monedas/list-monedas/list-monedas.component';
-import { ListRecetasComponent } from './pages/productos/recetas/list-recetas.component';
-import { ListIngredientesComponent } from './pages/productos/ingredientes/list-ingredientes.component';
 import { ListDispositivosComponent } from './pages/financiero/dispositivos/list-dispositivos.component';
 import { ListCajasComponent } from './pages/financiero/cajas/list-cajas.component';
 import { FinancieroDashboardComponent } from './pages/financiero/dashboard/financiero-dashboard.component';
-import { TipoPrecioComponent } from './pages/financiero/tipo-precio/tipo-precio.component';
 import { ComprasDashboardComponent } from './pages/compras/dashboard/compras-dashboard.component';
-import { ListComprasComponent } from './pages/compras/compras/list-compras.component';
-import { ListMovimientosStockComponent } from './pages/productos/movimientos/list-movimientos-stock.component';
-import { VentasDashboardComponent } from './pages/ventas/dashboard/ventas-dashboard.component';
-import { ProductoDashboardComponent } from './pages/productos/dashboard/producto-dashboard.component';
-import { ListProductosComponent } from './pages/productos/productos/list-productos/list-productos.component';
+import { ProductosDashboardComponent } from './pages/productos/dashboard/productos-dashboard.component';
+import { ListRecetasComponent } from './pages/gestion-recetas/list-recetas/list-recetas.component';
+import { ListAdicionalesComponent } from './pages/gestion-recetas/list-adicionales/list-adicionales.component';
+import { ListProductosComponent } from './pages/productos/list-productos/list-productos.component';
+import { ListSaboresComponent } from './pages/gestion-sabores/list-sabores/list-sabores.component';
 
 @Component({
   selector: 'app-root',
@@ -255,6 +251,12 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  // Close menu method
+  closeMenu(): void {
+    this.isMenuExpanded = false;
+    this.expandedMenu = null;
+  }
+
   // Expand menu when any item is clicked in collapsed mode
   expandMenu(event?: MouseEvent, menuSection?: string): void {
     if (event) {
@@ -293,6 +295,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       width: '800px',
       maxHeight: '90vh',
     });
+    this.closeMenu();
   }
 
   // Tab navigation methods
@@ -304,6 +307,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       'dashboard-tab',
       true
     );
+    this.closeMenu();
   }
 
   // RRHH related tab navigation methods
@@ -315,6 +319,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       'rrhh-dash-tab',
       true
     );
+    this.closeMenu();
   }
 
   openPersonasTab() {
@@ -325,6 +330,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       'personas-tab',
       true
     );
+    this.closeMenu();
   }
 
   openUsuariosTab() {
@@ -335,6 +341,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       'usuarios-tab',
       true
     );
+    this.closeMenu();
   }
 
   openClientesTab() {
@@ -345,27 +352,29 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       'clientes-tab',
       true
     );
+    this.closeMenu();
   }
 
   // Productos related tab navigation methods
   openCategoriasTab() {
-    this.tabsService.openTab(
-      'Categorías',
-      ListCategoriasComponent,
-      { source: 'navigation' },
-      'categorias-tab',
-      true
-    );
+    // this.tabsService.openTab(
+    //   'Categorías',
+    //   ListCategoriasComponent,
+    //   { source: 'navigation' },
+    //   'categorias-tab',
+    //   true
+    // );
   }
 
   openProductosTab() {
     this.tabsService.openTab(
-      'Productos',
+      'Lista de Productos',
       ListProductosComponent,
       { source: 'navigation' },
       'productos-tab',
       true
     );
+    this.closeMenu();
   }
 
   openMonedasTab() {
@@ -376,18 +385,48 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       'monedas-tab',
       true
     );
+    this.closeMenu();
   }
 
   openRecetasTab() {
-    this.tabsService.openTab('Recetas ', ListRecetasComponent);
+    this.tabsService.openTab(
+      'Gestión de Recetas',
+      ListRecetasComponent,
+      { source: 'navigation' },
+      'recetas-tab',
+      true
+    );
+    this.closeMenu();
+  }
+
+  openAdicionalesTab() {
+    this.tabsService.openTab(
+      'Gestión de Adicionales',
+      ListAdicionalesComponent,
+      { source: 'navigation' },
+      'adicionales-tab',
+      true
+    );
+    this.closeMenu();
+  }
+
+  openSaboresTab() {
+    this.tabsService.openTab(
+      'Gestión de Sabores',
+      ListSaboresComponent,
+      { source: 'navigation' },
+      'sabores-tab',
+      true
+    );
+    this.closeMenu();
   }
 
   openIngredientesTab() {
-    this.tabsService.addTab('Ingredientes', ListIngredientesComponent);
+    // this.tabsService.addTab('Ingredientes', ListIngredientesComponent);
   }
 
   openTipoPrecioTab() {
-      this.tabsService.addTab('Tipos de Precio', TipoPrecioComponent);
+      // this.tabsService.addTab('Tipos de Precio', TipoPrecioComponent);
   }
 
   // New Financiero tab navigation methods
@@ -399,6 +438,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       'financiero-dashboard-tab',
       true
     );
+    this.closeMenu();
   }
 
   openCajasTab() {
@@ -409,6 +449,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       'cajas-tab',
       true
     );
+    this.closeMenu();
   }
 
   openDispositivosTab() {
@@ -420,6 +461,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       'dispositivos-tab',
       true
     );
+    this.closeMenu();
   }
 
   // Compras related tab navigation methods
@@ -431,40 +473,42 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       'compras-dashboard-tab',
       true
     );
+    this.closeMenu();
   }
 
   openComprasTab() {
-    this.tabsService.openTab(
-      'Compras',
-      ListComprasComponent,
-      { source: 'navigation' },
-      'compras-tab',
-      true
-    );
+    // this.tabsService.openTab(
+    //   'Compras',
+    //   ListComprasComponent,
+    //   { source: 'navigation' },
+    //   'compras-tab',
+    //   true
+    // );
   }
 
   openMovimientosStockTab() {
-    this.tabsService.addTab('Movimientos de Stock', ListMovimientosStockComponent);
+    // this.tabsService.addTab('Movimientos de Stock', ListMovimientosStockComponent);
   }
 
   openVentasDashTab() {
-    this.tabsService.openTab(
-      'Dashboard de Ventas',
-      VentasDashboardComponent,
-      { source: 'navigation' },
-      'ventas-dashboard-tab',
-      true
-    );
+    // this.tabsService.openTab(
+    //   'Dashboard de Ventas',
+    //   VentasDashboardComponent,
+    //   { source: 'navigation' },
+    //   'ventas-dashboard-tab',
+    //   true
+    // );
   }
 
   openProductoDashboardTab() {
     this.tabsService.openTab(
-      'Dashboard de Productos',
-      ProductoDashboardComponent,
+      'Dashboard de productos',
+      ProductosDashboardComponent,
       { source: 'navigation' },
       'producto-dashboard-tab',
       true
     );
+    this.closeMenu();
   }
 
   private applyTheme() {

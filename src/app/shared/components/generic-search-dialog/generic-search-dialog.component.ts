@@ -8,6 +8,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatCardModule } from '@angular/material/card';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatRadioModule } from '@angular/material/radio';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Observable, Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
@@ -16,10 +20,37 @@ export interface GenericSearchConfig {
   title: string;
   displayedColumns: string[];
   columnLabels: { [key: string]: string };
-  searchFn: (query: string, page: number, pageSize: number) => Promise<{ items: any[], total: number }>;
+  columnAlignments?: { [key: string]: 'left' | 'center' | 'right' };
+  booleanColumns?: { [key: string]: { trueValue: string; falseValue: string } };
+  searchFn: (query: string, page: number, pageSize: number, activeFilter?: 'all' | 'active' | 'inactive') => Promise<{ items: any[], total: number }>;
   displayFn?: (item: any) => string;
+  showActiveFilter?: boolean;
 }
 
+/**
+ * Ejemplo de uso de la configuración mejorada:
+ * 
+ * const config: GenericSearchConfig = {
+ *   title: 'BUSCAR FAMILIA',
+ *   displayedColumns: ['nombre', 'activo'],
+ *   columnLabels: {
+ *     nombre: 'NOMBRE',
+ *     activo: 'ACTIVO'
+ *   },
+ *   columnAlignments: {
+ *     nombre: 'left',
+ *     activo: 'center'
+ *   },
+ *   booleanColumns: {
+ *     activo: { trueValue: 'Sí', falseValue: 'No' }
+ *   },
+ *   showActiveFilter: true,
+ *   searchFn: async (query, page, pageSize, activeFilter) => {
+ *     // Implementar búsqueda con filtro de estado
+ *     return { items: [], total: 0 };
+ *   }
+ * };
+ */
 interface ItemWithDisplayValues {
   [key: string]: any;
   __displayValues?: { [key: string]: string };
@@ -38,6 +69,10 @@ interface ItemWithDisplayValues {
     MatTableModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
+    MatProgressBarModule,
+    MatCardModule,
+    MatTooltipModule,
+    MatRadioModule,
     ReactiveFormsModule
   ],
   templateUrl: './generic-search-dialog.component.html',
@@ -48,6 +83,12 @@ export class GenericSearchDialogComponent implements OnInit {
   items: ItemWithDisplayValues[] = [];
   displayedColumns: string[] = [];
   columnLabels: { [key: string]: string } = {};
+  columnAlignments: { [key: string]: 'left' | 'center' | 'right' } = {};
+  booleanColumns: { [key: string]: { trueValue: string; falseValue: string } } = {};
+  
+  // Filter properties
+  activeFilter: 'all' | 'active' | 'inactive' = 'active';
+  showActiveFilter = false;
   
   isLoading = false;
   totalItems = 0;
@@ -63,6 +104,9 @@ export class GenericSearchDialogComponent implements OnInit {
   ) {
     this.displayedColumns = [...config.displayedColumns, 'actions'];
     this.columnLabels = config.columnLabels;
+    this.columnAlignments = config.columnAlignments || {};
+    this.booleanColumns = config.booleanColumns || {};
+    this.showActiveFilter = config.showActiveFilter || false;
   }
   
   ngOnInit(): void {
@@ -85,7 +129,7 @@ export class GenericSearchDialogComponent implements OnInit {
     this.isLoading = true;
     try {
       const query = this.searchControl.value || '';
-      const result = await this.config.searchFn(query, this.currentPage, this.pageSize);
+      const result = await this.config.searchFn(query, this.currentPage, this.pageSize, this.activeFilter);
       // Pre-compute display values for each item
       this.items = result.items.map(item => this.preComputeDisplayValues(item));
       this.totalItems = result.total;
@@ -99,6 +143,12 @@ export class GenericSearchDialogComponent implements OnInit {
   onPageChange(event: PageEvent): void {
     this.pageSize = event.pageSize;
     this.currentPage = event.pageIndex;
+    this.search();
+  }
+  
+  onActiveFilterChange(filter: 'all' | 'active' | 'inactive'): void {
+    this.activeFilter = filter;
+    this.currentPage = 0; // Reset to first page when filter changes
     this.search();
   }
   
@@ -128,10 +178,35 @@ export class GenericSearchDialogComponent implements OnInit {
         value = value?.[prop];
         if (value === undefined) return '';
       }
-      return value;
+      return this.formatValue(value, column);
     }
     
-    return item[column] !== undefined ? item[column].toString() : '';
+    const value = item[column];
+    return this.formatValue(value, column);
+  }
+
+  // Format value based on column type and configuration
+  private formatValue(value: any, column: string): string {
+    if (value === undefined || value === null) return '';
+    
+    // Handle boolean values
+    if (typeof value === 'boolean' && this.booleanColumns[column]) {
+      const config = this.booleanColumns[column];
+      return value ? config.trueValue : config.falseValue;
+    }
+    
+    // Handle boolean values without specific configuration (default)
+    if (typeof value === 'boolean') {
+      return value ? 'Sí' : 'No';
+    }
+    
+    return value.toString();
+  }
+
+  // Get alignment class for a column
+  getColumnAlignment(column: string): string {
+    const alignment = this.columnAlignments[column] || 'left';
+    return `text-${alignment}`;
   }
 
   // Pre-compute display values for all columns

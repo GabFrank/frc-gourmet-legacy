@@ -1,0 +1,382 @@
+<div class="gestion-recetas-container">
+  <!-- Loading Spinner -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>{{isEditMode ? 'Cargando receta...' : 'Guardando receta...'}}</p>
+  </div>
+
+  <!-- Form Content -->
+  <div *ngIf="!loading" class="form-content">
+    <!-- Header -->
+    <div class="header">
+      <div class="title-section">
+        <h3>{{isEditMode ? 'Editar Receta' : 'Nueva Receta'}}</h3>
+        <p class="subtitle">{{isEditMode ? 'Modifica los datos de la receta' : 'Crea una nueva receta para el sistema'}}</p>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <form [formGroup]="recetaForm" (ngSubmit)="saveReceta()" class="receta-form">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title class="titulo">Información Básica</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="form-grid">
+            <!-- Nombre -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Nombre de la Receta</mat-label>
+              <input matInput
+                     formControlName="nombre"
+                     placeholder="Ej: Pizza Margherita"
+                     required>
+              <mat-error *ngIf="recetaForm.get('nombre')?.hasError('required')">
+                El nombre es requerido
+              </mat-error>
+              <mat-error *ngIf="recetaForm.get('nombre')?.hasError('minlength')">
+                El nombre debe tener al menos 3 caracteres
+              </mat-error>
+            </mat-form-field>
+
+            <!-- ✅ NUEVO: Rendimiento y Unidad de Medida -->
+            <div class="rendimiento-section">
+              <mat-form-field appearance="outline" class="rendimiento-field">
+                <mat-label>Rendimiento</mat-label>
+                <input matInput
+                       type="number"
+                       formControlName="rendimiento"
+                       placeholder="1"
+                       min="0.01"
+                       step="0.01"
+                       required>
+                <mat-error *ngIf="recetaForm.get('rendimiento')?.hasError('required')">
+                  El rendimiento es requerido
+                </mat-error>
+                <mat-error *ngIf="recetaForm.get('rendimiento')?.hasError('min')">
+                  El rendimiento debe ser mayor a 0
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="unidad-field">
+                <mat-label>Unidad de Medida</mat-label>
+                <mat-select formControlName="unidadRendimiento" required>
+                  <mat-option *ngFor="let unidad of unidadesDisponibles" [value]="unidad.valor">
+                    {{unidad.texto}}
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="recetaForm.get('unidadRendimiento')?.hasError('required')">
+                  La unidad de medida es requerida
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <!-- ✅ NUEVO: Texto de ayuda -->
+            <div class="help-section">
+              <p class="help-text">
+                <mat-icon>info</mat-icon>
+                <strong>Rendimiento:</strong> Define cuánto produce esta receta.
+                Ejemplo: Si usas 500g de harina y produces 2 pizzas, el rendimiento es 2.
+              </p>
+            </div>
+
+            <!-- Descripción -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Descripción</mat-label>
+              <textarea matInput
+                        formControlName="descripcion"
+                        placeholder="Descripción opcional de la receta"
+                        rows="3"></textarea>
+            </mat-form-field>
+
+            <!-- Estado -->
+            <div class="checkbox-field">
+              <mat-checkbox formControlName="activo" color="primary">
+                Receta Activa
+              </mat-checkbox>
+              <p class="help-text">Las recetas inactivas no aparecerán en las listas de selección</p>
+            </div>
+          </div>
+        </mat-card-content>
+
+        <!-- Botones de Acción -->
+        <mat-card-actions align="end">
+          <button type="button" mat-raised-button
+                  type="submit"
+                  color="primary"
+                  [disabled]="!recetaForm.valid || loading">
+            <mat-icon>save</mat-icon>
+            {{isEditMode ? 'Actualizar' : 'Crear'}} Receta
+          </button>
+        </mat-card-actions>
+      </mat-card>
+
+      <!-- Sección de Ingredientes -->
+      <mat-card class="ingredients-section">
+        <mat-card-header>
+          <mat-card-title class="titulo">Ingredientes</mat-card-title>
+          <mat-card-subtitle>Agrega los ingredientes necesarios para esta receta</mat-card-subtitle>
+          <button type="button" mat-raised-button
+                  color="primary"
+                  (click)="addIngrediente()"
+                  [disabled]="!receta?.id">
+            <mat-icon>add</mat-icon>
+            Agregar Ingrediente
+          </button>
+        </mat-card-header>
+        <mat-card-content style="min-height: 300px; background-color: #404040;">
+
+          <!-- Loading de ingredientes -->
+          <div *ngIf="ingredientesLoading" class="loading-container">
+            <mat-spinner diameter="30"></mat-spinner>
+            <p>Cargando ingredientes...</p>
+          </div>
+
+          <!-- Tabla de ingredientes -->
+          <div *ngIf="!ingredientesLoading && hayIngredientes" class="ingredientes-table-container">
+            <table mat-table [dataSource]="ingredientesParaMostrar" class="ingredientes-table">
+
+              <!-- Nombre del Ingrediente -->
+              <ng-container matColumnDef="nombre">
+                <th mat-header-cell *matHeaderCellDef>Ingrediente</th>
+                <td mat-cell *matCellDef="let item">
+                  <div class="ingrediente-info">
+                    <span class="ingrediente-nombre">{{item.ingrediente.ingrediente.nombre | uppercase}}</span>
+                    <span class="ingrediente-tipo">({{item.ingrediente.ingrediente.tipo}})</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Cantidad y Unidad -->
+              <ng-container matColumnDef="cantidad">
+                <th mat-header-cell *matHeaderCellDef class="text-center">Cantidad</th>
+                <td mat-cell *matCellDef="let item" class="text-center">
+                  {{item.cantidadParaMostrar | number:'1.0-2'}} {{item.unidadParaMostrar}}
+                </td>
+              </ng-container>
+
+              <!-- Costo Unitario -->
+              <ng-container matColumnDef="costoUnitario">
+                <th mat-header-cell *matHeaderCellDef class="text-center">Costo Unitario</th>
+                <td mat-cell *matCellDef="let item" class="text-center">
+                  {{item.ingrediente.costoUnitario | number:'1.0-2'}}
+                </td>
+              </ng-container>
+
+              <!-- Costo Total -->
+              <ng-container matColumnDef="costoTotal">
+                <th mat-header-cell *matHeaderCellDef class="text-center">Costo Total</th>
+                <td mat-cell *matCellDef="let item" class="text-center">
+                  {{item.ingrediente.costoTotal | number:'1.0-2'}}
+                </td>
+              </ng-container>
+
+              <!-- Estado -->
+              <ng-container matColumnDef="estado">
+                <th mat-header-cell *matHeaderCellDef class="text-center">Estado</th>
+                <td mat-cell *matCellDef="let item" class="text-center">
+                  <mat-chip-listbox style="text-align: center; justify-content: center;">
+                    <mat-chip [color]="item.ingrediente.activo ? 'accent' : 'warn'" selected>
+                      {{item.ingrediente.activo ? 'Activo' : 'Inactivo'}}
+                    </mat-chip>
+                    <mat-chip *ngIf="item.ingrediente.esExtra" color="primary" selected>
+                      Extra
+                    </mat-chip>
+                    <mat-chip *ngIf="item.ingrediente.esOpcional" color="warn" selected>
+                      Opcional
+                    </mat-chip>
+                    <mat-chip *ngIf="item.ingrediente.esCambiable" color="accent" selected>
+                      Cambiable
+                    </mat-chip>
+                  </mat-chip-listbox>
+                </td>
+              </ng-container>
+
+              <!-- Acciones -->
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef class="text-center">Acciones</th>
+                <td mat-cell *matCellDef="let item" class="text-center">
+                  <button type="button" mat-icon-button
+                          [matMenuTriggerFor]="menu"
+                          (click)="$event.stopPropagation()">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                                   <mat-menu #menu="matMenu">
+                   <button mat-menu-item type="button" (click)="editIngrediente(item.ingrediente)">
+                     <mat-icon>edit</mat-icon>
+                     <span>Editar</span>
+                   </button>
+                   <button mat-menu-item type="button" (click)="deleteIngrediente(item.ingrediente)">
+                     <mat-icon>delete</mat-icon>
+                     <span>Eliminar</span>
+                   </button>
+                 </mat-menu>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="['nombre', 'cantidad', 'costoUnitario', 'costoTotal', 'estado', 'acciones']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['nombre', 'cantidad', 'costoUnitario', 'costoTotal', 'estado', 'acciones'];"></tr>
+            </table>
+          </div>
+
+          <!-- Estado vacío -->
+          <div *ngIf="!ingredientesLoading && ingredientesVacios" class="empty-ingredients">
+            <mat-icon>restaurant</mat-icon>
+            <h3>No hay ingredientes</h3>
+            <p>Agrega ingredientes para calcular el costo de la receta</p>
+            <button type="button" mat-raised-button
+                    color="primary"
+                    (click)="addIngrediente()"
+                    [disabled]="!receta?.id">
+              <mat-icon>add</mat-icon>
+              Agregar Primer Ingrediente
+            </button>
+          </div>
+
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Resumen de Costos -->
+      <mat-card class="costos-section" *ngIf="hayIngredientes">
+        <mat-card-header>
+          <mat-card-title class="titulo">Resumen de Costos</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="costos-grid">
+            <div class="costo-item">
+              <span class="costo-label">Costo Total Ingredientes:</span>
+              <span class="costo-valor">{{costoTotalReceta | number:'1.0-2'}}</span>
+            </div>
+            <div class="costo-item">
+              <span class="costo-label">Margen de Ganancia (35%):</span>
+              <span class="costo-valor">{{(costoTotalReceta / 0.35) - costoTotalReceta| number:'1.0-2'}}</span>
+            </div>
+            <div class="costo-item total">
+              <span class="costo-label">Precio Sugerido:</span>
+              <span class="costo-valor">{{precioSugerido | number:'1.0-2'}}</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Sección de Adicionales -->
+      <mat-card class="adicionales-section">
+        <mat-card-header>
+          <mat-card-title class="titulo">Adicionales</mat-card-title>
+          <mat-card-subtitle>Configura opciones adicionales para esta receta</mat-card-subtitle>
+          <button type="button" mat-raised-button
+                  color="primary"
+                  (click)="vincularAdicionales()"
+                  [disabled]="!receta?.id">
+            <mat-icon>link</mat-icon>
+            Vincular Adicionales
+          </button>
+        </mat-card-header>
+        <mat-card-content style="min-height: 300px; background-color: #404040;">
+
+          <!-- Loading de adicionales -->
+          <div *ngIf="adicionalesLoading" class="loading-container">
+            <mat-spinner diameter="30"></mat-spinner>
+            <p>Cargando adicionales...</p>
+          </div>
+
+          <!-- Tabla de adicionales -->
+          <div *ngIf="!adicionalesLoading && adicionales.length > 0" class="adicionales-table-container">
+            <table mat-table [dataSource]="adicionales" class="adicionales-table">
+
+              <!-- Nombre del Adicional -->
+              <ng-container matColumnDef="nombre">
+                <th mat-header-cell *matHeaderCellDef>Adicional</th>
+                <td mat-cell *matCellDef="let item">
+                  <div class="adicional-info">
+                    <span class="adicional-nombre">{{item.adicional.nombre | uppercase}}</span>
+                    <span class="adicional-categoria" *ngIf="item.adicional.categoria">({{item.adicional.categoria}})</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Precio -->
+              <ng-container matColumnDef="precio">
+                <th mat-header-cell *matHeaderCellDef class="text-center">Precio</th>
+                <td mat-cell *matCellDef="let item" class="text-center">
+                  <span *ngIf="item.precioAdicional > 0; else sinPrecio" class="precio-valor">
+                    {{item.precioAdicional | number:'1.0-2'}}
+                  </span>
+                  <ng-template #sinPrecio>
+                    <span class="precio-gratis">Sin precio</span>
+                  </ng-template>
+                </td>
+              </ng-container>
+
+              <!-- Cantidad -->
+              <ng-container matColumnDef="cantidad">
+                <th mat-header-cell *matHeaderCellDef class="text-center">Cantidad</th>
+                <td mat-cell *matCellDef="let item" class="text-center">
+                  <span class="cantidad-valor">
+                    {{item.cantidad}} {{item.unidad}}
+                  </span>
+                </td>
+              </ng-container>
+
+              <!-- Precio Base -->
+              <ng-container matColumnDef="precioBase">
+                <th mat-header-cell *matHeaderCellDef class="text-center">Precio Base</th>
+                <td mat-cell *matCellDef="let item" class="text-center">
+                  {{item.adicional.precioBase | number:'1.0-2'}}
+                </td>
+              </ng-container>
+
+              <!-- Estado -->
+              <ng-container matColumnDef="estado">
+                <th mat-header-cell *matHeaderCellDef class="text-center">Estado</th>
+                <td mat-cell *matCellDef="let item" class="text-center">
+                  <mat-chip [color]="item.activo ? 'accent' : 'warn'" selected>
+                    {{item.activo ? 'ACTIVO' : 'INACTIVO'}}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <!-- Acciones -->
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef class="text-center">Acciones</th>
+                <td mat-cell *matCellDef="let item" class="text-center">
+                  <button type="button" mat-icon-button
+                          [matMenuTriggerFor]="menu"
+                          (click)="$event.stopPropagation()">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                                   <mat-menu #menu="matMenu">
+                   <button mat-menu-item type="button" (click)="editAdicional(item)">
+                     <mat-icon>edit</mat-icon>
+                     <span>Editar</span>
+                   </button>
+                   <button mat-menu-item type="button" (click)="deleteAdicional(item)">
+                     <mat-icon>delete</mat-icon>
+                     <span>Eliminar</span>
+                   </button>
+                 </mat-menu>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="['nombre', 'precio', 'cantidad', 'precioBase', 'estado', 'acciones']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['nombre', 'precio', 'cantidad', 'precioBase', 'estado', 'acciones'];"></tr>
+            </table>
+          </div>
+
+          <!-- Estado vacío -->
+          <div *ngIf="!adicionalesLoading && adicionales.length === 0" class="empty-adicionales">
+            <mat-icon>add_circle_outline</mat-icon>
+            <h3>No hay adicionales</h3>
+            <p>Vincula adicionales para ofrecer opciones adicionales</p>
+            <button type="button" mat-raised-button
+                    color="primary"
+                    (click)="vincularAdicionales()"
+                    [disabled]="!receta?.id">
+              Vincular Adicionales
+            </button>
+          </div>
+
+        </mat-card-content>
+      </mat-card>
+    </form>
+  </div>
+</div>

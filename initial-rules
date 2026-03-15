@@ -1,0 +1,7 @@
+## Angular Template Performance
+2. **NO DIRECT FUNCTION CALLS IN TEMPLATES**: Never do `{{ calculateValue() }}` or `[prop]="service.format()"` or `[prop]="getValue(param)"`. Instead:
+   - Store pre-computed values in component properties
+   - Update properties when inputs change
+   - Use pipes for transformations
+   - Do not use getters, avoid any kind of function that can cause performance issue
+   - **IMPORTANT:** This includes functions with parameters like `getValue(param)` - these are also NOT allowed 

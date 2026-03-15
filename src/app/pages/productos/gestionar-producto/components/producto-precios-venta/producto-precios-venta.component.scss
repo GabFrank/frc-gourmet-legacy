@@ -1,0 +1,531 @@
+.precios-venta-container {
+  padding: 0px 10px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    gap: 16px;
+    color: var(--text-secondary);
+
+    p {
+      margin: 0;
+      font-size: 14px;
+    }
+  }
+
+  .content-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 100%;
+  }
+
+  // Mensaje cuando no hay receta
+  .no-recipe-message {
+    .info-card {
+      background-color: var(--warning-bg);
+      border-left: 4px solid var(--warning-color);
+
+      .warning-icon {
+        color: var(--warning-color);
+        margin-right: 8px;
+      }
+
+      .recipe-required-info {
+        h3 {
+          margin: 0 0 16px 0;
+          font-size: 18px;
+          font-weight: 500;
+          color: var(--text-primary);
+        }
+
+        p {
+          margin: 0 0 20px 0;
+          font-size: 14px;
+          line-height: 1.5;
+          color: var(--text-secondary);
+        }
+
+        .steps-info {
+          margin: 20px 0;
+          padding: 16px;
+          background-color: rgba(255, 255, 255, 0.1);
+          border-radius: 8px;
+
+          h4 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+          }
+
+          ol {
+            margin: 0;
+            padding-left: 20px;
+            color: var(--text-secondary);
+
+            li {
+              margin: 8px 0;
+              font-size: 14px;
+              line-height: 1.4;
+
+              strong {
+                color: var(--text-primary);
+                font-weight: 500;
+              }
+            }
+          }
+        }
+
+        .actions {
+          margin-top: 24px;
+          display: flex;
+          gap: 8px;
+        }
+      }
+    }
+  }
+
+  // Contenido con receta
+  .recipe-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 100%;
+
+    .header-section {
+      margin-bottom: 10px;
+
+      h3 {
+        margin: 0 0 8px 0;
+        font-weight: 500;
+      }
+
+      .description {
+        margin: 0;
+        color: #818181;
+        font-size: 14px;
+      }
+    }
+
+    .recipe-info-row {
+      display: flex;
+      gap: 16px;
+
+      .recipe-info-card, .recipe-cost-card {
+        flex: 1;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        .recipe-details {
+          text-align: center;
+
+          .recipe-name {
+            font-weight: 600;
+            color: var(--primary-color, #4a92da);
+            margin: 0 0 8px 0;
+          }
+
+          .recipe-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin: 0;
+          }
+        }
+
+        .cost-details {
+          text-align: center;
+
+          .cost-value {
+            font-weight: 600;
+            color: var(--accent-color);
+            margin: 0 0 8px 0;
+          }
+
+          .cost-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin: 0;
+          }
+        }
+      }
+
+      .suggested-price-card {
+        flex: 1;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        .suggested-price-details {
+          text-align: center;
+
+          .suggested-price-value {
+            font-weight: 600;
+            color: var(--success-color, #4caf50);
+            margin: 0 0 8px 0;
+          }
+
+          .suggested-price-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin: 0;
+          }
+        }
+      }
+    }
+
+    .form-card {
+
+      // Indicador de modo edición
+      &.editing-mode {
+        border: 2px solid #1976d2;
+
+        .mat-card-header {
+          margin: -16px -16px 16px -16px;
+          padding: 16px;
+          border-radius: 4px 4px 0 0;
+
+          .mat-card-title {
+            color: #1976d2;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            mat-icon {
+              font-size: 20px;
+              width: 20px;
+              height: 20px;
+            }
+          }
+        }
+      }
+
+      .titulo {
+        display: flex;
+        align-items: center;
+
+        mat-icon {
+          color: var(--accent-color);
+        }
+      }
+
+      .form-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+
+        .form-field {
+          flex: 1;
+          min-width: 200px;
+        }
+
+        .checkbox-fields {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          padding-top: 16px;
+          min-width: 120px;
+        }
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        margin-top: 20px;
+        align-items: center;
+
+        .action-button {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          min-width: 120px;
+        }
+      }
+    }
+
+    .table-card {
+      flex: 1;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+      .table-container {
+        flex: 1;
+        position: relative;
+        min-height: 200px;
+
+        .loading-shade {
+          position: absolute;
+          top: 0;
+          left: 0;
+          bottom: 0;
+          right: 0;
+          background: rgba(255, 255, 255, 0.8);
+          z-index: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .data-table {
+          width: 100%;
+
+          .mat-column-id {
+            width: 60px;
+            text-align: center;
+          }
+          
+          .mat-column-moneda {
+            width: 100px;
+            text-align: center;
+          }
+          
+          .mat-column-tipoPrecio {
+            width: 120px;
+            text-align: center;
+          }
+          
+          .mat-column-valor {
+            width: 120px;
+            text-align: center;
+          }
+          
+          .mat-column-cmv {
+            width: 100px;
+            text-align: center;
+          }
+          
+          .mat-column-principal {
+            width: 80px;
+            text-align: center;
+          }
+          
+          .mat-column-activo {
+            width: 80px;
+            text-align: center;
+          }
+          
+          .mat-column-acciones {
+            width: 100px;
+            text-align: center;
+          }
+
+          th {
+            text-align: center;
+          }
+
+          td {
+            text-align: center;
+            padding: 8px 16px;
+            vertical-align: middle;
+          }
+        }
+
+        .no-data {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 40px 20px;
+          color: var(--mat-secondary-text-color, #666);
+          text-align: center;
+
+          mat-icon {
+            font-size: 48px;
+            width: 48px;
+            height: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+          }
+
+          p {
+            margin: 8px 0;
+            font-size: 16px;
+          }
+        }
+      }
+
+      mat-paginator {
+        .mat-paginator-container {
+          justify-content: center;
+        }
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .precios-venta-container {
+    padding: 16px;
+
+    .recipe-content {
+      .recipe-info-row {
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .form-card {
+        .form-row {
+          flex-direction: column;
+          gap: 12px;
+
+          .form-field {
+            min-width: auto;
+          }
+        }
+
+        .form-actions {
+          flex-direction: column;
+          gap: 8px;
+
+          .action-button {
+            width: 100%;
+          }
+        }
+      }
+
+      .table-card {
+        .table-container {
+          .data-table {
+            font-size: 14px;
+
+            th,
+            td {
+              padding: 4px 8px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Dark theme support
+@media (prefers-color-scheme: dark) {
+  .precios-venta-container {
+    .recipe-content {
+      .form-card {}
+
+      .table-card {
+        .table-container {
+          .loading-shade {
+            background: rgba(0, 0, 0, 0.8);
+          }
+
+          .data-table {
+            th {
+              background-color: var(--background-secondary);
+              color: white;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Estilos para el menú de acciones
+.mat-menu-panel {
+  .mat-menu-item {
+    &.delete-action {
+      color: var(--mat-warn-color, #f44336);
+      
+      mat-icon {
+        color: var(--mat-warn-color, #f44336);
+      }
+      
+      &:hover {
+        background-color: rgba(244, 67, 54, 0.1);
+      }
+    }
+  }
+}
+
+// Estilos para los checkboxes
+.principal-checkbox, .activo-checkbox {
+  &.mat-checkbox-checked {
+    .mat-checkbox-background {
+      background-color: var(--mat-success-color, #4caf50);
+    }
+    
+    .mat-checkbox-checkmark {
+      color: white;
+    }
+  }
+  
+  &.mat-checkbox-disabled {
+    .mat-checkbox-background {
+      background-color: var(--mat-disabled-color, #ccc);
+    }
+  }
+  
+  &.mat-checkbox-indeterminate {
+    .mat-checkbox-background {
+      background-color: var(--mat-warning-color, #ff9800);
+    }
+  }
+}
+
+// Estilos para el filtro
+.filtro-container {
+  
+  .filtro-radio-group {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    
+    .filtro-radio {
+      margin: 0;
+      
+      .mat-radio-label {
+        font-weight: 500;
+        color: var(--mat-text-color, #333);
+      }
+      
+      &.mat-radio-checked {
+        .mat-radio-outer-circle {
+          border-color: var(--mat-primary-color, #1976d2);
+        }
+        
+        .mat-radio-inner-circle {
+          background-color: var(--mat-primary-color, #1976d2);
+        }
+        
+        .mat-radio-label {
+          color: var(--mat-primary-color, #1976d2);
+          font-weight: 600;
+        }
+      }
+    }
+  }
+}
+
+// Estilos para colores del CMV
+.cmv-verde {
+  color: #4caf50 !important;
+  font-weight: 600;
+}
+
+.cmv-amarillo {
+  color: #ff9800 !important;
+  font-weight: 600;
+}
+
+.cmv-naranja {
+  color: #ff5722 !important;
+  font-weight: 600;
+}
+
+.cmv-rojo {
+  color: #f44336 !important;
+  font-weight: 600;
+} 

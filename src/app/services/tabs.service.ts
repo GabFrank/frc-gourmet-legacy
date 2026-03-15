@@ -1,8 +1,13 @@
 import { Injectable, Type, EventEmitter } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
-import { CreateEditProductoComponent } from '../pages/productos/productos/create-edit-producto/create-edit-producto.component';
-import { ListRecetasComponent } from '../pages/productos/recetas/list-recetas.component';
+import { ListFamiliasComponent } from '../pages/productos/familias/list-familias.component';
+import { GestionarProductoComponent } from '../pages/productos/gestionar-producto/gestionar-producto.component';
+import { ListRecetasComponent } from '../pages/gestion-recetas/list-recetas/list-recetas.component';
+import { ListAdicionalesComponent } from '../pages/gestion-recetas/list-adicionales/list-adicionales.component';
+import { GestionRecetasComponent } from '../pages/gestion-recetas/gestion-recetas.component';
+import { ListProductosComponent } from '../pages/productos/list-productos/list-productos.component';
+import { ListSaboresComponent } from '../pages/gestion-sabores/list-sabores/list-sabores.component';
 
 export interface Tab {
   id: string;
@@ -40,7 +45,18 @@ export class TabsService {
     // open producto v2 with id 1
     // this.addTab('Producto', CreateEditProductoComponent, { productoId: 2 });
     // open list recetas
-    this.addTab('Listado de recetas', ListRecetasComponent);
+    // open list productos
+    // this.addTab('Lista de productos', ListProductosComponent);
+    // open gestionar producto
+    this.addTab('Gestionar Producto 13', GestionarProductoComponent, { productoId: 13 });
+    // // open list recetas
+    // this.addTab('Lista de recetas', ListRecetasComponent);
+    // open gestiona receta
+    // this.addTab('Gestionar Receta 2', GestionRecetasComponent, { recetaId: 2 });
+    // open list adicionales
+    // this.addTab('Lista de adicionales', ListAdicionalesComponent);
+    // open list sabores
+    // this.addTab('Lista de sabores', ListSaboresComponent);
   }
 
   /**

@@ -1,0 +1,364 @@
+.vincular-receta-adicional-dialog-container {
+
+
+  h2[mat-dialog-title] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 16px 24px 0;
+
+    mat-icon {
+      color: var(--primary-color);
+    }
+  }
+
+  mat-dialog-content {
+    padding: 16px 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .adicional-form {
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--text-color);
+      font-size: 14px;
+    }
+
+    // Estilos para selección de adicional
+    .adicional-selection {
+      margin-bottom: 16px;
+
+      .selected-adicional {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        border: 2px solid var(--primary-color);
+        border-radius: 8px;
+        background-color: var(--primary-color);
+        color: white;
+
+        .adicional-info {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          .adicional-name {
+            font-weight: 500;
+            font-size: 16px;
+          }
+
+          .adicional-price {
+            font-size: 12px;
+            opacity: 0.8;
+          }
+
+          .adicional-status {
+            mat-chip {
+              font-size: 10px;
+              height: 20px;
+            }
+          }
+        }
+      }
+
+      .select-adicional-btn {
+        width: 100%;
+    padding: 12px 16px;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    background-color: var(--surface-color);
+    color: var(--text-color);
+    transition: all 0.2s ease;
+
+        mat-icon {
+          margin-right: 8px;
+        }
+      }
+
+      .info-message {
+        color: var(--text-color);
+        font-size: 12px;
+        margin-top: 4px;
+        opacity: 0.7;
+        font-style: italic;
+      }
+    }
+
+    // Estilos para información de receta
+    .receta-info {
+      margin-bottom: 16px;
+
+      .receta-details {
+        padding: 12px 16px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background-color: var(--background-color);
+
+        // ✅ NUEVO: Estilos para información de unidad de la receta
+        .receta-unidad-info {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-top: 8px;
+          padding: 8px 12px;
+          background-color: rgba(25, 118, 210, 0.1);
+          border-radius: 4px;
+          border-left: 3px solid var(--primary-color);
+
+          mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+            color: var(--primary-color);
+          }
+
+          span {
+            font-size: 12px;
+            color: var(--text-color);
+
+            strong {
+              color: var(--primary-color);
+              font-weight: 600;
+            }
+          }
+        }
+
+        // ✅ NUEVO: Estilos para información de composición de la receta
+        .receta-composicion,
+        .receta-principal {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          margin-bottom: 8px;
+
+          .receta-name {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--text-color);
+          }
+
+          .receta-description {
+            font-size: 12px;
+            color: var(--text-color);
+            opacity: 0.7;
+            font-style: italic;
+          }
+        }
+
+        .receta-composicion {
+          .receta-name {
+            color: var(--success-color);
+          }
+        }
+
+        .receta-principal {
+          .receta-name {
+            color: var(--primary-color);
+          }
+        }
+
+        .receta-sin-receta {
+          .receta-name {
+            color: var(--warn-color);
+          }
+        }
+
+        // ✅ NUEVO: Estilos para información de debug
+        .debug-info {
+          margin-top: 8px;
+          padding: 8px 12px;
+          background-color: rgba(255, 193, 7, 0.1);
+          border-radius: 4px;
+          border-left: 3px solid #ffc107;
+
+          p {
+            margin: 2px 0;
+            font-size: 11px;
+            color: #666;
+            font-family: monospace;
+          }
+        }
+
+        .receta-name {
+          font-weight: 500;
+          color: var(--text-color);
+          font-size: 14px;
+        }
+      }
+    }
+
+    // Estilos para configuración de vinculación
+    .vinculacion-config {
+      margin-top: 16px;
+      padding: 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background-color: var(--background-color);
+
+      .form-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+        align-items: flex-start;
+
+        .half-width {
+          flex: 1;
+        }
+
+        .checkbox-field {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          .help-text {
+            font-size: 12px;
+            color: var(--text-color);
+            opacity: 0.7;
+            margin: 0;
+          }
+        }
+      }
+
+      mat-form-field {
+        width: 100%;
+      }
+
+      mat-checkbox {
+        margin-bottom: 8px;
+      }
+
+      // ✅ NUEVO: Estilos para información de cantidad
+      .cantidad-info {
+        margin-top: 8px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        background-color: var(--primary-color);
+        color: white;
+
+        .help-text {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          margin: 0;
+          font-size: 12px;
+          opacity: 0.9;
+
+          mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+          }
+
+          strong {
+            font-weight: 600;
+          }
+        }
+      }
+
+      // ✅ NUEVO: Estilos para información de unidades compatibles
+      .unidad-info {
+        margin-top: 8px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        background-color: rgba(76, 175, 80, 0.1);
+        border-left: 3px solid var(--success-color);
+
+        .help-text {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin: 0;
+          font-size: 12px;
+          color: var(--text-color);
+
+          mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+            color: var(--success-color);
+          }
+
+          strong {
+            color: var(--success-color);
+            font-weight: 600;
+          }
+        }
+      }
+    }
+  }
+
+  mat-dialog-actions {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-color);
+
+    button {
+      border-radius: 6px;
+      font-weight: 500;
+      min-width: 100px;
+
+      mat-icon {
+        margin-right: 8px;
+      }
+    }
+  }
+}
+
+// Variables de colores (mismo esquema que ingrediente-dialog)
+:host {
+  --primary-color: #2196f3;
+  --accent-color: #ff9800;
+  --warn-color: #f44336;
+  --success-color: #4caf50;
+  --background-color: #ffffff;
+  --text-color: #333333;
+  --border-color: #e0e0e0;
+}
+
+// Dark theme support
+@media (prefers-color-scheme: dark) {
+  :host {
+    --background-color: #424242;
+    --text-color: #ffffff;
+    --border-color: rgba(255, 255, 255, 0.12);
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .vincular-receta-adicional-dialog-container {
+    min-width: 90vw;
+    max-width: 90vw;
+
+    mat-dialog-content {
+      padding: 12px 16px;
+    }
+
+    h2[mat-dialog-title] {
+      padding: 12px 16px 0;
+    }
+
+    mat-dialog-actions {
+      padding: 12px 16px;
+    }
+
+    .adicional-form {
+      .vinculacion-config {
+        .form-row {
+          flex-direction: column;
+          gap: 12px;
+
+          .half-width,
+          .checkbox-field {
+            width: 100%;
+          }
+        }
+      }
+    }
+  }
+}

@@ -16,31 +16,6 @@ export { UsuarioRole } from './personas/usuario-role.entity';
 export { TipoCliente } from './personas/tipo-cliente.entity';
 export { Cliente } from './personas/cliente.entity';
 
-// Export producto-related entities and enums
-export { TipoMedida as PresentacionTipoMedida } from './productos/presentacion.entity';
-export { TipoMedida as IngredienteTipoMedida } from './productos/ingrediente.entity';
-export { MetodoCalculo } from './productos/presentacion.entity';
-export { Categoria } from './productos/categoria.entity';
-export { Subcategoria } from './productos/subcategoria.entity';
-export { Producto } from './productos/producto.entity';
-export { Presentacion } from './productos/presentacion.entity';
-export { PrecioVenta } from './productos/precio-venta.entity';
-export { Codigo } from './productos/codigo.entity';
-export { ProductoImage } from './productos/producto-image.entity';
-export { Sabor } from './productos/sabor.entity';
-export { PresentacionSabor } from './productos/presentacion-sabor.entity';
-export { Ingrediente } from './productos/ingrediente.entity';
-export { Receta } from './productos/receta.entity';
-export { Combo } from './productos/combo.entity';
-export { ComboItem } from './productos/combo-item.entity';
-export { IntercambioIngrediente } from './productos/intercambio-ingrediente.entity';
-export { Observacion } from './productos/observacion.entity';
-export { ObservacionProducto } from './productos/observacion-producto.entity';
-export { ObservacionProductoVentaItem } from './productos/observacion-producto-venta-item.entity';
-export { Adicional } from './productos/adicional.entity';
-export { ProductoAdicional } from './productos/producto-adicional.entity';
-export { ProductoAdicionalVentaItem } from './productos/producto-adicional-venta-item.entity';
-
 // Export financiero-related entities and enums
 export { Moneda } from './financiero/moneda.entity';
 export { TipoPrecio } from './financiero/tipo-precio.entity';
@@ -50,6 +25,37 @@ export { ConteoDetalle } from './financiero/conteo-detalle.entity';
 export { Dispositivo } from './financiero/dispositivo.entity';
 export { Caja, CajaEstado } from './financiero/caja.entity';
 export { CajaMoneda } from './financiero/caja-moneda.entity';
+
+// Export productos-related entities and enums in dependency order
+export { ProductoTipo } from './productos/producto-tipo.enum';
+export { RecetaTipo } from './productos/receta-tipo.enum';
+export { FuenteCosto } from './productos/precio-costo.entity';
+export { StockMovimiento, StockMovimientoTipo, StockMovimientoTipoReferencia } from './productos/stock-movimiento.entity';
+export { TipoPromocion } from './productos/promocion.entity';
+export { Familia } from './productos/familia.entity';
+export { Subfamilia } from './productos/subfamilia.entity';
+export { Producto } from './productos/producto.entity';
+export { Presentacion } from './productos/presentacion.entity';
+export { CodigoBarra } from './productos/codigo-barra.entity';
+export { PrecioVenta } from './productos/precio-venta.entity';
+export { PrecioCosto } from './productos/precio-costo.entity';
+export { Receta } from './productos/receta.entity';
+export { RecetaIngrediente } from './productos/receta-ingrediente.entity';
+export { RecetaIngredienteIntercambiable } from './productos/receta-ingrediente-intercambiable.entity';
+export { Observacion } from './productos/observacion.entity';
+export { ProductoObservacion } from './productos/producto-observacion.entity';
+export { TamanhoPizza } from './productos/tamanho-pizza.entity';
+export { SaborPizza } from './productos/sabor-pizza.entity';
+export { EnsambladoPizza } from './productos/ensamblado-pizza.entity';
+export { EnsambladoPizzaSabor } from './productos/ensamblado-pizza-sabor.entity';
+export { Produccion } from './productos/produccion.entity';
+export { ProduccionIngrediente } from './productos/produccion-ingrediente.entity';
+export { Combo } from './productos/combo.entity';
+export { ComboProducto } from './productos/combo-producto.entity';
+export { Promocion } from './productos/promocion.entity';
+export { PromocionPresentacion } from './productos/promocion-presentacion.entity';
+export { ConversionMoneda } from './productos/conversion-moneda.entity';
+export { ConfiguracionMonetaria } from './productos/configuracion-monetaria.entity';
 
 // Export compras-related entities and enums
 export { CompraEstado, PagoEstado } from './compras/estado.enum';

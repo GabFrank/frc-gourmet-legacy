@@ -1,0 +1,94 @@
+<div class="page-container">
+  <div class="page-wrapper-grid" *ngIf="{
+    isLoading: isLoading$ | async,
+    isEditMode: isEditMode$ | async,
+    productoNombre: productoNombre$ | async,
+    productoTipo: productoTipo$ | async,
+    visibleTabs: visibleTabs$ | async
+  } as data">
+
+    <!-- Panel Lateral de Resumen -->
+    <div class="summary-panel">
+      <app-producto-resumen></app-producto-resumen>
+    </div>
+
+    <!-- Área de Contenido con Pestañas -->
+    <div class="content-panel">
+      <mat-progress-bar mode="indeterminate" *ngIf="data.isLoading"></mat-progress-bar>
+
+      <div class="content-section" *ngIf="!data.isLoading">
+        <mat-tab-group class="h-100">
+
+          <!-- Pestaña de Información General - Siempre visible -->
+          <mat-tab label="Información General">
+            <ng-template matTabContent class="h-100">
+              <app-producto-informacion-general class="h-100"></app-producto-informacion-general>
+            </ng-template>
+          </mat-tab>
+
+          <!-- Pestaña de Presentaciones y Precios - Solo para RETAIL y RETAIL_INGREDIENTE -->
+          <mat-tab *ngIf="data.isEditMode && data.visibleTabs?.presentaciones"
+                   label="Presentaciones y Precios">
+            <ng-template matTabContent class="h-100">
+              <app-producto-presentaciones-precios class="h-100"></app-producto-presentaciones-precios>
+            </ng-template>
+          </mat-tab>
+
+          <!-- ✅ UNIFICADA: Pestaña de Sabores y Variaciones - Solo para ELABORADO_CON_VARIACION (antes que Receta) -->
+          <mat-tab *ngIf="data.isEditMode && data.visibleTabs?.sabores"
+                   label="Sabores y Variaciones">
+            <ng-template matTabContent class="h-100">
+              <app-producto-sabores
+                [productoId]="productoId!"
+                [productoNombre]="data.productoNombre || 'Producto'"
+                [productoTipo]="data.productoTipo || ''"
+                class="h-100">
+              </app-producto-sabores>
+            </ng-template>
+          </mat-tab>
+
+          <!-- Pestaña de Receta - Solo para productos elaborados (DESPUÉS de Sabores) -->
+          <mat-tab *ngIf="data.isEditMode && data.visibleTabs?.receta"
+                   label="Receta">
+            <ng-template matTabContent class="h-100">
+              <app-producto-receta class="h-100"></app-producto-receta>
+            </ng-template>
+          </mat-tab>
+
+          <!-- Pestaña de Precios de Venta - Solo para ELABORADO_SIN_VARIACION y COMBO (DESPUÉS de Receta) -->
+          <mat-tab *ngIf="data.isEditMode && data.visibleTabs?.preciosVenta"
+                   label="Precios de Venta">
+            <ng-template matTabContent class="h-100">
+              <app-producto-precios-venta class="h-100"></app-producto-precios-venta>
+            </ng-template>
+          </mat-tab>
+
+          <!-- Pestaña de Precios de Costo - Para todos los tipos -->
+          <mat-tab *ngIf="data.isEditMode && data.visibleTabs?.preciosCosto"
+                   label="Precios de Costo">
+            <ng-template matTabContent class="h-100">
+              <app-producto-precios-costo class="h-100"></app-producto-precios-costo>
+            </ng-template>
+          </mat-tab>
+
+          <!-- Pestaña de Stock - Para todos los tipos -->
+          <mat-tab *ngIf="data.isEditMode && data.visibleTabs?.stock"
+                   label="Stock">
+            <ng-template matTabContent class="h-100">
+              <app-producto-stock class="h-100"></app-producto-stock>
+            </ng-template>
+          </mat-tab>
+
+          <!-- Pestaña de Combo - Solo para tipo COMBO -->
+          <mat-tab *ngIf="data.isEditMode && data.visibleTabs?.combo"
+                   label="Combo">
+            <ng-template matTabContent class="h-100">
+              <app-producto-combo class="h-100"></app-producto-combo>
+            </ng-template>
+          </mat-tab>
+
+        </mat-tab-group>
+      </div>
+    </div>
+  </div>
+</div>

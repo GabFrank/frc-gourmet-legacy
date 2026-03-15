@@ -1,6 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseModel } from '../base.entity';
-import { Producto } from '../productos/producto.entity';
 
 @Entity('pdv_item_producto')
 export class PdvItemProducto extends BaseModel {
@@ -22,9 +21,9 @@ export class PdvItemProducto extends BaseModel {
   @JoinColumn({ name: 'categoriaItemId' })
   categoriaItem?: any;
 
-  @ManyToOne(() => Producto, { nullable: false })
-  @JoinColumn({ name: 'productoId' })
-  producto!: Producto;
+  // @ManyToOne(() => Producto, { nullable: false })
+  // @JoinColumn({ name: 'productoId' })
+  // producto!: Producto;
 }
 
 // Import after the class declaration to avoid circular dependencies

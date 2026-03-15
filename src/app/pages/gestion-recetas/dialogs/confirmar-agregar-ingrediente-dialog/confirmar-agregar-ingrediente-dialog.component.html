@@ -1,0 +1,33 @@
+<div class="confirm-dialog-container">
+  <h1 mat-dialog-title class="dialog-title">
+    <mat-icon class="title-icon">library_add</mat-icon>
+    <span>Ingrediente en Múltiples Variaciones</span>
+  </h1>
+
+  <mat-dialog-content class="dialog-content">
+    <p>
+      Has agregado el ingrediente <strong>"{{ data.nombreIngrediente }}"</strong>.
+    </p>
+    <p>
+      ¿Deseas agregarlo también a las otras variaciones de este mismo sabor?
+    </p>
+    <div class="dialog-details">
+      <mat-icon class="details-icon">info_outline</mat-icon>
+      <span>
+        Esto te permitirá configurar las cantidades para cada variación en el siguiente paso.
+      </span>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="dialog-actions" align="end">
+    <button mat-stroked-button (click)="onNoClick()" class="action-button">
+      <mat-icon>close</mat-icon>
+      <span>No, solo en esta</span>
+    </button>
+    <button mat-flat-button color="primary" (click)="onYesClick()" cdkFocusInitial class="action-button">
+      <mat-icon>arrow_forward</mat-icon>
+      <span>Sí, continuar</span>
+    </button>
+  </mat-dialog-actions>
+</div>
+

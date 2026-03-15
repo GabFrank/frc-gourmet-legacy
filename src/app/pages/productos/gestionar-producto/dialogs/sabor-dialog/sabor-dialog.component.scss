@@ -1,0 +1,429 @@
+.sabor-dialog-container {
+  width: 100%;
+  max-width: 600px;
+  min-width: 480px;
+  padding: 0;
+}
+
+// ✅ HEADER
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  margin-bottom: 0;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.87);
+
+    .header-icon {
+      margin-right: 12px;
+      font-size: 24px;
+      color: #1976d2;
+    }
+  }
+
+  .close-button {
+    color: rgba(0, 0, 0, 0.54);
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+  }
+}
+
+// ✅ CONTENT
+.dialog-content {
+  padding: 24px !important;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+// ✅ PREVIEW CARD
+.preview-card {
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8f5e8 100%);
+  border-left: 4px solid #4caf50;
+
+  .preview-content {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+
+    .preview-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      margin-right: 16px;
+      color: #4caf50;
+    }
+
+    .preview-text {
+      flex: 1;
+
+      h4 {
+        margin: 0 0 4px 0;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .preview-name {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #2e7d32;
+        letter-spacing: 0.5px;
+      }
+    }
+  }
+}
+
+// ✅ FORM
+.sabor-form {
+  .form-row {
+    margin-bottom: 20px;
+
+    .full-width {
+      width: 100%;
+    }
+  }
+
+  // Estilos para mat-form-field
+  ::ng-deep {
+    .mat-mdc-form-field {
+      .mat-mdc-text-field-wrapper {
+        .mat-mdc-form-field-flex {
+          .mat-mdc-form-field-infix {
+            padding-top: 16px;
+            padding-bottom: 16px;
+          }
+        }
+      }
+
+      // Íconos de sufijo
+      .mat-mdc-form-field-icon-suffix {
+        color: rgba(0, 0, 0, 0.54);
+      }
+
+      // Hints
+      .mat-mdc-form-field-subscript-wrapper {
+        .mat-mdc-form-field-hint-wrapper {
+          .mat-mdc-form-field-hint {
+            color: rgba(0, 0, 0, 0.6);
+            font-size: 12px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// ✅ CATEGORIA OPTIONS
+.categoria-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: #1976d2;
+  }
+
+  span {
+    font-size: 14px;
+  }
+}
+
+// ✅ INFO CARD
+.info-card {
+  margin-top: 24px;
+  background-color: #f8f9fa;
+  border-left: 4px solid #2196f3;
+
+  .info-content {
+    display: flex;
+    align-items: flex-start;
+    padding: 8px 0;
+
+    .info-icon {
+      margin-right: 16px;
+      margin-top: 2px;
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+
+    .info-text {
+      flex: 1;
+
+      h4 {
+        margin: 0 0 12px 0;
+        font-size: 16px;
+        font-weight: 500;
+        color: rgba(0, 0, 0, 0.87);
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 20px;
+        list-style-type: disc;
+
+        li {
+          margin-bottom: 8px;
+          font-size: 14px;
+          line-height: 1.4;
+          color: rgba(0, 0, 0, 0.7);
+
+          strong {
+            color: rgba(0, 0, 0, 0.87);
+            font-weight: 500;
+          }
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+    }
+  }
+}
+
+// ✅ ACTIONS
+.dialog-actions {
+  padding: 16px 24px 24px 24px !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  margin-top: 0;
+  gap: 12px;
+
+  .cancel-button {
+    min-width: 100px;
+    color: rgba(0, 0, 0, 0.6);
+
+    &:hover:not([disabled]) {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+  }
+
+  .primary-button {
+    min-width: 140px;
+    font-weight: 500;
+
+    .loading-icon {
+      animation: spin 2s linear infinite;
+      margin-right: 8px;
+    }
+
+    mat-icon:not(.loading-icon) {
+      margin-right: 8px;
+    }
+  }
+}
+
+// ✅ ANIMATIONS
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// ✅ RESPONSIVE
+@media (max-width: 600px) {
+  .sabor-dialog-container {
+    min-width: 95vw;
+    max-width: 95vw;
+  }
+
+  .dialog-header {
+    padding: 16px;
+
+    h2 {
+      font-size: 18px;
+
+      .header-icon {
+        font-size: 20px;
+        margin-right: 8px;
+      }
+    }
+  }
+
+  .dialog-content {
+    padding: 16px !important;
+  }
+
+  .preview-card,
+  .info-card {
+    margin-left: -4px;
+    margin-right: -4px;
+  }
+
+  .info-content {
+    .info-text {
+      ul li {
+        font-size: 13px;
+      }
+    }
+  }
+
+  .dialog-actions {
+    padding: 12px 16px 16px 16px !important;
+    flex-direction: column;
+    gap: 8px;
+
+    .cancel-button,
+    .primary-button {
+      width: 100%;
+      min-width: unset;
+    }
+
+    .primary-button {
+      order: -1;
+    }
+  }
+}
+
+// ✅ ACCESSIBILITY
+@media (prefers-reduced-motion: reduce) {
+  .loading-icon {
+    animation: none;
+  }
+}
+
+// ✅ HIGH CONTRAST MODE
+@media (prefers-contrast: high) {
+  .preview-card {
+    border-left-width: 6px;
+    border-left-color: #000;
+  }
+
+  .info-card {
+    border-left-width: 6px;
+    border-left-color: #000;
+  }
+
+  .dialog-header {
+    border-bottom-color: #000;
+  }
+
+  .dialog-actions {
+    border-top-color: #000;
+  }
+}
+
+// ✅ DARK MODE READY
+@media (prefers-color-scheme: dark) {
+  .preview-card {
+    background: linear-gradient(135deg, #363636 0%, #1a4d1a 100%);
+    border-left-color: #81c784;
+
+    .preview-text {
+      .preview-name {
+        color: #81c784;
+      }
+      h4 {
+        color: rgba(255, 255, 255, 0.7);
+      }
+    }
+
+    .preview-icon {
+      color: #81c784;
+    }
+  }
+
+  .info-card {
+    background-color: #2d2d2d;
+    border-left-color: #64b5f6;
+  }
+
+  .dialog-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+
+    h2 {
+      color: rgba(255, 255, 255, 0.87);
+
+      .header-icon {
+        color: #90caf9;
+      }
+    }
+
+    .close-button {
+      color: rgba(255, 255, 255, 0.7);
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.08);
+      }
+    }
+  }
+
+  .info-card {
+    .info-content {
+      .info-text {
+        h4 {
+          color: rgba(255, 255, 255, 0.87);
+        }
+        ul li {
+          color: rgba(255, 255, 255, 0.75);
+          strong {
+            color: rgba(255, 255, 255, 0.87);
+          }
+        }
+      }
+    }
+  }
+
+  .categoria-option {
+    mat-icon {
+      color: #90caf9;
+    }
+    span {
+      color: rgba(255, 255, 255, 0.87);
+    }
+  }
+
+  .sabor-form {
+    ::ng-deep {
+      .mat-mdc-form-field {
+        .mat-mdc-form-field-icon-suffix {
+          color: rgba(255, 255, 255, 0.7);
+        }
+        .mat-mdc-form-field-subscript-wrapper {
+          .mat-mdc-form-field-hint-wrapper {
+            .mat-mdc-form-field-hint {
+              color: rgba(255, 255, 255, 0.7);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .dialog-actions {
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+
+    .cancel-button {
+      color: rgba(255, 255, 255, 0.7);
+      &:hover:not([disabled]) {
+        background-color: rgba(255, 255, 255, 0.08);
+      }
+    }
+  }
+  }
+
+// Alternativa por clase de tema (si la app usa .dark-theme en el body)
+:host-context(.dark-theme) {
+  .dialog-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    h2 { color: rgba(255, 255, 255, 0.87); }
+    .close-button { color: rgba(255, 255, 255, 0.7); }
+  }
+  .preview-card { border-left-color: #81c784; }
+  .info-card { border-left-color: #64b5f6; }
+  .dialog-actions { border-top: 1px solid rgba(255, 255, 255, 0.12); }
+}
+

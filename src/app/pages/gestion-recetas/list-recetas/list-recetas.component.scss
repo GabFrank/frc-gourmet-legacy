@@ -1,0 +1,268 @@
+.list-recetas-container {
+  height: 100%;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  background-color: #404040;
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 32px;
+
+    .title-section {
+      h1 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 500;
+        color: #333;
+      }
+
+      .subtitle {
+        margin: 8px 0 0 0;
+        color: #666;
+        font-size: 1rem;
+      }
+    }
+
+    .actions-section {
+      button {
+        mat-icon {
+          margin-right: 8px;
+        }
+      }
+    }
+  }
+
+  .filters-section {
+    border-radius: 5px;
+    background: #363636;
+    margin: 10px;
+    padding: 10px;
+
+    .search-field {
+      width: 100%;
+      max-width: 400px;
+      margin-top: 10px;
+    }
+  }
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+    color: #666;
+
+    p {
+      margin-top: 16px;
+      font-size: 1rem;
+    }
+  }
+
+  .table-container {
+    flex: 1;
+    background: #363636;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    .recetas-table {
+      width: 100%;
+
+      .mat-header-cell {
+        font-weight: 600;
+        color: #333;
+      }
+
+      .mat-cell {
+        padding: 12px 16px;
+      }
+
+      .actions-buttons {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-start;
+
+        button {
+          width: 32px;
+          height: 32px;
+          line-height: 32px;
+
+          mat-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+          }
+        }
+      }
+
+      .estado-chip {
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        &:hover {
+          opacity: 0.8;
+        }
+        
+        &.activo {
+          background-color: #e8f5e8;
+          color: #2e7d32;
+          border: 1px solid #4caf50;
+        }
+        
+        &.inactivo {
+          background-color: #ffebee;
+          color: #c62828;
+          border: 1px solid #f44336;
+        }
+      }
+    }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 64px 24px;
+      text-align: center;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+      mat-icon {
+        color: #ccc;
+      }
+  
+      h3 {
+        margin: 0 0 8px 0;
+        font-size: 1.5rem;
+        color: #eb6b1c;
+      }
+  
+      p {
+        margin: 0 0 24px 0;
+        color: #666;
+        font-size: 1rem;
+      }
+  
+      button {
+        mat-icon {
+          margin-right: 8px;
+        }
+      }
+    }
+
+    mat-paginator {
+      border-top: 1px solid #e0e0e0;
+    }
+  }
+
+  
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .list-recetas-container {
+    padding: 16px;
+
+    .header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+
+      .title-section {
+        h1 {
+          font-size: 1.5rem;
+        }
+      }
+    }
+
+    .table-container {
+      .recetas-table {
+        .mat-cell {
+          padding: 8px;
+        }
+
+        .actions-buttons {
+          flex-direction: column;
+          gap: 4px;
+        }
+      }
+    }
+  }
+}
+
+// Dark theme support
+@media (prefers-color-scheme: dark) {
+  .list-recetas-container {
+    .header {
+      .title-section {
+        h1 {
+          color: #fff;
+        }
+
+        .subtitle {
+          color: #ccc;
+        }
+      }
+    }
+
+    .table-container {
+
+      .recetas-table {
+        .mat-header-cell {
+          background-color: #3d3d3d;
+          color: #fff;
+        }
+
+        .mat-cell {
+          color: #fff;
+        }
+
+        .estado-chip {
+          &.activo {
+            background-color: #1b5e20;
+            color: #a5d6a7;
+            border-color: #4caf50;
+          }
+          
+          &.inactivo {
+            background-color: #b71c1c;
+            color: #ef9a9a;
+            border-color: #f44336;
+          }
+        }
+      }
+
+      mat-paginator {
+        border-top-color: #444;
+      }
+    }
+
+    .empty-state {
+      background: #2d2d2d;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+      h3 {
+        color: #fff;
+      }
+
+      p {
+        color: #ccc;
+      }
+    }
+  }
+} 

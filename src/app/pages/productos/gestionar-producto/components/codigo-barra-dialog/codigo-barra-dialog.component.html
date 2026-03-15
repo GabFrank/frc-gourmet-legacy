@@ -1,0 +1,224 @@
+<div class="dialog-container">
+  <div class="dialog-header">
+    <h2 mat-dialog-title class="dialog-main-title">
+      <mat-icon>qr_code</mat-icon>
+      {{ dialogTitle }}
+    </h2>
+  </div>
+
+  <mat-progress-bar mode="indeterminate" *ngIf="isLoading"></mat-progress-bar>
+
+  <mat-dialog-content class="dialog-content">
+    
+    <!-- Codigo Information Card -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title class="card-title">
+          <mat-icon *ngIf="editingCodigoId">edit</mat-icon>
+          {{ editingCodigoId ? 'Editar Código con ID: ' + editingCodigoId : 'Nuevo Código' }}
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="codigo-form-container">
+        <form [formGroup]="codigoForm" class="codigo-form">
+          
+          <!-- First Row: Codigo -->
+          <div class="form-row">
+            <!-- Codigo Field -->
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Código*</mat-label>
+              <input matInput 
+                     formControlName="codigo"
+                     placeholder="Ingrese el código de barras"
+                     minlength="3"
+                     required>
+              <mat-icon matSuffix>qr_code</mat-icon>
+              <mat-error *ngIf="codigoForm.get('codigo')?.invalid && codigoForm.get('codigo')?.touched">
+                {{ getErrorMessage('codigo') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Second Row: Principal and Activo -->
+          <div class="form-row">
+            <div class="checkbox-container">
+              <mat-checkbox formControlName="principal" color="primary">
+                <span class="checkbox-label">
+                  <mat-icon>{{ codigoForm.get('principal')?.value ? 'star' : 'star_border' }}</mat-icon>
+                  Código Principal
+                </span>
+              </mat-checkbox>
+              <mat-hint class="checkbox-hint">
+                Solo un código puede ser principal por presentación
+              </mat-hint>
+            </div>
+
+            <div class="checkbox-container">
+              <mat-checkbox formControlName="activo" color="primary">
+                <span class="checkbox-label">
+                  <mat-icon>{{ codigoForm.get('activo')?.value ? 'visibility' : 'visibility_off' }}</mat-icon>
+                  Activo
+                </span>
+              </mat-checkbox>
+              <mat-hint class="checkbox-hint">
+                Los códigos inactivos no aparecerán en las ventas
+              </mat-hint>
+            </div>
+          </div>
+
+          <!-- Third Row: Save/Update Button -->
+          <div class="form-row form-actions">
+            <div class="actions-container">
+              <button mat-raised-button 
+                      color="primary"
+                      (click)="saveCodigo()"
+                      [disabled]="codigoForm.invalid || isLoadingCodigos">
+                <mat-icon>save</mat-icon>
+                {{ editingCodigoId ? 'ACTUALIZAR' : 'CREAR CÓDIGO' }}
+              </button>
+              <button mat-button 
+                      (click)="cancelCodigoEdit()">
+                <mat-icon>cancel</mat-icon>
+                CANCELAR
+              </button>
+            </div>
+          </div>
+
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Codigos de Barras Management Card -->
+    <mat-card class="codigos-card">
+      <mat-card-header>
+        <mat-card-title class="card-title">
+          <mat-icon>qr_code</mat-icon>
+          Códigos de Barras ({{ codigos.length }})
+        </mat-card-title>
+        <mat-card-subtitle>Gestionar códigos de barras para esta presentación</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+          <div class="filter-controls">
+            <mat-radio-group 
+                [value]="codigoFilter" 
+                (change)="onCodigoFilterChange($event)"
+                class="filter-radio-group">
+              <mat-radio-button value="all" class="filter-radio">
+                TODOS
+              </mat-radio-button>
+              <mat-radio-button value="active" class="filter-radio">
+                ACTIVOS
+              </mat-radio-button>
+              <mat-radio-button value="inactive" class="filter-radio">
+                INACTIVOS
+              </mat-radio-button>
+            </mat-radio-group>
+          </div>
+        </div>
+
+        <!-- Codigos Table -->
+        <div class="codigos-table-container" *ngIf="codigos.length > 0">
+          <table mat-table [dataSource]="codigoDataSource" class="codigos-table">
+            <!-- ID Column -->
+            <ng-container matColumnDef="id">
+              <th mat-header-cell *matHeaderCellDef style="text-align: center;">ID</th>
+              <td mat-cell *matCellDef="let codigo" style="text-align: center;">
+                <span class="codigo-id">{{ codigo.id }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Codigo Column -->
+            <ng-container matColumnDef="codigo">
+              <th mat-header-cell *matHeaderCellDef style="text-align: center;">Código</th>
+              <td mat-cell *matCellDef="let codigo" style="text-align: center;">
+                <span class="codigo-valor">{{ codigo.codigo }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Principal Column -->
+            <ng-container matColumnDef="principal">
+              <th mat-header-cell *matHeaderCellDef style="text-align: center;">Principal</th>
+              <td mat-cell *matCellDef="let codigo" style="text-align: center;">
+                <mat-radio-button 
+                  [checked]="codigo.principal"
+                  (change)="marcarComoPrincipal(codigo)"
+                  [disabled]="!codigo.activo || isLoadingCodigos"
+                  [matTooltip]="!codigo.activo ? 'Código inactivo' : (codigo.principal ? 'Ya es el código principal' : 'Marcar como código principal')"
+                  class="principal-radio">
+                </mat-radio-button>
+              </td>
+            </ng-container>
+
+            <!-- Activo Column -->
+            <ng-container matColumnDef="activo">
+              <th mat-header-cell *matHeaderCellDef style="text-align: center;">Activo</th>
+              <td mat-cell *matCellDef="let codigo" style="text-align: center;">
+                <mat-checkbox 
+                  [checked]="codigo.activo"
+                  (change)="toggleCodigoStatus(codigo)"
+                  [disabled]="codigo.principal || isLoadingCodigos"
+                  [matTooltip]="codigo.principal ? 'No se puede desactivar el código principal' : (codigo.activo ? 'Desactivar código' : 'Activar código')"
+                  class="activo-checkbox">
+                </mat-checkbox>
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef style="text-align: center;">Acciones</th>
+              <td mat-cell *matCellDef="let codigo" style="text-align: center; display: flex; justify-content: center;">
+                <button mat-icon-button [matMenuTriggerFor]="codigoMenu">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #codigoMenu="matMenu">
+                  <button mat-menu-item 
+                          (click)="editCodigo(codigo)"
+                          [disabled]="isAddingCodigo || editingCodigoId !== null">
+                    <mat-icon>edit</mat-icon>
+                    <span>Editar</span>
+                  </button>
+                  <mat-divider></mat-divider>
+                  <button mat-menu-item 
+                          (click)="deleteCodigo(codigo)"
+                          [disabled]="isLoadingCodigos"
+                          class="delete-action">
+                    <mat-icon>delete</mat-icon>
+                    <span>Eliminar</span>
+                  </button>
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="codigoDisplayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: codigoDisplayedColumns;"
+                [class.codigo-principal]="row.principal"
+                [class.codigo-inactivo]="!row.activo"></tr>
+          </table>
+        </div>
+
+        <!-- No Codigos Message -->
+        <div *ngIf="codigos.length === 0 && !isLoadingCodigos" class="no-codigos">
+          <mat-icon>qr_code</mat-icon>
+          <p>No hay códigos configurados para esta presentación.</p>
+          <p>Agrega un código usando el formulario de arriba.</p>
+        </div>
+
+        <!-- Loading indicator -->
+        <mat-progress-bar mode="indeterminate" *ngIf="isLoadingCodigos"></mat-progress-bar>
+      </mat-card-content>
+    </mat-card>
+
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="dialog-actions">
+    <button mat-button 
+            type="button" 
+            (click)="onCancel()"
+            [disabled]="isLoading">
+      <mat-icon>cancel</mat-icon>
+      CERRAR
+    </button>
+  </mat-dialog-actions>
+</div> 

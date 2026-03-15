@@ -1,0 +1,408 @@
+.dialog-container {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--divider-color);
+  margin-bottom: 12px;
+  // create a gradient background using gradient()
+  background: #552a9b;
+  background: linear-gradient(90deg, rgba(85, 42, 155, 1) 0%, rgba(237, 83, 114, 1) 100%);
+
+  .dialog-main-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    color: var(--primary-text-color);
+    font-size: small; // Medium font size
+    font-weight: 500;
+    padding-bottom: 0px;
+  }
+
+  .close-button {
+    color: var(--secondary-text-color);
+  }
+}
+
+.dialog-content {
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.subfamilias-card {
+  flex: 1;
+}
+
+// Card styles with darker background
+.info-card,
+.subfamilias-card {
+  background-color: var(--background-hover, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--divider-color);
+  border-radius: 8px;
+
+  mat-card-header {
+    padding: 16px 16px 8px 16px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    .card-title {
+      font-size: small; // Medium font size
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    mat-card-subtitle {
+      color: var(--secondary-text-color);
+      font-size: 0.875rem;
+      margin-top: 4px;
+      margin-bottom: 0;
+    }
+
+    .card-header-actions {
+      margin-left: auto;
+
+      button {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.875rem;
+        padding: 6px 12px;
+        min-height: 32px;
+      }
+    }
+  }
+}
+
+.familia-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+// Improved audit row layout
+.audit-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: flex-start;
+  background-color: var(--background-card);
+  border: 1px solid var(--divider-color);
+  border-radius: 8px;
+}
+
+mat-card-content {
+  padding: 0px;
+}
+
+.status-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+  }
+
+  .checkbox-hint {
+    font-size: 12px;
+    color: var(--secondary-text-color);
+    margin-left: 32px;
+    line-height: 1.4;
+  }
+}
+
+.audit-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.audit-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: smaller;
+  color: var(--secondary-text-color);
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.checkbox-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+  }
+
+  .checkbox-hint {
+    font-size: 12px;
+    color: var(--secondary-text-color);
+    margin-left: 32px;
+  }
+}
+
+// Subfamilias section improvements
+.subfamilia-form-container {
+  background-color: var(--background-card);
+  border: 1px solid var(--divider-color);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.subfamilia-form-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: flex-start;
+
+  .subfamilia-name-field {
+    grid-column: 1;
+  }
+
+  .subfamilia-checkbox {
+    grid-column: 2;
+    margin-top: 12px;
+  }
+
+  .subfamilia-form-actions {
+    grid-column: 3;
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+}
+
+.subfamilias-table-container {
+  margin-top: 12px;
+  border: 1px solid var(--divider-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.subfamilias-table {
+  width: 100%;
+
+  th,
+  td {
+    padding: 10px 12px;
+  }
+
+  th {
+    background-color: var(--background-hover, rgba(0, 0, 0, 0.04));
+    font-weight: 500;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+
+    &.active {
+      background-color: #e8f5e8;
+      color: #2e7d32;
+    }
+
+    &.inactive {
+      background-color: #ffebee;
+      color: #c62828;
+    }
+  }
+}
+
+.no-subfamilias {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--secondary-text-color);
+  background-color: var(--background-card);
+  border: 1px solid var(--divider-color);
+  border-radius: 8px;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 20px 20px 20px;
+  border-top: 1px solid var(--divider-color);
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+  }
+}
+
+// Menu improvements
+.delete-action {
+  color: var(--warn-color, #f44336);
+
+  mat-icon {
+    color: var(--warn-color, #f44336);
+  }
+}
+
+mat-progress-bar {
+  margin-bottom: 12px;
+}
+
+.info-card {
+  background-color: #363636;
+}
+
+.subfamilias-card {
+  background-color: #363636;
+}
+
+.familia-form-container {
+  padding: 0px;
+}
+
+// Dark theme improvements
+[data-theme="dark"] {
+  .info-card {
+    background-color: #363636;
+  }
+
+  .info-card,
+  .subfamilias-card {
+    background-color: #363636;
+  }
+
+  .audit-row,
+  .subfamilia-form-container,
+  .no-subfamilias {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+
+  .subfamilias-table th {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .dialog-container {
+    min-width: 95vw;
+    max-width: 98vw;
+  }
+
+  .dialog-header,
+  .dialog-content,
+  .dialog-actions {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .info-card,
+  .subfamilias-card {
+    mat-card-header {
+      flex-direction: column;
+      align-items: flex-start;
+
+      .card-header-actions {
+        margin-left: 0;
+        margin-top: 8px;
+
+        button {
+          font-size: 0.8rem;
+          padding: 4px 8px;
+        }
+      }
+    }
+  }
+
+  .audit-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .subfamilia-form-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+
+    .subfamilia-checkbox,
+    .subfamilia-form-actions {
+      grid-column: 1;
+      margin-top: 0;
+    }
+
+    .subfamilia-form-actions {
+      justify-content: flex-end;
+    }
+  }
+
+  .subfamilias-table {
+    font-size: 12px;
+
+    th,
+    td {
+      padding: 6px 4px;
+    }
+  }
+
+  .dialog-actions {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+}

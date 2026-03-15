@@ -1,0 +1,503 @@
+<div class="producto-sabores-container">
+
+  <!-- ✅ HEADER CON ESTADÍSTICAS -->
+  <div class="header-section">
+    <div class="header-content">
+      <div class="title-section">
+        <h2 class="section-title">
+          <mat-icon class="section-icon">restaurant_menu</mat-icon>
+          Gestión de Sabores y Variaciones
+        </h2>
+        <p class="section-subtitle">{{ productoNombre }}</p>
+      </div>
+
+      <div class="stats-grid" *ngIf="!loading">
+        <mat-card class="stat-card stat-primary">
+          <mat-card-content>
+            <div class="stat-content">
+              <mat-icon class="stat-icon">inventory</mat-icon>
+              <div class="stat-info">
+                <span class="stat-number">{{ estadisticas.totalSabores }}</span>
+                <span class="stat-label">Total Sabores</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card stat-success">
+          <mat-card-content>
+            <div class="stat-content">
+              <mat-icon class="stat-icon">check_circle</mat-icon>
+              <div class="stat-info">
+                <span class="stat-number">{{ estadisticas.saboresActivos }}</span>
+                <span class="stat-label">Activos</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card stat-info">
+          <mat-card-content>
+            <div class="stat-content">
+              <mat-icon class="stat-icon">receipt</mat-icon>
+              <div class="stat-info">
+                <span class="stat-number">{{ estadisticas.totalRecetas }}</span>
+                <span class="stat-label">Recetas</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card stat-accent">
+          <mat-card-content>
+            <div class="stat-content">
+              <mat-icon class="stat-icon">view_module</mat-icon>
+              <div class="stat-info">
+                <span class="stat-number">{{ estadisticas.totalVariaciones }}</span>
+                <span class="stat-label">Variaciones</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ BARRA DE FILTROS Y ACCIONES -->
+  <div class="filters-section">
+    <mat-card class="filters-card">
+      <mat-card-content>
+
+        <!-- Fila de búsqueda y filtros -->
+        <div class="filters-row">
+          <div class="search-section">
+            <mat-form-field appearance="outline" class="search-field">
+              <mat-label>Buscar sabores y variaciones</mat-label>
+              <input matInput [formControl]="searchControl" placeholder="Nombre, categoría, descripción, SKU...">
+              <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="filter-section">
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Categoría</mat-label>
+              <mat-select [formControl]="filtroCategoria">
+                <mat-option *ngFor="let categoria of categoriasDisponibles" [value]="categoria.value">
+                  {{ categoria.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Estado</mat-label>
+              <mat-select [formControl]="filtroActivo">
+                <mat-option *ngFor="let opcion of opcionesActivo" [value]="opcion.value">
+                  {{ opcion.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="clear-filters-section" *ngIf="hayFiltrosActivos">
+            <button mat-button (click)="limpiarFiltros()" class="clear-filters-btn">
+              <mat-icon>clear</mat-icon>
+              Limpiar
+            </button>
+          </div>
+        </div>
+
+        <!-- Fila de acciones principales -->
+        <div class="actions-row">
+          <div class="primary-actions">
+            <button mat-raised-button color="primary" (click)="nuevoSabor()" [disabled]="loading">
+              <mat-icon>add</mat-icon>
+              Nuevo Sabor
+            </button>
+
+            <button mat-raised-button color="accent" (click)="generarTodasLasVariaciones()"
+              [disabled]="loading || estadisticas.totalSabores === 0">
+              <mat-icon>auto_awesome</mat-icon>
+              Generar Variaciones
+            </button>
+          </div>
+
+          <div class="secondary-actions">
+            <button mat-icon-button (click)="recargarDatos()" [disabled]="loading" matTooltip="Recargar datos">
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Información de resultados -->
+        <div class="results-info" *ngIf="!loading">
+          <span class="results-text">{{ mensajeResultados }}</span>
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- ✅ LOADING STATE -->
+  <div class="loading-section" *ngIf="loading">
+    <mat-card class="loading-card">
+      <mat-card-content>
+        <div class="loading-content">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Cargando sabores y variaciones...</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- ✅ ERROR STATE -->
+  <div class="error-section" *ngIf="error && !loading">
+    <mat-card class="error-card">
+      <mat-card-content>
+        <div class="error-content">
+          <mat-icon class="error-icon">error_outline</mat-icon>
+          <h3>Error al cargar sabores</h3>
+          <p>{{ error }}</p>
+          <button mat-raised-button color="primary" (click)="recargarDatos()">
+            <mat-icon>refresh</mat-icon>
+            Reintentar
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- ✅ EMPTY STATE -->
+  <div class="empty-section" *ngIf="!loading && !error && sabores.length === 0">
+    <mat-card class="empty-card">
+      <mat-card-content>
+        <div class="empty-content">
+          <mat-icon class="empty-icon">restaurant_menu</mat-icon>
+          <h3>No hay sabores configurados</h3>
+          <p>Agrega el primer sabor para este producto y comenzarás a generar variaciones automáticamente.</p>
+          <button mat-raised-button color="primary" (click)="nuevoSabor()">
+            <mat-icon>add</mat-icon>
+            Crear Primer Sabor
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- ✅ TABLA DE SABORES CON FILAS EXPANDIBLES -->
+  <div class="sabores-table-section" *ngIf="!loading && !error && sabores.length > 0">
+
+    <!-- No results filtered -->
+    <div class="no-results-section" *ngIf="saboresFiltrados.length === 0 && hayFiltrosActivos">
+      <mat-card class="no-results-card">
+        <mat-card-content>
+          <div class="no-results-content">
+            <mat-icon class="no-results-icon">search_off</mat-icon>
+            <h3>No se encontraron resultados</h3>
+            <p>No hay sabores que coincidan con los filtros aplicados.</p>
+            <button mat-button color="primary" (click)="limpiarFiltros()">
+              <mat-icon>clear</mat-icon>
+              Limpiar Filtros
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Tabla Principal -->
+    <mat-card class="table-card" *ngIf="saboresFiltrados.length > 0">
+      <mat-card-content class="table-content">
+        <div class="table-container">
+          <table mat-table [dataSource]="dataSource" multiTemplateDataRows class="sabores-table">
+
+            <!-- Columna Expandir -->
+            <ng-container matColumnDef="expand">
+              <th mat-header-cell *matHeaderCellDef class="expand-column"></th>
+              <td mat-cell *matCellDef="let sabor" class="expand-column">
+                <button mat-icon-button (click)="expandedSabor = expandedSabor === sabor ? null : sabor"
+                  [attr.aria-label]="expandedSabor === sabor ? 'Ocultar variaciones de ' + sabor.nombre : 'Ver variaciones de ' + sabor.nombre"
+                  [matTooltip]="expandedSabor === sabor ? 'Ocultar variaciones' : 'Ver variaciones'"
+                  class="expand-button">
+                  <mat-icon [@.disabled]="expandedSabor !== sabor">
+                    {{ expandedSabor === sabor ? 'expand_less' : 'expand_more' }}
+                  </mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <!-- Columna Nombre -->
+            <ng-container matColumnDef="nombre">
+              <th mat-header-cell *matHeaderCellDef class="nombre-column">Sabor</th>
+              <td mat-cell *matCellDef="let sabor" class="nombre-column">
+                <div class="sabor-info">
+                  <div class="sabor-details">
+                    <span class="sabor-nombre">{{ sabor.nombre }}</span>
+                    <span class="sabor-descripcion" *ngIf="sabor.descripcion">{{ sabor.descripcion }}</span>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Columna Categoría -->
+            <ng-container matColumnDef="categoria">
+              <th mat-header-cell *matHeaderCellDef class="categoria-column">Categoría</th>
+              <td mat-cell *matCellDef="let sabor" class="categoria-column">
+                <mat-chip [color]="sabor.categoriaColor" selected>
+                  {{ sabor.categoria }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Columna Variaciones -->
+            <ng-container matColumnDef="variaciones_count">
+              <th mat-header-cell *matHeaderCellDef class="variaciones-column">Variaciones</th>
+              <td mat-cell *matCellDef="let sabor" class="variaciones-column">
+                <div class="variaciones-count">
+                  <span class="count-total">{{ sabor.variacionesCount }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Columna Estado -->
+            <ng-container matColumnDef="activo">
+              <th mat-header-cell *matHeaderCellDef class="estado-column">Estado</th>
+              <td mat-cell *matCellDef="let sabor" class="estado-column">
+                <mat-chip [color]="sabor.activo ? 'primary' : 'warn'" selected>
+                  {{ sabor.activo ? 'Activo' : 'Inactivo' }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Columna Acciones -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef class="actions-column">Acciones</th>
+              <td mat-cell *matCellDef="let sabor" class="actions-column">
+                <div class="actions-cell">
+                  <button mat-icon-button [matMenuTriggerFor]="menu" matTooltip="Acciones">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #menu="matMenu">
+                    <button mat-menu-item (click)="editarSabor(sabor)">
+                      <mat-icon>edit</mat-icon>
+                      <span>Editar Sabor</span>
+                    </button>
+                    <button mat-menu-item (click)="gestionarReceta(sabor)">
+                      <mat-icon>receipt</mat-icon>
+                      <span>Gestionar Receta</span>
+                    </button>
+                    <button mat-menu-item (click)="eliminarSabor(sabor)" class="delete-action">
+                      <mat-icon>delete</mat-icon>
+                      <span>Eliminar Sabor</span>
+                    </button>
+                  </mat-menu>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Fila Expandible con Variaciones -->
+            <ng-container matColumnDef="expandedDetail">
+              <td mat-cell *matCellDef="let sabor" [attr.colspan]="displayedColumns.length">
+                <div class="variaciones-detail" [@detailExpand]="expandedSabor === sabor ? 'expanded' : 'collapsed'">
+
+                  <!-- Header de Variaciones -->
+                  <div class="variaciones-header">
+                    <div class="variaciones-title">
+                      <h4>Variaciones del Sabor: {{ sabor.nombre }}</h4>
+                      <span class="variaciones-subtitle">
+                        {{ sabor.variacionesCount }} variación{{ sabor.variacionesCount !== 1 ? 'es' : '' }} disponibles
+                      </span>
+                    </div>
+                    <div class="variaciones-actions">
+                      <button mat-button color="primary" (click)="generarTodasLasVariaciones()">
+                        <mat-icon>auto_awesome</mat-icon>
+                        Generar Variaciones
+                      </button>
+                    </div>
+                  </div>
+
+
+
+                  <!-- Contenido de Variaciones -->
+                  <div class="variaciones-content">
+
+                    <!-- Tabla de Variaciones (cuando existen) -->
+                    <div class="variaciones-table-container"
+                      *ngIf="sabor.variacionesCalculadas && sabor.variacionesCalculadas.length > 0">
+                      <table mat-table [dataSource]="sabor.variacionesCalculadas" class="variaciones-subtable">
+
+                        <!-- Nombre Generado -->
+                        <ng-container matColumnDef="nombre_generado">
+                          <th mat-header-cell *matHeaderCellDef class="variacion-nombre-column">Variación</th>
+                          <td mat-cell *matCellDef="let variacion" class="variacion-nombre-column">
+                            <div class="variacion-nombre">
+                              <span class="nombre-principal">{{ variacion.nombre_generado }}</span>
+                              <span class="sku" *ngIf="variacion.sku">({{ variacion.sku }})</span>
+                            </div>
+                          </td>
+                        </ng-container>
+
+                        <!-- Presentación -->
+                        <ng-container matColumnDef="presentacion">
+                          <th mat-header-cell *matHeaderCellDef class="center">Presentación</th>
+                          <td mat-cell *matCellDef="let variacion" class="center">
+                            <span class="presentacion-nombre">{{ variacion.presentacion?.nombre || '-' }}</span>
+                          </td>
+                        </ng-container>
+
+                        <!-- Costo -->
+                        <ng-container matColumnDef="costo_calculado">
+                          <th mat-header-cell *matHeaderCellDef class="center">Costo</th>
+                          <td mat-cell *matCellDef="let variacion" class="center">
+                            <span>{{ variacion.costo_calculado | number:'1.0-2' }}</span>
+                          </td>
+                        </ng-container>
+
+                        <!-- Precio -->
+                        <ng-container matColumnDef="precio_ajuste">
+                          <th mat-header-cell *matHeaderCellDef class="center">Precio</th>
+                          <td mat-cell *matCellDef="let variacion" class="center">
+                            <span>{{ variacion.precio_ajuste | number:'1.0-2' }}</span>
+                          </td>
+                        </ng-container>
+
+                        <!-- ✅ NUEVA: Precio Principal -->
+                        <ng-container matColumnDef="precio_principal">
+                          <th mat-header-cell *matHeaderCellDef class="center">Precio Principal</th>
+                          <td mat-cell *matCellDef="let variacion" class="center">
+                            <div class="precio-principal-info" *ngIf="variacion.tienePrecioPrincipal">
+                              <span class="precio-principal-valor" [class]="'precio-' + (variacion.precioPrincipalActivo ? 'activo' : 'inactivo')">
+                                 {{ variacion.precioPrincipalValor | number:'1.0-2' }}
+                              </span>
+                            </div>
+                            <span *ngIf="!variacion.tienePrecioPrincipal" class="precio-principal-na">
+                              Sin precio
+                            </span>
+                          </td>
+                        </ng-container>
+
+                        <!-- Margen -->
+                        <ng-container matColumnDef="margen">
+                          <th mat-header-cell *matHeaderCellDef class="center">CMV</th>
+                          <td mat-cell *matCellDef="let variacion" class="center">
+                            <div class="margen-info" *ngIf="variacion.precioPrincipalValor && variacion.costo_calculado">
+                              <span>
+                                <!-- calcular aqui el cmv usando el costo y precio de venta -->
+                                {{ (variacion.costo_calculado / variacion.precioPrincipalValor) * 100 | number:'1.0-2' }}%
+                              </span>
+                            </div>
+                            <span *ngIf="!variacion.precioPrincipalValor || !variacion.costo_calculado"
+                              class="margen-na">-</span>
+                          </td>
+                        </ng-container>
+
+                        <!-- Estado de Precios -->
+                        <!-- <ng-container matColumnDef="estado_precios">
+                          <th mat-header-cell *matHeaderCellDef class="precios-column">Precios</th>
+                          <td mat-cell *matCellDef="let variacion" class="precios-column">
+                            <div class="precios-status">
+                              <mat-icon
+                                [class]="variacion.preciosVenta && variacion.preciosVenta.length > 0 ? 'precios-configurados' : 'precios-sin-configurar'"
+                                [matTooltip]="variacion.preciosVenta && variacion.preciosVenta.length > 0 ?
+                                  variacion.preciosVenta.length + ' precio(s) configurado(s)' :
+                                  'Sin precios configurados'">
+                                {{ variacion.preciosVenta && variacion.preciosVenta.length > 0 ? 'attach_money' : 'money_off' }}
+                              </mat-icon>
+                              <span class="precios-count" *ngIf="variacion.preciosVenta && variacion.preciosVenta.length > 0">
+                                {{ variacion.preciosVenta.length }}
+                              </span>
+                            </div>
+                          </td>
+                        </ng-container> -->
+
+                        <!-- Estado -->
+                        <ng-container matColumnDef="activo_variacion">
+                          <th mat-header-cell *matHeaderCellDef class="estado-variacion-column">Estado</th>
+                          <td mat-cell *matCellDef="let variacion" class="estado-variacion-column">
+                            <mat-slide-toggle [checked]="variacion.activo" (change)="toggleActivoVariacion(variacion)"
+                              color="primary">
+                            </mat-slide-toggle>
+                          </td>
+                        </ng-container>
+
+                        <!-- Acciones Variación -->
+                        <ng-container matColumnDef="actions_variacion">
+                          <th mat-header-cell *matHeaderCellDef class="actions-variacion-column">Acciones</th>
+                          <td mat-cell *matCellDef="let variacion" class="actions-variacion-column">
+                            <div class="variacion-actions">
+                              <button mat-icon-button [matMenuTriggerFor]="variacionMenu" matTooltip="Acciones">
+                                <mat-icon>more_vert</mat-icon>
+                              </button>
+                              <mat-menu #variacionMenu="matMenu">
+                                <button mat-menu-item (click)="editarVariacion(variacion)">
+                                  <mat-icon>edit</mat-icon>
+                                  <span>Editar Variación</span>
+                                </button>
+                                <button mat-menu-item (click)="gestionarRecetaDeVariacion(variacion)">
+                                  <mat-icon>receipt_long</mat-icon>
+                                  <span>Gestionar Receta</span>
+                                </button>
+                                <button mat-menu-item (click)="gestionarPreciosVariacion(variacion)">
+                                  <mat-icon>attach_money</mat-icon>
+                                  <span>Gestionar Precios</span>
+                                </button>
+                                <button mat-menu-item (click)="eliminarVariacion(variacion)" class="delete-action">
+                                  <mat-icon>delete</mat-icon>
+                                  <span>Eliminar Variación</span>
+                                </button>
+                              </mat-menu>
+                            </div>
+                          </td>
+                        </ng-container>
+
+                        <tr mat-header-row *matHeaderRowDef="variacionesColumns"></tr>
+                        <tr mat-row *matRowDef="let row; columns: variacionesColumns;"></tr>
+                      </table>
+                    </div>
+
+                    <!-- Estado vacío para variaciones (cuando no existen) -->
+                    <div class="variaciones-empty"
+                      *ngIf="!sabor.variacionesCalculadas || sabor.variacionesCalculadas.length === 0">
+                      <div class="empty-content">
+                        <mat-icon class="empty-icon">view_module</mat-icon>
+                        <h5 class="empty-title">No hay variaciones generadas</h5>
+                        <p class="empty-description">Este sabor aún no tiene variaciones. Genera variaciones para poder
+                          ofrecer diferentes presentaciones del producto.</p>
+                        <div class="empty-actions">
+                          <button mat-raised-button color="primary" (click)="generarTodasLasVariaciones()">
+                            <mat-icon>auto_awesome</mat-icon>
+                            Generar Variaciones
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Header Row -->
+            <tr mat-header-row *matHeaderRowDef="columnsToDisplay; sticky: true"></tr>
+
+            <!-- Data Row -->
+            <tr mat-row *matRowDef="let sabor; columns: columnsToDisplay;" class="sabor-row"
+              [class.expanded]="expandedSabor === sabor"
+              (click)="expandedSabor = expandedSabor === sabor ? null : sabor">
+            </tr>
+
+            <!-- Expanded Detail Row (always rendered, but hidden with CSS) -->
+            <tr mat-row *matRowDef="let sabor; columns: ['expandedDetail']" class="variaciones-detail-row">
+            </tr>
+
+          </table>
+        </div>
+
+        <!-- Paginator -->
+        <mat-paginator #paginator [pageSizeOptions]="[10, 25, 50]" [pageSize]="25" showFirstLastButtons
+          aria-label="Seleccionar página de sabores">
+        </mat-paginator>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+</div>

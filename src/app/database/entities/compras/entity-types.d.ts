@@ -6,9 +6,6 @@ import { BaseModel } from '../base.entity';
 import { Moneda } from '../financiero/moneda.entity';
 import { Caja } from '../financiero/caja.entity';
 import { PagoEstado, CompraEstado } from './estado.enum';
-import { Producto } from '../productos/producto.entity';
-import { Ingrediente } from '../productos/ingrediente.entity';
-import { Presentacion } from '../productos/presentacion.entity';
 import { Persona } from '../personas/persona.entity';
 
 // Forward declarations to avoid circular dependencies
@@ -28,9 +25,9 @@ export interface ICompraDetalle extends BaseModel {
   valor: number;
   activo: boolean;
   compra: ICompra;
-  producto?: Producto;
-  ingrediente?: Ingrediente;
-  presentacion?: Presentacion;
+  // producto?: Producto;
+  // ingrediente?: Ingrediente;
+  // presentacion?: Presentacion;
 }
 
 export interface IProveedor extends BaseModel {
@@ -48,8 +45,8 @@ export interface IProveedor extends BaseModel {
 export interface IProveedorProducto extends BaseModel {
   activo: boolean;
   proveedor: IProveedor;
-  producto?: Producto;
-  ingrediente?: Ingrediente;
+  // producto?: Producto;
+  // ingrediente?: Ingrediente;
   compra?: ICompra;
 }
 

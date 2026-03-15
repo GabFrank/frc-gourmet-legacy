@@ -1,0 +1,264 @@
+<div class="create-edit-adicional-dialog-container">
+  <h2 mat-dialog-title>
+    <mat-icon>add_circle</mat-icon>
+    {{dialogTitle}}
+  </h2>
+
+  <mat-dialog-content class="dialog-content">
+    <!-- Formulario de Creación/Edición -->
+    <div *ngIf="isEditMode || isCreateMode" class="form-section">
+      <mat-card class="form-card">
+        <mat-card-header>
+          <mat-card-title class="titulo">Información del Adicional</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <form [formGroup]="adicionalForm" class="adicional-form">
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Nombre del Adicional</mat-label>
+                <input matInput
+                       formControlName="nombre"
+                       placeholder="Ej: Queso Extra"
+                       required>
+                <mat-error *ngIf="adicionalForm.get('nombre')?.hasError('required')">
+                  El nombre es requerido
+                </mat-error>
+                <mat-error *ngIf="adicionalForm.get('nombre')?.hasError('minlength')">
+                  El nombre debe tener al menos 3 caracteres
+                </mat-error>
+                <mat-error *ngIf="adicionalForm.get('nombre')?.hasError('maxlength')">
+                  El nombre no puede exceder 255 caracteres
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Precio Base</mat-label>
+                <input matInput
+                       type="number"
+                       formControlName="precioBase"
+                       placeholder="0.00"
+                       step="0.01"
+                       min="0"
+                       required>
+                <mat-error *ngIf="adicionalForm.get('precioBase')?.hasError('required')">
+                  El precio es requerido
+                </mat-error>
+                <mat-error *ngIf="adicionalForm.get('precioBase')?.hasError('min')">
+                  El precio debe ser mayor o igual a 0
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Categoría</mat-label>
+                <input matInput
+                       formControlName="categoria"
+                       placeholder="Ej: Carnes, Lácteos, Salsas">
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <div class="checkbox-field">
+                <mat-checkbox formControlName="activo" color="primary">
+                  Adicional Activo
+                </mat-checkbox>
+                <p class="help-text">Los adicionales inactivos no aparecerán en las opciones</p>
+              </div>
+
+              <!-- ✅ NUEVO: Campo para Receta con PaginatedDropdown -->
+              <div class="receta-field">
+                <app-paginated-dropdown
+                  [config]="recetaDropdownConfig"
+                  [options]="recetaDropdownOptions"
+                  [loading]="recetaDropdownLoading"
+                  [totalItems]="recetaDropdownTotalItems"
+                  [hasMoreItems]="recetaDropdownHasMoreItems"
+                  formControlName="recetaId"
+                  (searchChange)="onRecetaSearchChange($event)"
+                  (loadMore)="onRecetaLoadMore()">
+                </app-paginated-dropdown>
+                <p class="help-text">Asocia una receta para calcular costos y descontar ingredientes</p>
+              </div>
+            </div>
+
+            <!-- ✅ NUEVO: Información de Receta -->
+            <div *ngIf="adicionalForm.get('recetaId')?.value" class="receta-info">
+              <mat-card class="receta-card">
+                <mat-card-header>
+                  <mat-card-title>
+                    <mat-icon>restaurant_menu</mat-icon>
+                    Información de Receta
+                  </mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <div *ngIf="recetaSeleccionada">
+                    <p><strong>Nombre:</strong> {{recetaSeleccionada.nombre}}</p>
+                    <p><strong>Costo Calculado:</strong> {{recetaSeleccionada.costoCalculado | number:'1.0-2'}} </p>
+                    <p><strong>Ingredientes:</strong> {{recetaSeleccionada.ingredientes?.length || 0}} ingredientes</p>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+
+            <div class="form-actions">
+              <button mat-raised-button
+                      color="primary"
+                      (click)="onSubmit()"
+                      [disabled]="!adicionalForm.valid || loading">
+                <mat-icon>save</mat-icon>
+                {{submitButtonText}}
+              </button>
+            </div>
+          </form>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Lista de Adicionales -->
+    <div *ngIf="!isEditMode" class="list-section">
+      <mat-card class="list-card">
+        <mat-card-header>
+          <mat-card-title class="titulo">Adicionales Disponibles</mat-card-title>
+          <mat-card-subtitle *ngIf="isSelectMode">
+            Selecciona un adicional existente o crea uno nuevo
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content style="padding-bottom: 0px;">
+
+          <!-- Filtros -->
+          <div class="filters-section">
+            <mat-form-field appearance="outline" class="search-field">
+              <mat-label>Buscar adicionales</mat-label>
+              <input matInput
+                     [(ngModel)]="searchTerm"
+                     (keyup.enter)="applyFilter()"
+                     placeholder="Buscar por nombre...">
+              <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Estado</mat-label>
+              <mat-select [(ngModel)]="activeFilter" (selectionChange)="onFilterChange()">
+                <mat-option value="all">Todos</mat-option>
+                <mat-option value="active">Activos</mat-option>
+                <mat-option value="inactive">Inactivos</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <button mat-raised-button
+                    color="primary"
+                    (click)="applyFilter()"
+                    [disabled]="adicionalesLoading">
+              <mat-icon>filter_list</mat-icon>
+              Filtrar
+            </button>
+          </div>
+
+          <!-- Loading -->
+          <div *ngIf="adicionalesLoading" class="loading-container">
+            <mat-spinner diameter="30"></mat-spinner>
+            <p>Cargando adicionales...</p>
+          </div>
+
+          <!-- Tabla de Adicionales -->
+          <div *ngIf="!adicionalesLoading" class="table-container">
+            <table mat-table [dataSource]="adicionalesDataSource" class="adicionales-table">
+
+              <!-- Nombre -->
+              <ng-container matColumnDef="nombre">
+                <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                <td mat-cell *matCellDef="let adicional">
+                  <div class="adicional-info">
+                    <span class="adicional-nombre">{{adicional.nombre}}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Precio Base -->
+              <ng-container matColumnDef="precioBase">
+                <th mat-header-cell *matHeaderCellDef class="text-center">Precio Base</th>
+                <td mat-cell *matCellDef="let adicional" class="text-center">
+                  {{adicional.precioBase | number:'1.0-2'}}
+                </td>
+              </ng-container>
+
+              <!-- Estado -->
+              <ng-container matColumnDef="activo">
+                <th mat-header-cell *matHeaderCellDef class="text-center">Estado</th>
+                <td mat-cell *matCellDef="let adicional" class="text-center">
+                  <mat-chip-listbox>
+                    <mat-chip [color]="adicional.activo ? 'accent' : 'warn'" selected>
+                      {{adicional.activo ? 'Activo' : 'Inactivo'}}
+                    </mat-chip>
+                  </mat-chip-listbox>
+                </td>
+              </ng-container>
+
+              <!-- Acciones -->
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef class="text-center">Acciones</th>
+                <td mat-cell *matCellDef="let adicional" class="text-center">
+                  <div class="actions-container">
+                    <button *ngIf="canSelect"
+                            mat-icon-button
+                            color="primary"
+                            (click)="selectAdicional(adicional)"
+                            matTooltip="Seleccionar">
+                      <mat-icon>check</mat-icon>
+                    </button>
+
+                    <button mat-icon-button
+                            [matMenuTriggerFor]="menu"
+                            (click)="$event.stopPropagation()">
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+                    <mat-menu #menu="matMenu">
+                      <button mat-menu-item (click)="editAdicional(adicional)">
+                        <mat-icon>edit</mat-icon>
+                        <span>Editar</span>
+                      </button>
+                      <button mat-menu-item (click)="deleteAdicional(adicional)">
+                        <mat-icon>delete</mat-icon>
+                        <span>Eliminar</span>
+                      </button>
+                    </mat-menu>
+                  </div>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+
+            <!-- Estado vacío -->
+          <div *ngIf="!adicionalesLoading && adicionales.length === 0" class="empty-state">
+            <mat-icon>add_circle_outline</mat-icon>
+            <h3>No hay adicionales</h3>
+            <p *ngIf="isSelectMode">Crea un nuevo adicional para continuar</p>
+            <p *ngIf="!isSelectMode">No se encontraron adicionales con los filtros aplicados</p>
+          </div>
+
+            <!-- Paginación -->
+            <mat-paginator [length]="totalItems"
+                          [pageSize]="pageSize"
+                          [pageIndex]="currentPage"
+                          [pageSizeOptions]="[5, 10, 25, 50]"
+                          (page)="onPageChange($event)">
+            </mat-paginator>
+          </div>
+
+
+
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">
+      Cancelar
+    </button>
+  </mat-dialog-actions>
+</div>

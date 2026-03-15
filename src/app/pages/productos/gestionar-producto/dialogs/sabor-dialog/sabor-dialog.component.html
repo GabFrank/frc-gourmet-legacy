@@ -1,0 +1,134 @@
+<div class="sabor-dialog-container">
+
+  <!-- Header -->
+  <div class="dialog-header">
+    <h2 mat-dialog-title>
+      <mat-icon class="header-icon">{{ getIconoCategoria(saborForm.get('categoria')?.value || 'PIZZA') }}</mat-icon>
+      {{ tituloDialog }}
+    </h2>
+    <button mat-icon-button mat-dialog-close class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Content -->
+  <mat-dialog-content class="dialog-content">
+
+    <!-- Preview Card -->
+    <mat-card class="preview-card" *ngIf="saborForm.get('nombre')?.value">
+      <mat-card-content>
+        <div class="preview-content">
+          <mat-icon class="preview-icon">{{ getIconoCategoria(saborForm.get('categoria')?.value || 'PIZZA') }}</mat-icon>
+          <div class="preview-text">
+            <h4>Preview del Nombre Generado:</h4>
+            <p class="preview-name">{{ nombreGeneradoPreview }}</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Form -->
+    <form [formGroup]="saborForm" (ngSubmit)="onSubmit()" class="sabor-form">
+
+      <!-- Nombre Field -->
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nombre del Sabor</mat-label>
+          <input
+            matInput
+            formControlName="nombre"
+            placeholder="Ej: CALABRESA, PEPPERONI, MARGHERITA"
+            (input)="onNombreChange()"
+            maxlength="50">
+          <mat-icon matSuffix>edit</mat-icon>
+          <mat-hint align="end">{{ saborForm.get('nombre')?.value?.length || 0 }}/50</mat-hint>
+          <mat-error>{{ nombreError }}</mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Categoria Field -->
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Categoría</mat-label>
+          <mat-select formControlName="categoria">
+            <mat-option
+              *ngFor="let categoria of categoriasDisponibles"
+              [value]="categoria.value">
+              <div class="categoria-option">
+                <mat-icon>{{ getIconoCategoria(categoria.value) }}</mat-icon>
+                <span>{{ categoria.label }}</span>
+              </div>
+            </mat-option>
+          </mat-select>
+          <mat-icon matSuffix>category</mat-icon>
+          <mat-hint>Selecciona la categoría que mejor describe este sabor</mat-hint>
+          <mat-error *ngIf="saborForm.get('categoria')?.hasError('required')">
+            La categoría es requerida
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Descripcion Field -->
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Descripción (Opcional)</mat-label>
+          <textarea
+            matInput
+            formControlName="descripcion"
+            placeholder="Describe los ingredientes principales, características especiales..."
+            rows="4"
+            maxlength="200"></textarea>
+          <mat-icon matSuffix>description</mat-icon>
+          <mat-hint align="end">{{ caracteresRestantes.descripcion }}/200 caracteres restantes</mat-hint>
+          <mat-error>{{ descripcionError }}</mat-error>
+        </mat-form-field>
+      </div>
+
+    </form>
+
+    <!-- Info Card -->
+    <mat-card class="info-card">
+      <mat-card-content>
+        <div class="info-content">
+          <mat-icon class="info-icon" color="primary">info</mat-icon>
+          <div class="info-text">
+            <h4>¿Qué sucede al crear este sabor?</h4>
+            <ul>
+              <li>Se creará automáticamente una <strong>receta base</strong></li>
+              <li>Se generarán <strong>variaciones automáticas</strong> para todas las presentaciones del producto</li>
+              <li>Podrás configurar ingredientes específicos en la receta</li>
+              <li>Cada variación tendrá su propio precio y SKU</li>
+            </ul>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+  </mat-dialog-content>
+
+  <!-- Actions -->
+  <mat-dialog-actions class="dialog-actions">
+    <button
+      mat-button
+      type="button"
+      (click)="onCancel()"
+      [disabled]="loading"
+      class="cancel-button">
+      Cancelar
+    </button>
+
+    <button
+      mat-raised-button
+      color="primary"
+      type="submit"
+      (click)="onSubmit()"
+      [disabled]="saborForm.invalid || loading"
+      class="primary-button">
+      <mat-icon *ngIf="loading" class="loading-icon">hourglass_empty</mat-icon>
+      <mat-icon *ngIf="!loading && data.modo === 'crear'">add</mat-icon>
+      <mat-icon *ngIf="!loading && data.modo === 'editar'">save</mat-icon>
+      {{ textoBotonPrimario }}
+    </button>
+  </mat-dialog-actions>
+
+</div>

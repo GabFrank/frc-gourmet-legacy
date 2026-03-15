@@ -11,31 +11,6 @@ import { TipoCliente } from './entities/personas/tipo-cliente.entity';
 import { Cliente } from './entities/personas/cliente.entity';
 import { LoginSession } from './entities/auth/login-session.entity';
 import { DeviceInfo } from '../services/auth.service';
-import { Categoria } from './entities/productos/categoria.entity';
-import { Producto } from './entities/productos/producto.entity';
-import { Subcategoria } from './entities/productos/subcategoria.entity';
-import { ProductoImage } from './entities/productos/producto-image.entity';
-import { Presentacion } from './entities/productos/presentacion.entity';
-import { Codigo } from './entities/productos/codigo.entity';
-import { Moneda } from './entities/financiero/moneda.entity';
-import { PrecioVenta } from './entities/productos/precio-venta.entity';
-import { Sabor } from './entities/productos/sabor.entity';
-import { PresentacionSabor } from './entities/productos/presentacion-sabor.entity';
-import { Receta } from './entities/productos/receta.entity';
-import { RecetaItem } from './entities/productos/receta-item.entity';
-import { Ingrediente } from './entities/productos/ingrediente.entity';
-import { TipoPrecio } from './entities/financiero/tipo-precio.entity';
-import { RecetaVariacion } from './entities/productos/receta-variacion.entity';
-import { RecetaVariacionItem } from './entities/productos/receta-variacion-item.entity';
-import { MovimientoStock, TipoReferencia } from './entities/productos/movimiento-stock.entity';
-// Import our new entities
-import { Observacion } from './entities/productos/observacion.entity';
-import { ObservacionProducto } from './entities/productos/observacion-producto.entity';
-import { ObservacionProductoVentaItem } from './entities/productos/observacion-producto-venta-item.entity';
-import { Adicional } from './entities/productos/adicional.entity';
-import { ProductoAdicional } from './entities/productos/producto-adicional.entity';
-import { ProductoAdicionalVentaItem } from './entities/productos/producto-adicional-venta-item.entity';
-import { CostoPorProducto } from './entities/productos/costo-por-producto.entity';
 // Import new financial entities
 import { MonedaBillete } from './entities/financiero/moneda-billete.entity';
 import { MonedaCambio } from './entities/financiero/moneda-cambio.entity';
@@ -63,6 +38,26 @@ import { PdvConfig } from './entities/ventas/pdv-config.entity';
 import { PdvMesa } from './entities/ventas/pdv-mesa.entity';
 import { Sector } from './entities/ventas/sector.entity';
 import { Reserva } from './entities/ventas/reserva.entity';
+import { Moneda } from './entities/financiero/moneda.entity';
+import { TipoPrecio } from './entities/financiero/tipo-precio.entity';
+// Import productos entities
+import { Familia } from './entities/productos/familia.entity';
+import { Subfamilia } from './entities/productos/subfamilia.entity';
+import { Producto } from './entities/productos/producto.entity';
+import { Presentacion } from './entities/productos/presentacion.entity';
+import { CodigoBarra } from './entities/productos/codigo-barra.entity';
+import { PrecioVenta } from './entities/productos/precio-venta.entity';
+import { PrecioCosto } from './entities/productos/precio-costo.entity';
+import { Receta } from './entities/productos/receta.entity';
+import { RecetaIngrediente } from './entities/productos/receta-ingrediente.entity';
+import { StockMovimiento } from './entities/productos/stock-movimiento.entity';
+import { ConversionMoneda } from './entities/productos/conversion-moneda.entity';
+import { ConfiguracionMonetaria } from './entities/productos/configuracion-monetaria.entity';
+import { Observacion } from './entities/productos/observacion.entity';
+import { ProductoObservacion } from './entities/productos/producto-observacion.entity';
+import { Adicional } from './entities/productos/adicional.entity';
+import { RecetaAdicionalVinculacion } from './entities/productos/receta-adicional-vinculacion.entity';
+import { RecetaIngredienteIntercambiable } from './entities/productos/receta-ingrediente-intercambiable.entity';
 
 export interface LoginResult {
   success: boolean;
@@ -127,47 +122,8 @@ interface ElectronAPI {
   // Profile image operations
   saveProfileImage: (base64Data: string, fileName: string) => Promise<{ imageUrl: string }>;
   deleteProfileImage: (imageUrl: string) => Promise<boolean>;
-  // Categoria operations
-  getCategorias: () => Promise<Categoria[]>;
-  getCategoria: (categoriaId: number) => Promise<Categoria>;
-  createCategoria: (categoriaData: any) => Promise<Categoria>;
-  updateCategoria: (categoriaId: number, categoriaData: any) => Promise<any>;
-  deleteCategoria: (categoriaId: number) => Promise<any>;
-  // Subcategoria operations
-  getSubcategorias: () => Promise<Subcategoria[]>;
-  getSubcategoria: (subcategoriaId: number) => Promise<Subcategoria>;
-  getSubcategoriasByCategoria: (categoriaId: number) => Promise<Subcategoria[]>;
-  createSubcategoria: (subcategoriaData: any) => Promise<Subcategoria>;
-  updateSubcategoria: (subcategoriaId: number, subcategoriaData: any) => Promise<any>;
-  deleteSubcategoria: (subcategoriaId: number) => Promise<any>;
-  // Producto operations
-  getProductos: () => Promise<Producto[]>;
-  getProducto: (productoId: number) => Promise<Producto>;
-  getProductosBySubcategoria: (subcategoriaId: number) => Promise<Producto[]>;
-  createProducto: (productoData: any) => Promise<Producto>;
-  updateProducto: (productoId: number, productoData: any) => Promise<any>;
-  deleteProducto: (productoId: number) => Promise<any>;
-  saveProductoImage: (base64Data: string, fileName: string) => Promise<{ imageUrl: string }>;
-  deleteProductoImage: (imageUrl: string) => Promise<boolean>;
-  // Product Image methods
-  getProductImages: (productoId: number) => Promise<ProductoImage[]>;
-  createProductImage: (imageData: Partial<ProductoImage>) => Promise<ProductoImage>;
-  updateProductImage: (imageId: number, imageData: Partial<ProductoImage>) => Promise<ProductoImage>;
-  deleteProductImage: (imageId: number) => Promise<boolean>;
-  // Presentacion methods
-  getPresentaciones: () => Promise<Presentacion[]>;
-  getPresentacion: (presentacionId: number) => Promise<Presentacion>;
-  getPresentacionesByProducto: (productoId: number) => Promise<Presentacion[]>;
-  createPresentacion: (presentacionData: any) => Promise<Presentacion>;
-  updatePresentacion: (presentacionId: number, presentacionData: any) => Promise<any>;
-  deletePresentacion: (presentacionId: number) => Promise<any>;
-  // Codigo methods
-  getCodigos: () => Promise<Codigo[]>;
-  getCodigo: (codigoId: number) => Promise<Codigo>;
-  getCodigosByPresentacion: (presentacionId: number) => Promise<Codigo[]>;
-  createCodigo: (codigoData: any) => Promise<Codigo>;
-  updateCodigo: (codigoId: number, codigoData: any) => Promise<any>;
-  deleteCodigo: (codigoId: number) => Promise<any>;
+
+
   // Moneda methods
   getMonedas: () => Promise<Moneda[]>;
   getMoneda: (monedaId: number) => Promise<Moneda>;
@@ -176,67 +132,11 @@ interface ElectronAPI {
   updateMoneda: (monedaId: number, monedaData: any) => Promise<any>;
   deleteMoneda: (monedaId: number) => Promise<any>;
   // TipoPrecio methods
-  getTipoPrecios: () => Promise<TipoPrecio[]>;
+  getTiposPrecio: () => Promise<TipoPrecio[]>;
   getTipoPrecio: (tipoPrecioId: number) => Promise<TipoPrecio>;
   createTipoPrecio: (tipoPrecioData: any) => Promise<TipoPrecio>;
-  updateTipoPrecio: (tipoPrecioId: number, tipoPrecioData: any) => Promise<TipoPrecio>;
-  deleteTipoPrecio: (tipoPrecioId: number) => Promise<boolean>;
-  // PrecioVenta methods
-  getPreciosVenta: () => Promise<PrecioVenta[]>;
-  getPrecioVenta: (precioVentaId: number, active: boolean) => Promise<PrecioVenta>;
-  getPreciosVentaByPresentacion: (presentacionId: number, active: boolean) => Promise<PrecioVenta[]>;
-  getPreciosVentaByPresentacionSabor: (presentacionSaborId: number, active: boolean) => Promise<PrecioVenta[]>;
-  getPreciosVentaByTipoPrecio: (tipoPrecioId: number, active: boolean) => Promise<PrecioVenta[]>;
-  createPrecioVenta: (precioVentaData: any) => Promise<PrecioVenta>;
-  updatePrecioVenta: (precioVentaId: number, precioVentaData: any) => Promise<any>;
-  deletePrecioVenta: (precioVentaId: number) => Promise<any>;
-  // Sabor methods
-  getSabores: () => Promise<Sabor[]>;
-  getSabor: (saborId: number) => Promise<Sabor>;
-  createSabor: (saborData: any) => Promise<Sabor>;
-  updateSabor: (saborId: number, saborData: any) => Promise<any>;
-  deleteSabor: (saborId: number) => Promise<any>;
-  // PresentacionSabor methods
-  getPresentacionSaboresByPresentacion: (presentacionId: number) => Promise<PresentacionSabor[]>;
-  getPresentacionSabor: (presentacionSaborId: number) => Promise<PresentacionSabor>;
-  createPresentacionSabor: (presentacionSaborData: any) => Promise<PresentacionSabor>;
-  updatePresentacionSabor: (presentacionSaborId: number, presentacionSaborData: any) => Promise<any>;
-  deletePresentacionSabor: (presentacionSaborId: number) => Promise<any>;
-  // Receta methods
-  getRecetas: () => Promise<Receta[]>;
-  getReceta: (recetaId: number) => Promise<Receta>;
-  createReceta: (recetaData: any) => Promise<Receta>;
-  updateReceta: (recetaId: number, recetaData: any) => Promise<any>;
-  deleteReceta: (recetaId: number) => Promise<any>;
-  // RecetaItem methods
-  getRecetaItems: (recetaId: number) => Promise<RecetaItem[]>;
-  getRecetaItem: (recetaItemId: number) => Promise<RecetaItem>;
-  createRecetaItem: (recetaItemData: any) => Promise<RecetaItem>;
-  updateRecetaItem: (recetaItemId: number, recetaItemData: any) => Promise<any>;
-  deleteRecetaItem: (recetaItemId: number) => Promise<any>;
-  // Ingrediente methods
-  getIngredientes: () => Promise<Ingrediente[]>;
-  getIngrediente: (ingredienteId: number) => Promise<Ingrediente>;
-  createIngrediente: (ingredienteData: any) => Promise<Ingrediente>;
-  updateIngrediente: (ingredienteId: number, ingredienteData: any) => Promise<any>;
-  deleteIngrediente: (ingredienteId: number) => Promise<any>;
-  searchIngredientesByDescripcion: (searchText: string) => Promise<Ingrediente[]>;
-
-  // RecetaVariacion methods
-  getRecetaVariaciones: (recetaId: number) => Promise<RecetaVariacion[]>;
-  getRecetaVariacion: (variacionId: number) => Promise<RecetaVariacion>;
-  createRecetaVariacion: (variacionData: Partial<RecetaVariacion>) => Promise<RecetaVariacion>;
-  updateRecetaVariacion: (variacionId: number, variacionData: Partial<RecetaVariacion>) => Promise<any>;
-  deleteRecetaVariacion: (variacionId: number) => Promise<any>;
-  searchRecetasByNombre: (searchText: string) => Promise<Receta[]>;
-  getRecetaVariacionCosto: (variacionId: number) => Promise<number>;
-
-  // RecetaVariacionItem methods
-  getRecetaVariacionItems: (variacionId: number) => Promise<RecetaVariacionItem[]>;
-  getRecetaVariacionItem: (variacionItemId: number) => Promise<RecetaVariacionItem>;
-  createRecetaVariacionItem: (variacionItemData: Partial<RecetaVariacionItem>) => Promise<RecetaVariacionItem>;
-  updateRecetaVariacionItem: (variacionItemId: number, variacionItemData: Partial<RecetaVariacionItem>) => Promise<any>;
-  deleteRecetaVariacionItem: (variacionItemId: number) => Promise<any>;
+  updateTipoPrecio: (tipoPrecioId: number, tipoPrecioData: any) => Promise<any>;
+  deleteTipoPrecio: (tipoPrecioId: number) => Promise<any>;
   // MonedaBillete methods
   getMonedasBilletes: () => Promise<MonedaBillete[]>;
   getMonedaBillete: (monedaBilleteId: number) => Promise<MonedaBillete>;
@@ -329,19 +229,7 @@ interface ElectronAPI {
   createFormaPago: (formaPagoData: Partial<FormasPago>) => Promise<FormasPago>;
   updateFormaPago: (formaPagoId: number, formaPagoData: Partial<FormasPago>) => Promise<any>;
   deleteFormaPago: (formaPagoId: number) => Promise<any>;
-  // MovimientoStock methods
-  getMovimientosStock: () => Promise<MovimientoStock[]>;
-  getMovimientoStock: (movimientoStockId: number) => Promise<MovimientoStock>;
-  getMovimientosStockByProducto: (productoId: number) => Promise<MovimientoStock[]>;
-  getMovimientosStockByIngrediente: (ingredienteId: number) => Promise<MovimientoStock[]>;
-  getMovimientosStockByTipoReferencia: (tipoReferencia: TipoReferencia) => Promise<MovimientoStock[]>;
-  getCurrentStockByProducto: (productoId: number) => Promise<MovimientoStock>;
-  getCurrentStockByIngrediente: (ingredienteId: number) => Promise<MovimientoStock>;
-  createMovimientoStock: (movimientoStockData: any) => Promise<MovimientoStock>;
-  updateMovimientoStock: (movimientoStockId: number, movimientoStockData: any) => Promise<any>;
-  deleteMovimientoStock: (movimientoStockId: number) => Promise<any>;
-  getMovimientosStockByReferenciaAndTipo: (referencia: number, tipoReferencia: TipoReferencia) => Promise<MovimientoStock[]>;
-  // PrecioDelivery operations
+ // PrecioDelivery operations
   getPreciosDelivery: () => Promise<PrecioDelivery[]>;
   getPrecioDelivery: (precioDeliveryId: number) => Promise<PrecioDelivery>;
   createPrecioDelivery: (precioDeliveryData: Partial<PrecioDelivery>) => Promise<PrecioDelivery>;
@@ -398,7 +286,7 @@ interface ElectronAPI {
   getPdvConfig: () => Promise<PdvConfig>;
   createPdvConfig: (data: Partial<PdvConfig>) => Promise<PdvConfig>;
   updatePdvConfig: (id: number, data: Partial<PdvConfig>) => Promise<PdvConfig>;
-  
+
   // PdvMesa methods
   getPdvMesas: () => Promise<PdvMesa[]>;
   getPdvMesasActivas: () => Promise<PdvMesa[]>;
@@ -408,7 +296,7 @@ interface ElectronAPI {
   createPdvMesa: (data: Partial<PdvMesa>) => Promise<PdvMesa>;
   updatePdvMesa: (id: number, data: Partial<PdvMesa>) => Promise<PdvMesa>;
   deletePdvMesa: (id: number) => Promise<boolean>;
-  
+
   // Sector methods
   getSectores: () => Promise<Sector[]>;
   getSectoresActivos: () => Promise<Sector[]>;
@@ -416,78 +304,225 @@ interface ElectronAPI {
   createSector: (data: Partial<Sector>) => Promise<Sector>;
   updateSector: (id: number, data: Partial<Sector>) => Promise<Sector>;
   deleteSector: (id: number) => Promise<boolean>;
-  
-  // Reserva methods
-  // ... existing methods ...
-  
-  // Producto search operations
-  searchProductos: (params: { searchTerm: string, page: number, pageSize: number, exactMatch?: boolean }) => 
-    Promise<{ items: Producto[], total: number, exactMatch?: boolean }>;
-  searchProductosByCode: (code: string) => Promise<{ product: Producto, presentacion: Presentacion } | null>;
-  
+
   // Observacion methods
   getObservaciones: () => Promise<Observacion[]>;
   getObservacion: (id: number) => Promise<Observacion>;
   createObservacion: (data: Partial<Observacion>) => Promise<Observacion>;
-  updateObservacion: (id: number, data: Partial<Observacion>) => Promise<Observacion>;
-  deleteObservacion: (id: number) => Promise<boolean>;
-  searchObservaciones: (searchTerm: string, page: number, pageSize: number) => Promise<Observacion[]>;
-  
-  // ObservacionProducto methods
-  getObservacionesProductos: () => Promise<ObservacionProducto[]>;
-  getObservacionesProductosByProducto: (productoId: number) => Promise<ObservacionProducto[]>;
-  getObservacionProducto: (id: number) => Promise<ObservacionProducto>;
-  createObservacionProducto: (data: Partial<ObservacionProducto>) => Promise<{ success: boolean, data?: ObservacionProducto, error?: string, message?: string }>;
-  updateObservacionProducto: (id: number, data: Partial<ObservacionProducto>) => Promise<ObservacionProducto>;
-  deleteObservacionProducto: (id: number) => Promise<boolean>;
-  
-  // ObservacionProductoVentaItem methods
-  getObservacionesProductosVentasItems: (ventaItemId: number) => Promise<ObservacionProductoVentaItem[]>;
-  getObservacionProductoVentaItem: (id: number) => Promise<ObservacionProductoVentaItem>;
-  createObservacionProductoVentaItem: (data: Partial<ObservacionProductoVentaItem>) => Promise<ObservacionProductoVentaItem>;
-  updateObservacionProductoVentaItem: (id: number, data: Partial<ObservacionProductoVentaItem>) => Promise<ObservacionProductoVentaItem>;
-  deleteObservacionProductoVentaItem: (id: number) => Promise<boolean>;
-  
-  // Adicional methods
+  updateObservacion: (id: number, data: Partial<Observacion>) => Promise<any>;
+  deleteObservacion: (id: number) => Promise<any>;
+  getObservacionesByProducto: (productoId: number) => Promise<ProductoObservacion[]>;
+  createProductoObservacion: (data: Partial<ProductoObservacion>) => Promise<ProductoObservacion>;
+  deleteProductoObservacion: (id: number) => Promise<any>;
+
+  // Adicional methods (Nueva Arquitectura)
   getAdicionales: () => Promise<Adicional[]>;
-  getAdicional: (id: number) => Promise<Adicional>;
-  getAdicionalesFiltered: (filters: {
-    nombre?: string;
-    ingredienteId?: number;
-    recetaId?: number;
-    monedaId?: number;
-    activo?: boolean;
-    pageIndex?: number;
+  getAdicionalesWithFilters: (filters: {
+    search?: string;
+    activo?: boolean | null;
+    categoria?: string;
+    page?: number;
     pageSize?: number;
-  }) => Promise<{items: Adicional[], total: number}>;
+  }) => Promise<{items: Adicional[], total: number, page: number, pageSize: number}>;
+  getAdicional: (adicionalId: number) => Promise<Adicional>;
+  getAdicionalWithReceta: (adicionalId: number) => Promise<Adicional>;
   createAdicional: (data: Partial<Adicional>) => Promise<Adicional>;
   updateAdicional: (id: number, data: Partial<Adicional>) => Promise<any>;
-  deleteAdicional: (id: number) => Promise<boolean>;
-  
-  // ProductoAdicional methods
-  getProductosAdicionales: () => Promise<ProductoAdicional[]>;
-  getProductosAdicionalesByProducto: (productoId: number) => Promise<ProductoAdicional[]>;
-  getProductosAdicionalesByPresentacion: (presentacionId: number) => Promise<ProductoAdicional[]>;
-  getProductoAdicional: (id: number) => Promise<ProductoAdicional>;
-  createProductoAdicional: (data: Partial<ProductoAdicional>) => Promise<{ success: boolean, data?: ProductoAdicional, error?: string, message?: string }>;
-  updateProductoAdicional: (id: number, data: Partial<ProductoAdicional>) => Promise<ProductoAdicional>;
-  deleteProductoAdicional: (id: number) => Promise<boolean>;
-  
-  // ProductoAdicionalVentaItem methods
-  getProductosAdicionalesVentasItems: (ventaItemId: number) => Promise<ProductoAdicionalVentaItem[]>;
-  getProductoAdicionalVentaItem: (id: number) => Promise<ProductoAdicionalVentaItem>;
-  createProductoAdicionalVentaItem: (data: Partial<ProductoAdicionalVentaItem>) => Promise<ProductoAdicionalVentaItem>;
-  updateProductoAdicionalVentaItem: (id: number, data: Partial<ProductoAdicionalVentaItem>) => Promise<ProductoAdicionalVentaItem>;
-  deleteProductoAdicionalVentaItem: (id: number) => Promise<boolean>;
-  
-  // CostoPorProducto methods
-  getCostosPorProducto: () => Promise<CostoPorProducto[]>;
-  getCostosPorProductoByProducto: (productoId: number) => Promise<CostoPorProducto[]>;
-  getCostoPorProducto: (id: number) => Promise<CostoPorProducto>;
-  createCostoPorProducto: (data: Partial<CostoPorProducto>) => Promise<CostoPorProducto>;
-  updateCostoPorProducto: (id: number, data: Partial<CostoPorProducto>) => Promise<CostoPorProducto>;
-  deleteCostoPorProducto: (id: number) => Promise<CostoPorProducto>;
+  deleteAdicional: (id: number) => Promise<any>;
+
+  // ✅ NUEVOS MÉTODOS: Para gestión de recetas de adicionales
+  createRecetaForAdicional: (adicionalId: number, recetaData: any) => Promise<Receta>;
+  updateRecetaForAdicional: (adicionalId: number, recetaData: any) => Promise<any>;
+  deleteRecetaForAdicional: (adicionalId: number) => Promise<any>;
+
+  // RecetaAdicionalVinculacion methods (Nueva Arquitectura)
+  getRecetaAdicionalVinculaciones: (recetaId: number) => Promise<RecetaAdicionalVinculacion[]>;
+  getRecetaAdicionalVinculacion: (vinculacionId: number) => Promise<RecetaAdicionalVinculacion>;
+  createRecetaAdicionalVinculacion: (data: Partial<RecetaAdicionalVinculacion>) => Promise<RecetaAdicionalVinculacion>;
+  updateRecetaAdicionalVinculacion: (id: number, data: Partial<RecetaAdicionalVinculacion>) => Promise<any>;
+  deleteRecetaAdicionalVinculacion: (id: number) => Promise<any>;
+
+  // RecetaIngredienteIntercambiable methods
+  getRecetaIngredientesIntercambiables: (recetaIngredienteId: number) => Promise<RecetaIngredienteIntercambiable[]>;
+  createRecetaIngredienteIntercambiable: (data: Partial<RecetaIngredienteIntercambiable>) => Promise<RecetaIngredienteIntercambiable>;
+  updateRecetaIngredienteIntercambiable: (id: number, data: Partial<RecetaIngredienteIntercambiable>) => Promise<any>;
+  deleteRecetaIngredienteIntercambiable: (id: number) => Promise<any>;
+
+  // --- Productos Repository Methods ---
+
+  // Familia methods
+  getFamilias: () => Promise<Familia[]>;
+  getFamilia: (familiaId: number) => Promise<Familia>;
+  createFamilia: (familiaData: any) => Promise<Familia>;
+  updateFamilia: (familiaId: number, familiaData: any) => Promise<any>;
+  deleteFamilia: (familiaId: number) => Promise<any>;
+  // Subfamilia methods
+  getSubfamilias: () => Promise<Subfamilia[]>;
+  getSubfamiliasByFamilia: (familiaId: number) => Promise<Subfamilia[]>;
+  getSubfamilia: (subfamiliaId: number) => Promise<Subfamilia>;
+  createSubfamilia: (subfamiliaData: any) => Promise<Subfamilia>;
+  updateSubfamilia: (subfamiliaId: number, subfamiliaData: any) => Promise<any>;
+  deleteSubfamilia: (subfamiliaId: number) => Promise<any>;
+  // Producto methods
+  getProductos: () => Promise<Producto[]>;
+  getProductosWithFilters: (filters: {
+    search?: string;
+    tipo?: string;
+    activo?: string;
+    esVendible?: string;
+    esComprable?: string;
+    controlaStock?: string;
+    esIngrediente?: string;
+    page?: number;
+    pageSize?: number;
+  }) => Promise<{items: Producto[], total: number}>;
+  getProducto: (productoId: number) => Promise<Producto>;
+  createProducto: (productoData: any) => Promise<Producto>;
+  updateProducto: (productoId: number, productoData: any) => Promise<any>;
+  deleteProducto: (productoId: number) => Promise<any>;
+  // Presentacion methods
+  getPresentaciones: () => Promise<Presentacion[]>;
+  getPresentacionesByProducto: (productoId: number, page?: number, pageSize?: number, filtroActivo?: string) => Promise<any>;
+  getPresentacion: (presentacionId: number) => Promise<any>;
+  createPresentacion: (presentacionData: any) => Promise<Presentacion>;
+  updatePresentacion: (presentacionId: number, presentacionData: any) => Promise<any>;
+  deletePresentacion: (presentacionId: number) => Promise<any>;
+  setPresentacionPrincipal: (presentacionId: number) => Promise<any>;
+  togglePresentacionActivo: (presentacionId: number) => Promise<any>;
+  // CodigoBarra methods
+  createCodigoBarra: (codigoBarraData: any) => Promise<CodigoBarra>;
+  updateCodigoBarra: (codigoBarraId: number, codigoBarraData: any) => Promise<any>;
+  deleteCodigoBarra: (codigoBarraId: number) => Promise<any>;
+  getCodigosBarraByPresentacion: (presentacionId: number) => Promise<CodigoBarra[]>;
+  searchProductosByCodigo: (codigo: string) => Promise<any>;
+  // PrecioVenta methods
+  getPreciosVenta: () => Promise<PrecioVenta[]>;
+  getPreciosVentaByPresentacion: (presentacionId: number, activo: boolean | null) => Promise<PrecioVenta[]>;
+  getPreciosVentaByReceta: (recetaId: number, activo: boolean | null) => Promise<PrecioVenta[]>;
+  createPrecioVenta: (precioVentaData: any) => Promise<PrecioVenta>;
+  updatePrecioVenta: (precioVentaId: number, precioVentaData: any) => Promise<any>;
+  deletePrecioVenta: (precioVentaId: number) => Promise<any>;
+  // PrecioCosto methods
+  getPreciosCosto: () => Promise<PrecioCosto[]>;
+  getPreciosCostoByProducto: (productoId: number) => Promise<PrecioCosto[]>;
+  createPrecioCosto: (precioCostoData: any) => Promise<PrecioCosto>;
+  updatePrecioCosto: (precioCostoId: number, precioCostoData: any) => Promise<any>;
+  deletePrecioCosto: (precioCostoId: number) => Promise<any>;
+  // Receta methods
+  getRecetas: () => Promise<Receta[]>;
+  getRecetasWithFilters: (filters: {
+    search?: string;
+    activo?: boolean | null;
+    page?: number;
+    pageSize?: number;
+  }) => Promise<{items: Receta[], total: number, page: number, pageSize: number}>;
+  checkRecetaDependencies: (recetaId: number) => Promise<{
+    receta: { id: number; nombre: string };
+    productosVinculados: Array<{ id: number; nombre: string; tipo: string; activo: boolean }>;
+  }>;
+  getReceta: (recetaId: number) => Promise<Receta>;
+  createReceta: (recetaData: any) => Promise<Receta>;
+  updateReceta: (recetaId: number, recetaData: any) => Promise<any>;
+  deleteReceta: (recetaId: number) => Promise<any>;
+  // Receta additional methods
+  getRecetasByEstado: (activo: boolean | null) => Promise<Receta[]>;
+  searchRecetasByNombre: (nombre: string) => Promise<Receta[]>;
+  getRecetasWithIngredientes: () => Promise<Receta[]>;
+  calcularCostoReceta: (recetaId: number) => Promise<number>;
+  actualizarCostoReceta: (recetaId: number) => Promise<any>;
+
+  // ✅ NUEVOS MÉTODOS PARA ARQUITECTURA CON VARIACIONES
+  // Sabor methods
+  getSaboresByProducto: (productoId: number) => Promise<any[]>;
+  createSabor: (saborData: {
+    nombre: string;
+    categoria: string;
+    descripcion?: string;
+    productoId: number;
+  }) => Promise<{ sabor: any; receta: any; mensaje: string }>;
+  updateSabor: (saborId: number, saborData: Partial<any>) => Promise<any>;
+  deleteSabor: (saborId: number) => Promise<{ success: boolean; mensaje: string }>;
+  getSaboresEstadisticas: (productoId: number) => Promise<{
+    totalSabores: number;
+    saboresActivos: number;
+    totalRecetas: number;
+    totalVariaciones: number;
+  }>;
+
+  // RecetaPresentacion methods
+  getVariacionesByProducto: (productoId: number) => Promise<any[]>;
+  getVariacionesByReceta: (recetaId: number) => Promise<any[]>;
+  createRecetaPresentacion: (variacionData: {
+    recetaId: number;
+    presentacionId: number;
+    saborId: number;
+    nombre_generado?: string;
+    sku?: string;
+    precio_ajuste?: number;
+  }) => Promise<any>;
+  updateRecetaPresentacion: (variacionId: number, variacionData: Partial<any>) => Promise<any>;
+  deleteRecetaPresentacion: (variacionId: number) => Promise<{ success: boolean; mensaje: string }>;
+  bulkUpdateVariaciones: (updates: Array<{
+    variacionId: number;
+    precio_ajuste?: number;
+    activo?: boolean;
+  }>) => Promise<{ success: boolean; actualizadas: number }>;
+  recalcularCostoVariacion: (variacionId: number) => Promise<{
+    success: boolean;
+    costoAnterior: number;
+    costoNuevo: number;
+    mensaje: string;
+  }>;
+  generateVariacionesFaltantes: (productoId: number) => Promise<{
+    success: boolean;
+    variacionesGeneradas: number;
+    variaciones: any[];
+  }>;
+  // RecetaIngrediente methods
+  getRecetaIngredientes: (recetaId: number) => Promise<RecetaIngrediente[]>;
+  createRecetaIngrediente: (recetaIngredienteData: any) => Promise<RecetaIngrediente>;
+  updateRecetaIngrediente: (recetaIngredienteId: number, recetaIngredienteData: any) => Promise<any>;
+  deleteRecetaIngrediente: (recetaIngredienteId: number) => Promise<any>;
+  deleteRecetaIngredienteMultiplesVariaciones: (data: {
+    recetaIngredienteId: number;
+    eliminarDeOtrasVariaciones: boolean;
+  }) => Promise<any>;
+  // RecetaIngrediente additional methods
+  getRecetaIngredientesActivos: (recetaId: number) => Promise<RecetaIngrediente[]>;
+  calcularCostoIngrediente: (recetaIngredienteId: number) => Promise<number>;
+  validarStockIngrediente: (recetaIngredienteId: number) => Promise<boolean>;
+  // Stock Movimiento methods
+  getStockMovimientos: () => Promise<StockMovimiento[]>;
+  getStockMovimientosByProducto: (productoId: number) => Promise<StockMovimiento[]>;
+  createStockMovimiento: (stockMovimientoData: any) => Promise<StockMovimiento>;
+  updateStockMovimiento: (stockMovimientoId: number, stockMovimientoData: any) => Promise<any>;
+  deleteStockMovimiento: (stockMovimientoId: number) => Promise<any>;
+  // Additional helper methods
+  searchProductosByNombre: (nombre: string) => Promise<Producto[]>;
+  getProductosByTipo: (tipo: string) => Promise<Producto[]>;
+  getProductosWithStock: () => Promise<Producto[]>;
+  // Conversion Moneda methods
+  getConversionesMoneda: () => Promise<ConversionMoneda[]>;
+  createConversionMoneda: (conversionData: any) => Promise<ConversionMoneda>;
+  updateConversionMoneda: (conversionId: number, conversionData: any) => Promise<any>;
+  deleteConversionMoneda: (conversionId: number) => Promise<any>;
+  // Configuracion Monetaria methods
+  getConfiguracionMonetaria: () => Promise<ConfiguracionMonetaria>;
+  createConfiguracionMonetaria: (configData: any) => Promise<ConfiguracionMonetaria>;
+  updateConfiguracionMonetaria: (configId: number, configData: any) => Promise<any>;
+  // ✅ NUEVO: Métodos para gestión de costos de recetas
+  recalculateRecipeCost: (recetaId: number) => Promise<{ success: boolean; costoCalculado: number }>;
+  recalculateAllRecipeCosts: () => Promise<any[]>;
+  getPreciosCostoReceta: (recetaId: number) => Promise<PrecioCosto[]>;
+  // Sabor methods
+  getSabores: () => Promise<string[]>;
+  createOrUpdateSabor: (saborData: any) => Promise<{ success: boolean, message: string }>;
+  getSaborDetails: (categoria: string) => Promise<any>;
+
+  // ✅ NUEVO: Endpoint para el asistente de ingredientes
+  getRecetasIdsPorVariacionIds: (variacionIds: number[]) => Promise<{ [variacionId: number]: number }>;
 }
+
 
 /**
  * Service to interact with the database through Electron IPC
@@ -505,7 +540,7 @@ export class RepositoryService {
 
     // Check for stored user on init and set up periodic refresh
     this.loadCurrentUser();
-    
+
     // Set up a periodic refresh to ensure current user state stays in sync
     setInterval(() => this.loadCurrentUser(), 60000); // Refresh every minute
   }
@@ -784,174 +819,6 @@ export class RepositoryService {
     return from(this.api.deleteProfileImage(imageUrl));
   }
 
-  // Categoria methods
-  getCategorias(): Observable<Categoria[]> {
-    return from(this.api.getCategorias());
-  }
-
-  getCategoria(categoriaId: number): Observable<Categoria> {
-    return from(this.api.getCategoria(categoriaId));
-  }
-
-  createCategoria(categoriaData: Partial<Categoria>): Observable<Categoria> {
-    return from(this.api.createCategoria(categoriaData));
-  }
-
-  updateCategoria(categoriaId: number, categoriaData: Partial<Categoria>): Observable<any> {
-    return from(this.api.updateCategoria(categoriaId, categoriaData));
-  }
-
-  deleteCategoria(categoriaId: number): Observable<any> {
-    return from(this.api.deleteCategoria(categoriaId));
-  }
-
-  // Subcategoria methods
-  getSubcategorias(): Observable<Subcategoria[]> {
-    return from(this.api.getSubcategorias());
-  }
-
-  getSubcategoria(subcategoriaId: number): Observable<Subcategoria> {
-    return from(this.api.getSubcategoria(subcategoriaId));
-  }
-
-  getSubcategoriasByCategoria(categoriaId: number): Observable<Subcategoria[]> {
-    return from(this.api.getSubcategoriasByCategoria(categoriaId));
-  }
-
-  createSubcategoria(subcategoriaData: Partial<Subcategoria>): Observable<Subcategoria> {
-    return from(this.api.createSubcategoria(subcategoriaData));
-  }
-
-  updateSubcategoria(subcategoriaId: number, subcategoriaData: Partial<Subcategoria>): Observable<any> {
-    return from(this.api.updateSubcategoria(subcategoriaId, subcategoriaData));
-  }
-
-  deleteSubcategoria(subcategoriaId: number): Observable<any> {
-    return from(this.api.deleteSubcategoria(subcategoriaId));
-  }
-
-  // Producto methods
-  getProductos(): Observable<Producto[]> {
-    return from(this.api.getProductos());
-  }
-
-  getProducto(productoId: number): Observable<Producto> {
-    return from(this.api.getProducto(productoId));
-  }
-
-  getProductosBySubcategoria(subcategoriaId: number): Observable<Producto[]> {
-    return from(this.api.getProductosBySubcategoria(subcategoriaId));
-  }
-
-  createProducto(productoData: Partial<Producto>): Observable<Producto> {
-    return from(this.api.createProducto(productoData));
-  }
-
-  updateProducto(productoId: number, productoData: Partial<Producto>): Observable<any> {
-    return from(this.api.updateProducto(productoId, productoData));
-  }
-
-  deleteProducto(productoId: number): Observable<any> {
-    return from(this.api.deleteProducto(productoId));
-  }
-
-  saveProductoImage(base64Data: string, fileName: string): Observable<{ imageUrl: string }> {
-    return from(this.api.saveProductoImage(base64Data, fileName)
-      .then(result => {
-        // Ensure the URL uses the app:// protocol for correct loading in renderer
-        if (result.imageUrl && !result.imageUrl.startsWith('app://')) {
-          result.imageUrl = `app://${result.imageUrl.replace(/\\/g, '/')}`;
-        }
-
-        return result;
-      })
-      .catch(error => {
-        console.error('Error saving product image:', error);
-        throw error;
-      })
-    );
-  }
-
-  deleteProductoImage(imageUrl: string): Observable<boolean> {
-    return from(this.api.deleteProductoImage(imageUrl));
-  }
-
-  // New methods for product images
-  getProductImages(productoId: number): Observable<ProductoImage[]> {
-    return from(this.api.getProductImages(productoId));
-  }
-
-  createProductImage(imageData: Partial<ProductoImage>): Observable<ProductoImage> {
-    return from(this.api.createProductImage(imageData));
-  }
-
-  updateProductImage(imageId: number, imageData: Partial<ProductoImage>): Observable<ProductoImage> {
-    return from(this.api.updateProductImage(imageId, imageData));
-  }
-
-  deleteProductImage(imageId: number): Observable<boolean> {
-    return from(this.api.deleteProductImage(imageId));
-  }
-
-  // Presentacion methods
-  getPresentaciones(): Observable<Presentacion[]> {
-    return from(this.api.getPresentaciones());
-  }
-
-  getPresentacion(presentacionId: number): Observable<Presentacion> {
-    return from(this.api.getPresentacion(presentacionId));
-  }
-
-  getPresentacionesByProducto(productoId: number): Observable<Presentacion[]> {
-    return from(this.api.getPresentacionesByProducto(productoId));
-  }
-
-  createPresentacion(presentacionData: Partial<Presentacion>): Observable<Presentacion> {
-    return from(this.api.createPresentacion(presentacionData));
-  }
-
-  updatePresentacion(presentacionId: number, presentacionData: Partial<Presentacion>): Observable<any> {
-    return from(this.api.updatePresentacion(presentacionId, presentacionData));
-  }
-
-  /**
-   * Delete a presentation - this should be updated in the backend 
-   * to handle cascade deletion of related entities:
-   * - PreciosVenta
-   * - Codigos
-   * - PresentacionSabores
-   * - ProductoAdicionales
-   * 
-   * Backend implementation should delete all child records first, then delete the presentation
-   */
-  deletePresentacion(presentacionId: number): Observable<any> {
-    return from(this.api.deletePresentacion(presentacionId));
-  }
-
-  // Codigo methods
-  getCodigos(): Observable<Codigo[]> {
-    return from(this.api.getCodigos());
-  }
-
-  getCodigo(codigoId: number): Observable<Codigo> {
-    return from(this.api.getCodigo(codigoId));
-  }
-
-  getCodigosByPresentacion(presentacionId: number): Observable<Codigo[]> {
-    return from(this.api.getCodigosByPresentacion(presentacionId));
-  }
-
-  createCodigo(codigoData: Partial<Codigo>): Observable<Codigo> {
-    return from(this.api.createCodigo(codigoData));
-  }
-
-  updateCodigo(codigoId: number, codigoData: Partial<Codigo>): Observable<any> {
-    return from(this.api.updateCodigo(codigoId, codigoData));
-  }
-
-  deleteCodigo(codigoId: number): Observable<any> {
-    return from(this.api.deleteCodigo(codigoId));
-  }
 
   // Moneda methods
   getMonedas(): Observable<Moneda[]> {
@@ -978,214 +845,6 @@ export class RepositoryService {
     return from(this.api.deleteMoneda(monedaId));
   }
 
-  // TipoPrecio methods
-  getTipoPrecios(): Observable<TipoPrecio[]> {
-    return from(this.api.getTipoPrecios());
-  }
-
-  getTipoPrecio(tipoPrecioId: number): Observable<TipoPrecio> {
-    return from(this.api.getTipoPrecio(tipoPrecioId));
-  }
-
-  createTipoPrecio(tipoPrecioData: Partial<TipoPrecio>): Observable<TipoPrecio> {
-    return from(this.api.createTipoPrecio(tipoPrecioData));
-  }
-
-  updateTipoPrecio(tipoPrecioId: number, tipoPrecioData: Partial<TipoPrecio>): Observable<TipoPrecio> {
-    return from(this.api.updateTipoPrecio(tipoPrecioId, tipoPrecioData));
-  }
-
-  deleteTipoPrecio(tipoPrecioId: number): Observable<boolean> {
-    return from(this.api.deleteTipoPrecio(tipoPrecioId));
-  }
-
-  // PrecioVenta methods
-  getPreciosVenta(): Observable<PrecioVenta[]> {
-    return from(this.api.getPreciosVenta());
-  }
-
-  getPrecioVenta(precioVentaId: number, active = true): Observable<PrecioVenta> {
-    return from(this.api.getPrecioVenta(precioVentaId, active));
-  }
-
-  getPreciosVentaByPresentacion(presentacionId: number, active = true): Observable<PrecioVenta[]> {
-    return from(this.api.getPreciosVentaByPresentacion(presentacionId, active));
-  }
-
-  getPreciosVentaByPresentacionSabor(presentacionSaborId: number, active = true): Observable<PrecioVenta[]> {
-    return from(this.api.getPreciosVentaByPresentacionSabor(presentacionSaborId, active));
-  }
-
-  getPreciosVentaByTipoPrecio(tipoPrecioId: number, active = true): Observable<PrecioVenta[]> {
-    return from(this.api.getPreciosVentaByTipoPrecio(tipoPrecioId, active));
-  }
-
-  createPrecioVenta(precioVentaData: Partial<PrecioVenta>): Observable<PrecioVenta> {
-    return from(this.api.createPrecioVenta(precioVentaData));
-  }
-
-  updatePrecioVenta(precioVentaId: number, precioVentaData: Partial<PrecioVenta>): Observable<any> {
-    return from(this.api.updatePrecioVenta(precioVentaId, precioVentaData));
-  }
-
-  deletePrecioVenta(precioVentaId: number): Observable<any> {
-    return from(this.api.deletePrecioVenta(precioVentaId));
-  }
-
-  // Sabor methods
-  getSabores(): Observable<Sabor[]> {
-    return from(this.api.getSabores());
-  }
-
-  getSabor(saborId: number): Observable<Sabor> {
-    return from(this.api.getSabor(saborId));
-  }
-
-  createSabor(saborData: Partial<Sabor>): Observable<Sabor> {
-    return from(this.api.createSabor(saborData));
-  }
-
-  updateSabor(saborId: number, saborData: Partial<Sabor>): Observable<any> {
-    return from(this.api.updateSabor(saborId, saborData));
-  }
-
-  deleteSabor(saborId: number): Observable<any> {
-    return from(this.api.deleteSabor(saborId));
-  }
-
-  // PresentacionSabor methods
-  getPresentacionSabores(presentacionId: number): Observable<PresentacionSabor[]> {
-    return from(this.api.getPresentacionSaboresByPresentacion(presentacionId));
-  }
-
-  getPresentacionSabor(presentacionSaborId: number): Observable<PresentacionSabor> {
-    return from(this.api.getPresentacionSabor(presentacionSaborId));
-  }
-
-  createPresentacionSabor(presentacionSaborData: Partial<PresentacionSabor>): Observable<PresentacionSabor> {
-    return from(this.api.createPresentacionSabor(presentacionSaborData));
-  }
-
-  updatePresentacionSabor(presentacionSaborId: number, presentacionSaborData: Partial<PresentacionSabor>): Observable<any> {
-    return from(this.api.updatePresentacionSabor(presentacionSaborId, presentacionSaborData));
-  }
-
-  deletePresentacionSabor(presentacionSaborId: number): Observable<any> {
-    return from(this.api.deletePresentacionSabor(presentacionSaborId));
-  }
-
-  // Receta methods
-  getRecetas(): Observable<Receta[]> {
-    return from(this.api.getRecetas());
-  }
-
-  getReceta(recetaId: number): Observable<Receta> {
-    return from(this.api.getReceta(recetaId));
-  }
-
-  createReceta(recetaData: Partial<Receta>): Observable<Receta> {
-    return from(this.api.createReceta(recetaData));
-  }
-
-  updateReceta(recetaId: number, recetaData: Partial<Receta>): Observable<any> {
-    return from(this.api.updateReceta(recetaId, recetaData));
-  }
-
-  deleteReceta(recetaId: number): Observable<any> {
-    return from(this.api.deleteReceta(recetaId));
-  }
-
-  // RecetaItem methods
-  getRecetaItems(recetaId: number): Observable<RecetaItem[]> {
-    return from(this.api.getRecetaItems(recetaId));
-  }
-
-  getRecetaItem(recetaItemId: number): Observable<RecetaItem> {
-    return from(this.api.getRecetaItem(recetaItemId));
-  }
-
-  createRecetaItem(recetaItemData: Partial<RecetaItem>): Observable<RecetaItem> {
-    return from(this.api.createRecetaItem(recetaItemData));
-  }
-
-  updateRecetaItem(recetaItemId: number, recetaItemData: Partial<RecetaItem>): Observable<any> {
-    return from(this.api.updateRecetaItem(recetaItemId, recetaItemData));
-  }
-
-  deleteRecetaItem(recetaItemId: number): Observable<any> {
-    return from(this.api.deleteRecetaItem(recetaItemId));
-  }
-
-  // Ingrediente methods
-  getIngredientes(): Observable<Ingrediente[]> {
-    return from(this.api.getIngredientes());
-  }
-
-  getIngrediente(ingredienteId: number): Observable<Ingrediente> {
-    return from(this.api.getIngrediente(ingredienteId));
-  }
-
-  createIngrediente(ingredienteData: Partial<Ingrediente>): Observable<Ingrediente> {
-    return from(this.api.createIngrediente(ingredienteData));
-  }
-
-  updateIngrediente(ingredienteId: number, ingredienteData: Partial<Ingrediente>): Observable<any> {
-    return from(this.api.updateIngrediente(ingredienteId, ingredienteData));
-  }
-
-  deleteIngrediente(ingredienteId: number): Observable<any> {
-    return from(this.api.deleteIngrediente(ingredienteId));
-  }
-
-  searchIngredientesByDescripcion(searchText: string): Observable<Ingrediente[]> {
-    return from(this.api.searchIngredientesByDescripcion(searchText));
-  }
-
-  // RecetaVariacion methods
-  getRecetaVariaciones(recetaId: number): Observable<RecetaVariacion[]> {
-    return from(this.api.getRecetaVariaciones(recetaId));
-  }
-
-  getRecetaVariacion(variacionId: number): Observable<RecetaVariacion> {
-    return from(this.api.getRecetaVariacion(variacionId));
-  }
-
-  createRecetaVariacion(variacionData: Partial<RecetaVariacion>): Observable<RecetaVariacion> {
-    return from(this.api.createRecetaVariacion(variacionData));
-  }
-
-  updateRecetaVariacion(variacionId: number, variacionData: Partial<RecetaVariacion>): Observable<any> {
-    return from(this.api.updateRecetaVariacion(variacionId, variacionData));
-  }
-
-  deleteRecetaVariacion(variacionId: number): Observable<any> {
-    return from(this.api.deleteRecetaVariacion(variacionId));
-  }
-
-  getRecetaVariacionCosto(variacionId: number): Observable<number> {
-    return from(this.api.getRecetaVariacionCosto(variacionId));
-  }
-
-  // RecetaVariacionItem methods
-  getRecetaVariacionItems(variacionId: number): Observable<RecetaVariacionItem[]> {
-    return from(this.api.getRecetaVariacionItems(variacionId));
-  }
-
-  getRecetaVariacionItem(variacionItemId: number): Observable<RecetaVariacionItem> {
-    return from(this.api.getRecetaVariacionItem(variacionItemId));
-  }
-
-  createRecetaVariacionItem(variacionItemData: Partial<RecetaVariacionItem>): Observable<RecetaVariacionItem> {
-    return from(this.api.createRecetaVariacionItem(variacionItemData));
-  }
-
-  updateRecetaVariacionItem(variacionItemId: number, variacionItemData: Partial<RecetaVariacionItem>): Observable<any> {
-    return from(this.api.updateRecetaVariacionItem(variacionItemId, variacionItemData));
-  }
-
-  deleteRecetaVariacionItem(variacionItemId: number): Observable<any> {
-    return from(this.api.deleteRecetaVariacionItem(variacionItemId));
-  }
 
   // MonedaBillete methods
   getMonedasBilletes(): Observable<MonedaBillete[]> {
@@ -1539,51 +1198,6 @@ export class RepositoryService {
     return from(Promise.all(updatePromises));
   }
 
-  // MovimientoStock methods
-  getMovimientosStock(): Observable<MovimientoStock[]> {
-    return from(this.api.getMovimientosStock());
-  }
-
-  getMovimientoStock(movimientoStockId: number): Observable<MovimientoStock> {
-    return from(this.api.getMovimientoStock(movimientoStockId));
-  }
-
-  getMovimientosStockByProducto(productoId: number): Observable<MovimientoStock[]> {
-    return from(this.api.getMovimientosStockByProducto(productoId));
-  }
-
-  getMovimientosStockByIngrediente(ingredienteId: number): Observable<MovimientoStock[]> {
-    return from(this.api.getMovimientosStockByIngrediente(ingredienteId));
-  }
-
-  getMovimientosStockByTipoReferencia(tipoReferencia: TipoReferencia): Observable<MovimientoStock[]> {
-    return from(this.api.getMovimientosStockByTipoReferencia(tipoReferencia));
-  }
-
-  getCurrentStockByProducto(productoId: number): Observable<MovimientoStock> {
-    return from(this.api.getCurrentStockByProducto(productoId));
-  }
-
-  getCurrentStockByIngrediente(ingredienteId: number): Observable<MovimientoStock> {
-    return from(this.api.getCurrentStockByIngrediente(ingredienteId));
-  }
-
-  createMovimientoStock(movimientoStockData: any): Observable<MovimientoStock> {
-    return from(this.api.createMovimientoStock(movimientoStockData));
-  }
-
-  updateMovimientoStock(movimientoStockId: number, movimientoStockData: any): Observable<any> {
-    return from(this.api.updateMovimientoStock(movimientoStockId, movimientoStockData));
-  }
-
-  deleteMovimientoStock(movimientoStockId: number): Observable<any> {
-    return from(this.api.deleteMovimientoStock(movimientoStockId));
-  }
-
-  getMovimientosStockByReferenciaAndTipo(referencia: number, tipoReferencia: TipoReferencia): Observable<MovimientoStock[]> {
-    return from(this.api.getMovimientosStockByReferenciaAndTipo(referencia, tipoReferencia));
-  }
-
   // PrecioDelivery methods
   getPreciosDelivery(): Observable<PrecioDelivery[]> {
     return from(this.api.getPreciosDelivery());
@@ -1784,76 +1398,65 @@ export class RepositoryService {
   updatePdvConfig(id: number, data: Partial<PdvConfig>): Observable<PdvConfig> {
     return from(this.api.updatePdvConfig(id, data));
   }
-  
+
   // PdvMesa methods
   getPdvMesas(): Observable<PdvMesa[]> {
     return from(this.api.getPdvMesas());
   }
-  
+
   getPdvMesasActivas(): Observable<PdvMesa[]> {
     return from(this.api.getPdvMesasActivas());
   }
-  
+
   getPdvMesasDisponibles(): Observable<PdvMesa[]> {
     return from(this.api.getPdvMesasDisponibles());
   }
-  
+
   getPdvMesasBySector(sectorId: number): Observable<PdvMesa[]> {
     return from(this.api.getPdvMesasBySector(sectorId));
   }
-  
+
   getPdvMesa(id: number): Observable<PdvMesa> {
     return from(this.api.getPdvMesa(id));
   }
-  
+
   createPdvMesa(data: Partial<PdvMesa>): Observable<PdvMesa> {
     return from(this.api.createPdvMesa(data));
   }
-  
+
   updatePdvMesa(id: number, data: Partial<PdvMesa>): Observable<PdvMesa> {
     return from(this.api.updatePdvMesa(id, data));
   }
-  
+
   deletePdvMesa(id: number): Observable<boolean> {
     return from(this.api.deletePdvMesa(id));
   }
-  
+
   // Sector methods
   getSectores(): Observable<Sector[]> {
     return from(this.api.getSectores());
   }
-  
+
   getSectoresActivos(): Observable<Sector[]> {
     return from(this.api.getSectoresActivos());
   }
-  
+
   getSector(id: number): Observable<Sector> {
     return from(this.api.getSector(id));
   }
-  
+
   createSector(data: Partial<Sector>): Observable<Sector> {
     return from(this.api.createSector(data));
   }
-  
+
   updateSector(id: number, data: Partial<Sector>): Observable<Sector> {
     return from(this.api.updateSector(id, data));
   }
-  
+
   deleteSector(id: number): Observable<boolean> {
     return from(this.api.deleteSector(id));
   }
-  
-  // Between the existing producto methods, add these new search methods
-  
-  searchProductos(params: { searchTerm: string, page: number, pageSize: number, exactMatch?: boolean }): 
-    Observable<{ items: Producto[], total: number, exactMatch?: boolean }> {
-    return from(this.api.searchProductos(params));
-  }
-  
-  searchProductosByCode(code: string): Observable<{ product: Producto, presentacion: Presentacion } | null> {
-    return from(this.api.searchProductosByCode(code));
-  }
-  
+
   // Observacion methods
   getObservaciones(): Observable<Observacion[]> {
     return from(this.api.getObservaciones());
@@ -1867,83 +1470,43 @@ export class RepositoryService {
     return from(this.api.createObservacion(data));
   }
 
-  updateObservacion(id: number, data: Partial<Observacion>): Observable<Observacion> {
+  updateObservacion(id: number, data: Partial<Observacion>): Observable<any> {
     return from(this.api.updateObservacion(id, data));
   }
 
-  deleteObservacion(id: number): Observable<boolean> {
+  deleteObservacion(id: number): Observable<any> {
     return from(this.api.deleteObservacion(id));
   }
 
-  searchObservaciones(searchTerm: string, page: number, pageSize: number): Observable<Observacion[]> {
-    return from(this.api.searchObservaciones(searchTerm, page, pageSize));
+  getObservacionesByProducto(productoId: number): Observable<ProductoObservacion[]> {
+    return from(this.api.getObservacionesByProducto(productoId));
   }
 
-  // ObservacionProducto methods
-  getObservacionesProductos(): Observable<ObservacionProducto[]> {
-    return from(this.api.getObservacionesProductos());
+  createProductoObservacion(data: Partial<ProductoObservacion>): Observable<ProductoObservacion> {
+    return from(this.api.createProductoObservacion(data));
   }
 
-  getObservacionesProductosByProducto(productoId: number): Observable<ObservacionProducto[]> {
-    return from(this.api.getObservacionesProductosByProducto(productoId));
+  deleteProductoObservacion(id: number): Observable<any> {
+    return from(this.api.deleteProductoObservacion(id));
   }
 
-  getObservacionProducto(id: number): Observable<ObservacionProducto> {
-    return from(this.api.getObservacionProducto(id));
-  }
-
-  createObservacionProducto(data: Partial<ObservacionProducto>): Observable<{ success: boolean, data?: ObservacionProducto, error?: string, message?: string }> {
-    return from(this.api.createObservacionProducto(data));
-  }
-
-  updateObservacionProducto(id: number, data: Partial<ObservacionProducto>): Observable<ObservacionProducto> {
-    return from(this.api.updateObservacionProducto(id, data));
-  }
-
-  deleteObservacionProducto(id: number): Observable<boolean> {
-    return from(this.api.deleteObservacionProducto(id));
-  }
-
-  // ObservacionProductoVentaItem methods
-  getObservacionesProductosVentasItems(ventaItemId: number): Observable<ObservacionProductoVentaItem[]> {
-    return from(this.api.getObservacionesProductosVentasItems(ventaItemId));
-  }
-
-  getObservacionProductoVentaItem(id: number): Observable<ObservacionProductoVentaItem> {
-    return from(this.api.getObservacionProductoVentaItem(id));
-  }
-
-  createObservacionProductoVentaItem(data: Partial<ObservacionProductoVentaItem>): Observable<ObservacionProductoVentaItem> {
-    return from(this.api.createObservacionProductoVentaItem(data));
-  }
-
-  updateObservacionProductoVentaItem(id: number, data: Partial<ObservacionProductoVentaItem>): Observable<ObservacionProductoVentaItem> {
-    return from(this.api.updateObservacionProductoVentaItem(id, data));
-  }
-
-  deleteObservacionProductoVentaItem(id: number): Observable<boolean> {
-    return from(this.api.deleteObservacionProductoVentaItem(id));
-  }
-
-  // Adicional methods
+  // Adicional methods (Nueva Arquitectura)
   getAdicionales(): Observable<Adicional[]> {
     return from(this.api.getAdicionales());
   }
 
-  getAdicional(id: number): Observable<Adicional> {
-    return from(this.api.getAdicional(id));
+  getAdicionalesWithFilters(filters: {
+    search?: string;
+    activo?: boolean | null;
+    categoria?: string;
+    page?: number;
+    pageSize?: number;
+  }): Observable<{items: Adicional[], total: number, page: number, pageSize: number}> {
+    return from(this.api.getAdicionalesWithFilters(filters));
   }
 
-  getAdicionalesFiltered(filters: {
-    nombre?: string;
-    ingredienteId?: number;
-    recetaId?: number;
-    monedaId?: number;
-    activo?: boolean;
-    pageIndex?: number;
-    pageSize?: number;
-  }): Observable<{items: Adicional[], total: number}> {
-    return from(this.api.getAdicionalesFiltered(filters));
+  getAdicional(adicionalId: number): Observable<Adicional> {
+    return from(this.api.getAdicional(adicionalId));
   }
 
   createAdicional(data: Partial<Adicional>): Observable<Adicional> {
@@ -1954,105 +1517,542 @@ export class RepositoryService {
     return from(this.api.updateAdicional(id, data));
   }
 
-  deleteAdicional(id: number): Observable<boolean> {
+  deleteAdicional(id: number): Observable<any> {
     return from(this.api.deleteAdicional(id));
   }
 
-  // ProductoAdicional methods
-  getProductosAdicionales(): Observable<ProductoAdicional[]> {
-    return from(this.api.getProductosAdicionales());
+  // ✅ NUEVOS MÉTODOS: Para gestión de recetas de adicionales
+  getAdicionalWithReceta(adicionalId: number): Observable<Adicional> {
+    return from(this.api.getAdicionalWithReceta(adicionalId));
   }
 
-  getProductosAdicionalesByProducto(productoId: number): Observable<ProductoAdicional[]> {
-    return from(this.api.getProductosAdicionalesByProducto(productoId));
+  createRecetaForAdicional(adicionalId: number, recetaData: any): Observable<Receta> {
+    return from(this.api.createRecetaForAdicional(adicionalId, recetaData));
   }
 
-  getProductosAdicionalesByPresentacion(presentacionId: number): Observable<ProductoAdicional[]> {
-    return from(this.api.getProductosAdicionalesByPresentacion(presentacionId));
+  updateRecetaForAdicional(adicionalId: number, recetaData: any): Observable<any> {
+    return from(this.api.updateRecetaForAdicional(adicionalId, recetaData));
   }
 
-  getProductoAdicional(id: number): Observable<ProductoAdicional> {
-    return from(this.api.getProductoAdicional(id));
+  deleteRecetaForAdicional(adicionalId: number): Observable<any> {
+    return from(this.api.deleteRecetaForAdicional(adicionalId));
   }
 
-  // add error handling like in createObservacionProducto 
-  createProductoAdicional(data: Partial<ProductoAdicional>): Observable<{ success: boolean, data?: ProductoAdicional, error?: string, message?: string }> {
-    return from(this.api.createProductoAdicional(data));
+  // RecetaAdicionalVinculacion methods (Nueva Arquitectura)
+  getRecetaAdicionalVinculaciones(recetaId: number): Observable<RecetaAdicionalVinculacion[]> {
+    return from(this.api.getRecetaAdicionalVinculaciones(recetaId));
   }
 
-  updateProductoAdicional(id: number, data: Partial<ProductoAdicional>): Observable<ProductoAdicional> {
-    return from(this.api.updateProductoAdicional(id, data));
+  getRecetaAdicionalVinculacion(vinculacionId: number): Observable<RecetaAdicionalVinculacion> {
+    return from(this.api.getRecetaAdicionalVinculacion(vinculacionId));
   }
 
-  deleteProductoAdicional(id: number): Observable<boolean> {
-    return from(this.api.deleteProductoAdicional(id));
+  createRecetaAdicionalVinculacion(data: Partial<RecetaAdicionalVinculacion>): Observable<RecetaAdicionalVinculacion> {
+    return from(this.api.createRecetaAdicionalVinculacion(data));
   }
 
-  // ProductoAdicionalVentaItem methods
-  getProductosAdicionalesVentasItems(ventaItemId: number): Observable<ProductoAdicionalVentaItem[]> {
-    return from(this.api.getProductosAdicionalesVentasItems(ventaItemId));
+  updateRecetaAdicionalVinculacion(id: number, data: Partial<RecetaAdicionalVinculacion>): Observable<any> {
+    return from(this.api.updateRecetaAdicionalVinculacion(id, data));
   }
 
-  getProductoAdicionalVentaItem(id: number): Observable<ProductoAdicionalVentaItem> {
-    return from(this.api.getProductoAdicionalVentaItem(id));
+  deleteRecetaAdicionalVinculacion(id: number): Observable<any> {
+    return from(this.api.deleteRecetaAdicionalVinculacion(id));
   }
 
-  createProductoAdicionalVentaItem(data: Partial<ProductoAdicionalVentaItem>): Observable<ProductoAdicionalVentaItem> {
-    return from(this.api.createProductoAdicionalVentaItem(data));
+  // RecetaIngredienteIntercambiable methods
+  getRecetaIngredientesIntercambiables(recetaIngredienteId: number): Observable<RecetaIngredienteIntercambiable[]> {
+    return from(this.api.getRecetaIngredientesIntercambiables(recetaIngredienteId));
   }
 
-  updateProductoAdicionalVentaItem(id: number, data: Partial<ProductoAdicionalVentaItem>): Observable<ProductoAdicionalVentaItem> {
-    return from(this.api.updateProductoAdicionalVentaItem(id, data));
+  createRecetaIngredienteIntercambiable(data: Partial<RecetaIngredienteIntercambiable>): Observable<RecetaIngredienteIntercambiable> {
+    return from(this.api.createRecetaIngredienteIntercambiable(data));
   }
 
-  deleteProductoAdicionalVentaItem(id: number): Observable<boolean> {
-    return from(this.api.deleteProductoAdicionalVentaItem(id));
+  updateRecetaIngredienteIntercambiable(id: number, data: Partial<RecetaIngredienteIntercambiable>): Observable<any> {
+    return from(this.api.updateRecetaIngredienteIntercambiable(id, data));
   }
 
-  /**
-   * Search ingredientes by name
-   * @param query The search string
-   * @returns Observable with filtered list of ingredientes
-   */
-  searchIngredientes(query: string): Observable<Ingrediente[]> {
-    // Assuming api is an instance of ElectronService or similar
-    // that handles the database operations
-    return from(this.api.searchIngredientesByDescripcion(query));
+  deleteRecetaIngredienteIntercambiable(id: number): Observable<any> {
+    return from(this.api.deleteRecetaIngredienteIntercambiable(id));
   }
 
-  /**
-   * Search recetas by name
-   * @param query The search string
-   * @returns Observable with filtered list of recetas
-   */
-  searchRecetas(query: string): Observable<Receta[]> {
-    // Assuming api is an instance of ElectronService or similar
-    // that handles the database operations
-    return from(this.api.searchRecetasByNombre(query));
+  // === productoS REPOSITORY METHODS ===
+
+  // Familia methods
+  getFamilias(): Observable<Familia[]> {
+    return from(this.api.getFamilias());
   }
 
-  // CostoPorProducto methods
-  getCostosPorProducto(): Observable<CostoPorProducto[]> {
-    return from(this.api.getCostosPorProducto());
+  getFamilia(familiaId: number): Observable<Familia> {
+    return from(this.api.getFamilia(familiaId));
   }
-  
-  getCostosPorProductoByProducto(productoId: number): Observable<CostoPorProducto[]> {
-    return from(this.api.getCostosPorProductoByProducto(productoId));
+
+  createFamilia(familiaData: Partial<Familia>): Observable<Familia> {
+    return from(this.api.createFamilia(familiaData));
   }
-  
-  getCostoPorProducto(id: number): Observable<CostoPorProducto> {
-    return from(this.api.getCostoPorProducto(id));
+
+  updateFamilia(familiaId: number, familiaData: Partial<Familia>): Observable<any> {
+    return from(this.api.updateFamilia(familiaId, familiaData));
   }
-  
-  createCostoPorProducto(data: Partial<CostoPorProducto>): Observable<CostoPorProducto> {
-    return from(this.api.createCostoPorProducto(data));
+
+  deleteFamilia(familiaId: number): Observable<any> {
+    return from(this.api.deleteFamilia(familiaId));
   }
-  
-  updateCostoPorProducto(id: number, data: Partial<CostoPorProducto>): Observable<CostoPorProducto> {
-    return from(this.api.updateCostoPorProducto(id, data));
+
+  // Subfamilia methods
+  getSubfamilias(): Observable<Subfamilia[]> {
+    return from(this.api.getSubfamilias());
   }
-  
-  deleteCostoPorProducto(id: number): Observable<CostoPorProducto> {
-    return from(this.api.deleteCostoPorProducto(id));
+
+  getSubfamiliasByFamilia(familiaId: number): Observable<Subfamilia[]> {
+    return from(this.api.getSubfamiliasByFamilia(familiaId));
   }
+
+  getSubfamilia(subfamiliaId: number): Observable<Subfamilia> {
+    return from(this.api.getSubfamilia(subfamiliaId));
+  }
+
+  createSubfamilia(subfamiliaData: Partial<Subfamilia>): Observable<Subfamilia> {
+    return from(this.api.createSubfamilia(subfamiliaData));
+  }
+
+  updateSubfamilia(subfamiliaId: number, subfamiliaData: Partial<Subfamilia>): Observable<any> {
+    return from(this.api.updateSubfamilia(subfamiliaId, subfamiliaData));
+  }
+
+  deleteSubfamilia(subfamiliaId: number): Observable<any> {
+    return from(this.api.deleteSubfamilia(subfamiliaId));
+  }
+
+  // producto methods
+  getProductos(): Observable<Producto[]> {
+    return from(this.api.getProductos());
+  }
+
+  getProductosWithFilters(filters: {
+    search?: string;
+    tipo?: string;
+    activo?: string;
+    esVendible?: string;
+    esComprable?: string;
+    controlaStock?: string;
+    esIngrediente?: string;
+    page?: number;
+    pageSize?: number;
+  }): Observable<{items: Producto[], total: number}> {
+    return from(this.api.getProductosWithFilters(filters));
+  }
+
+  getProducto(productoId: number): Observable<Producto> {
+    return from(this.api.getProducto(productoId));
+  }
+
+  createProducto(productoData: Partial<Producto>): Observable<Producto> {
+    return from(this.api.createProducto(productoData));
+  }
+
+  updateProducto(productoId: number, productoData: Partial<Producto>): Observable<any> {
+    return from(this.api.updateProducto(productoId, productoData));
+  }
+
+  deleteProducto(productoId: number): Observable<any> {
+    return from(this.api.deleteProducto(productoId));
+  }
+
+  // Presentacion methods
+  getPresentaciones(): Observable<Presentacion[]> {
+    return from(this.api.getPresentaciones());
+  }
+
+  getPresentacionesByProducto(productoId: number, page = 0, pageSize = 10, filtroActivo = 'activos'): Observable<any> {
+    return from(this.api.getPresentacionesByProducto(productoId, page, pageSize, filtroActivo));
+  }
+
+  getPresentacion(presentacionId: number): Observable<any> {
+    return from(this.api.getPresentacion(presentacionId));
+  }
+
+  createPresentacion(presentacionData: Partial<Presentacion>): Observable<Presentacion> {
+    return from(this.api.createPresentacion(presentacionData));
+  }
+
+  updatePresentacion(presentacionId: number, presentacionData: Partial<Presentacion>): Observable<any> {
+    return from(this.api.updatePresentacion(presentacionId, presentacionData));
+  }
+
+  deletePresentacion(presentacionId: number): Observable<any> {
+    return from(this.api.deletePresentacion(presentacionId));
+  }
+
+  setPresentacionPrincipal(presentacionId: number): Observable<any> {
+    return from(this.api.setPresentacionPrincipal(presentacionId));
+  }
+
+  togglePresentacionActivo(presentacionId: number): Observable<any> {
+    return from(this.api.togglePresentacionActivo(presentacionId));
+  }
+
+  // CodigoBarra methods
+  createCodigoBarra(codigoBarraData: Partial<CodigoBarra>): Observable<CodigoBarra> {
+    return from(this.api.createCodigoBarra(codigoBarraData));
+  }
+
+  updateCodigoBarra(codigoBarraId: number, codigoBarraData: Partial<CodigoBarra>): Observable<any> {
+    return from(this.api.updateCodigoBarra(codigoBarraId, codigoBarraData));
+  }
+
+  deleteCodigoBarra(codigoBarraId: number): Observable<any> {
+    return from(this.api.deleteCodigoBarra(codigoBarraId));
+  }
+
+  getCodigosBarraByPresentacion(presentacionId: number): Observable<CodigoBarra[]> {
+    return from(this.api.getCodigosBarraByPresentacion(presentacionId));
+  }
+
+  searchProductosByCodigo(codigo: string): Observable<any> {
+    return from(this.api.searchProductosByCodigo(codigo));
+  }
+
+  // PrecioVenta methods
+  getPreciosVenta(): Observable<PrecioVenta[]> {
+    return from(this.api.getPreciosVenta());
+  }
+
+  getPreciosVentaByPresentacion(presentacionId: number, activo: boolean | null): Observable<PrecioVenta[]> {
+    return from(this.api.getPreciosVentaByPresentacion(presentacionId, activo));
+  }
+
+  getPreciosVentaByReceta(recetaId: number, activo: boolean | null): Observable<PrecioVenta[]> {
+    return from(this.api.getPreciosVentaByReceta(recetaId, activo));
+  }
+
+  createPrecioVenta(precioVentaData: Partial<PrecioVenta>): Observable<PrecioVenta> {
+    return from(this.api.createPrecioVenta(precioVentaData));
+  }
+
+  updatePrecioVenta(precioVentaId: number, precioVentaData: Partial<PrecioVenta>): Observable<any> {
+    return from(this.api.updatePrecioVenta(precioVentaId, precioVentaData));
+  }
+
+  deletePrecioVenta(precioVentaId: number): Observable<any> {
+    return from(this.api.deletePrecioVenta(precioVentaId));
+  }
+
+  // PrecioCosto methods
+  getPreciosCosto(): Observable<PrecioCosto[]> {
+    return from(this.api.getPreciosCosto());
+  }
+
+  getPreciosCostoByProducto(productoId: number): Observable<PrecioCosto[]> {
+    return from(this.api.getPreciosCostoByProducto(productoId));
+  }
+
+  createPrecioCosto(precioCostoData: Partial<PrecioCosto>): Observable<PrecioCosto> {
+    return from(this.api.createPrecioCosto(precioCostoData));
+  }
+
+  updatePrecioCosto(precioCostoId: number, precioCostoData: Partial<PrecioCosto>): Observable<any> {
+    return from(this.api.updatePrecioCosto(precioCostoId, precioCostoData));
+  }
+
+  deletePrecioCosto(precioCostoId: number): Observable<any> {
+    return from(this.api.deletePrecioCosto(precioCostoId));
+  }
+
+  // Receta methods
+  getRecetas(): Observable<Receta[]> {
+    return from(this.api.getRecetas());
+  }
+
+  getRecetasWithFilters(filters: {
+    search?: string;
+    activo?: boolean | null;
+    page?: number;
+    pageSize?: number;
+  }): Observable<{items: Receta[], total: number, page: number, pageSize: number}> {
+    return from(this.api.getRecetasWithFilters(filters));
+  }
+
+  getReceta(recetaId: number): Observable<Receta> {
+    return from(this.api.getReceta(recetaId));
+  }
+
+  createReceta(recetaData: Partial<Receta>): Observable<Receta> {
+    return from(this.api.createReceta(recetaData));
+  }
+
+  updateReceta(recetaId: number, recetaData: Partial<Receta>): Observable<any> {
+    return from(this.api.updateReceta(recetaId, recetaData));
+  }
+
+  checkRecetaDependencies(recetaId: number): Observable<{
+    receta: { id: number; nombre: string };
+    productosVinculados: Array<{ id: number; nombre: string; tipo: string; activo: boolean }>;
+  }> {
+    return from(this.api.checkRecetaDependencies(recetaId));
+  }
+
+  deleteReceta(recetaId: number): Observable<any> {
+    return from(this.api.deleteReceta(recetaId));
+  }
+
+  // Receta additional methods
+  getRecetasByEstado(activo: boolean | null): Observable<Receta[]> {
+    return from(this.api.getRecetasByEstado(activo));
+  }
+
+  searchRecetasByNombre(nombre: string): Observable<Receta[]> {
+    return from(this.api.searchRecetasByNombre(nombre));
+  }
+
+  getRecetasWithIngredientes(): Observable<Receta[]> {
+    return from(this.api.getRecetasWithIngredientes());
+  }
+
+  calcularCostoReceta(recetaId: number): Observable<number> {
+    return from(this.api.calcularCostoReceta(recetaId));
+  }
+
+  actualizarCostoReceta(recetaId: number): Observable<any> {
+    return from(this.api.actualizarCostoReceta(recetaId));
+  }
+
+  // RecetaIngrediente methods
+  getRecetaIngredientes(recetaId: number): Observable<RecetaIngrediente[]> {
+    return from(this.api.getRecetaIngredientes(recetaId));
+  }
+
+  createRecetaIngrediente(recetaIngredienteData: Partial<RecetaIngrediente>): Observable<RecetaIngrediente> {
+    return from(this.api.createRecetaIngrediente(recetaIngredienteData));
+  }
+
+  updateRecetaIngrediente(recetaIngredienteId: number, recetaIngredienteData: Partial<RecetaIngrediente>): Observable<any> {
+    return from(this.api.updateRecetaIngrediente(recetaIngredienteId, recetaIngredienteData));
+  }
+
+  deleteRecetaIngrediente(recetaIngredienteId: number): Observable<any> {
+    return from(this.api.deleteRecetaIngrediente(recetaIngredienteId));
+  }
+
+  deleteRecetaIngredienteMultiplesVariaciones(data: {
+    recetaIngredienteId: number;
+    eliminarDeOtrasVariaciones: boolean;
+  }): Observable<any> {
+    return from(this.api.deleteRecetaIngredienteMultiplesVariaciones(data));
+  }
+
+  // RecetaIngrediente additional methods
+  getRecetaIngredientesActivos(recetaId: number): Observable<RecetaIngrediente[]> {
+    return from(this.api.getRecetaIngredientesActivos(recetaId));
+  }
+
+  calcularCostoIngrediente(recetaIngredienteId: number): Observable<number> {
+    return from(this.api.calcularCostoIngrediente(recetaIngredienteId));
+  }
+
+  validarStockIngrediente(recetaIngredienteId: number): Observable<boolean> {
+    return from(this.api.validarStockIngrediente(recetaIngredienteId));
+  }
+
+  // ✅ NUEVOS MÉTODOS PARA ARQUITECTURA CON VARIACIONES
+
+  // Sabor methods
+  getSaboresByProducto(productoId: number): Observable<any[]> {
+    return from(this.api.getSaboresByProducto(productoId));
+  }
+
+  createSabor(saborData: {
+    nombre: string;
+    categoria: string;
+    descripcion?: string;
+    productoId: number;
+  }): Observable<{ sabor: any; receta: any; mensaje: string }> {
+    return from(this.api.createSabor(saborData));
+  }
+
+  updateSabor(saborId: number, saborData: Partial<any>): Observable<any> {
+    return from(this.api.updateSabor(saborId, saborData));
+  }
+
+  deleteSabor(saborId: number): Observable<{ success: boolean; mensaje: string }> {
+    return from(this.api.deleteSabor(saborId));
+  }
+
+  getSaboresEstadisticas(productoId: number): Observable<{
+    totalSabores: number;
+    saboresActivos: number;
+    totalRecetas: number;
+    totalVariaciones: number;
+  }> {
+    return from(this.api.getSaboresEstadisticas(productoId));
+  }
+
+  // RecetaPresentacion methods
+  getVariacionesByProducto(productoId: number): Observable<any[]> {
+    return from(this.api.getVariacionesByProducto(productoId));
+  }
+
+  getVariacionesByReceta(recetaId: number): Observable<any[]> {
+    return from(this.api.getVariacionesByReceta(recetaId));
+  }
+
+  createRecetaPresentacion(variacionData: {
+    recetaId: number;
+    presentacionId: number;
+    saborId: number;
+    nombre_generado?: string;
+    sku?: string;
+    precio_ajuste?: number;
+  }): Observable<any> {
+    return from(this.api.createRecetaPresentacion(variacionData));
+  }
+
+  updateRecetaPresentacion(variacionId: number, variacionData: Partial<any>): Observable<any> {
+    return from(this.api.updateRecetaPresentacion(variacionId, variacionData));
+  }
+
+  deleteRecetaPresentacion(variacionId: number): Observable<{ success: boolean; mensaje: string }> {
+    return from(this.api.deleteRecetaPresentacion(variacionId));
+  }
+
+  // bulkUpdateVariaciones(updates: Array<{ variacionId: number; precio_ajuste?: number; activo?: boolean; }>): Observable<{ success: boolean; actualizadas: number }> {
+  //   return from(this.api.bulkUpdateVariaciones(updates));
+  // }
+
+  bulkUpdateVariaciones(updates: Array<{
+    variacionId: number;
+    precio_ajuste?: number;
+    activo?: boolean;
+  }>): Observable<{ success: boolean; actualizadas: number }> {
+    return from(this.api.bulkUpdateVariaciones(updates));
+  }
+
+  recalcularCostoVariacion(variacionId: number): Observable<{
+    success: boolean;
+    costoAnterior: number;
+    costoNuevo: number;
+    mensaje: string;
+  }> {
+    return from(this.api.recalcularCostoVariacion(variacionId));
+  }
+
+  generateVariacionesFaltantes(productoId: number): Observable<{
+    success: boolean;
+    variacionesGeneradas: number;
+    variaciones: any[];
+  }> {
+    return from(this.api.generateVariacionesFaltantes(productoId));
+  }
+
+  // Stock Movimiento methods
+  getStockMovimientos(): Observable<StockMovimiento[]> {
+    return from(this.api.getStockMovimientos());
+  }
+
+  getStockMovimientosByProducto(productoId: number): Observable<StockMovimiento[]> {
+    return from(this.api.getStockMovimientosByProducto(productoId));
+  }
+
+  createStockMovimiento(stockMovimientoData: Partial<StockMovimiento>): Observable<StockMovimiento> {
+    return from(this.api.createStockMovimiento(stockMovimientoData));
+  }
+
+  updateStockMovimiento(stockMovimientoId: number, stockMovimientoData: Partial<StockMovimiento>): Observable<any> {
+    return from(this.api.updateStockMovimiento(stockMovimientoId, stockMovimientoData));
+  }
+
+  deleteStockMovimiento(stockMovimientoId: number): Observable<any> {
+    return from(this.api.deleteStockMovimiento(stockMovimientoId));
+  }
+
+  // Additional helper methods
+  searchProductosByNombre(nombre: string): Observable<Producto[]> {
+    return from(this.api.searchProductosByNombre(nombre));
+  }
+
+  getProductosByTipo(tipo: string): Observable<Producto[]> {
+    return from(this.api.getProductosByTipo(tipo));
+  }
+
+  getProductosWithStock(): Observable<Producto[]> {
+    return from(this.api.getProductosWithStock());
+  }
+
+  // Conversion Moneda methods
+  getConversionesMoneda(): Observable<ConversionMoneda[]> {
+    return from(this.api.getConversionesMoneda());
+  }
+
+  createConversionMoneda(conversionData: Partial<ConversionMoneda>): Observable<ConversionMoneda> {
+    return from(this.api.createConversionMoneda(conversionData));
+  }
+
+  updateConversionMoneda(conversionId: number, conversionData: Partial<ConversionMoneda>): Observable<any> {
+    return from(this.api.updateConversionMoneda(conversionId, conversionData));
+  }
+
+  deleteConversionMoneda(conversionId: number): Observable<any> {
+    return from(this.api.deleteConversionMoneda(conversionId));
+  }
+
+  // Configuracion Monetaria methods
+  getConfiguracionMonetaria(): Observable<ConfiguracionMonetaria> {
+    return from(this.api.getConfiguracionMonetaria());
+  }
+
+  createConfiguracionMonetaria(configData: Partial<ConfiguracionMonetaria>): Observable<ConfiguracionMonetaria> {
+    return from(this.api.createConfiguracionMonetaria(configData));
+  }
+
+  updateConfiguracionMonetaria(configId: number, configData: Partial<ConfiguracionMonetaria>): Observable<any> {
+    return from(this.api.updateConfiguracionMonetaria(configId, configData));
+  }
+
+  // TipoPrecio methods
+  getTiposPrecio(): Observable<TipoPrecio[]> {
+    return from(this.api.getTiposPrecio());
+  }
+
+  getTipoPrecio(tipoPrecioId: number): Observable<TipoPrecio> {
+    return from(this.api.getTipoPrecio(tipoPrecioId));
+  }
+
+  createTipoPrecio(tipoPrecioData: Partial<TipoPrecio>): Observable<TipoPrecio> {
+    return from(this.api.createTipoPrecio(tipoPrecioData));
+  }
+
+  updateTipoPrecio(tipoPrecioId: number, tipoPrecioData: Partial<TipoPrecio>): Observable<any> {
+    return from(this.api.updateTipoPrecio(tipoPrecioId, tipoPrecioData));
+  }
+
+  deleteTipoPrecio(tipoPrecioId: number): Observable<any> {
+    return from(this.api.deleteTipoPrecio(tipoPrecioId));
+  }
+
+  recalculateAllRecipeCosts(): Observable<any[]> {
+    return from(this.api.recalculateAllRecipeCosts());
+  }
+
+  recalculateRecipeCost(recetaId: number): Observable<any> {
+    return from(this.api.recalculateRecipeCost(recetaId));
+  }
+
+  // Sabor methods
+  getSabores(): Observable<string[]> {
+    return from(this.api.getSabores());
+  }
+
+  createOrUpdateSabor(saborData: any): Observable<{ success: boolean, message: string }> {
+    return from(this.api.createOrUpdateSabor(saborData));
+  }
+
+  getSaborDetails(categoria: string): Observable<any> {
+    return from(this.api.getSaborDetails(categoria));
+  }
+
+  // ✅ NUEVO: Método para obtener un mapeo de variacionId -> recetaId
+  getRecetasIdsPorVariacionIds(variacionIds: number[]): Observable<{ [variacionId: number]: number }> {
+    return from(this.api.getRecetasIdsPorVariacionIds(variacionIds));
+  }
+
 }

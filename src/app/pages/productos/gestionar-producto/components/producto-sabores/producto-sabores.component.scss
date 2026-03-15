@@ -1,0 +1,799 @@
+// ✅ THEME VARIABLES (Regla #10: No hardcoded colors)
+:host {
+  --primary-color: var(--mdc-theme-primary, #1976d2);
+  --success-color: var(--mdc-theme-success, #4caf50);
+  --warning-color: var(--mdc-theme-warning, #ff9800);
+  --error-color: var(--mdc-theme-error, #f44336);
+  --warn-color: var(--mdc-theme-error, #f44336);
+
+  // Text colors that work with both light and dark themes
+  --text-primary: var(--mdc-theme-on-surface, #000);
+  --text-secondary: var(--mdc-theme-on-surface-variant, #666);
+  --text-disabled: var(--mdc-theme-on-surface-variant, #999);
+
+  // Surface and background colors
+  --surface: var(--mdc-theme-surface, #fff);
+  --outline: var(--mdc-theme-outline, rgba(0, 0, 0, 0.12));
+
+  // Border colors that adapt to theme
+  --border-color: var(--mdc-theme-outline, rgba(0, 0, 0, 0.12));
+  --border-light: var(--mdc-theme-outline, rgba(0, 0, 0, 0.08));
+
+  // Hover backgrounds that work with both themes
+  --hover-bg: var(--mdc-theme-surface-variant, rgba(0, 0, 0, 0.04));
+  --hover-bg-light: var(--mdc-theme-surface-variant, rgba(0, 0, 0, 0.08));
+
+  // Shadow colors that adapt to theme
+  --shadow-color: var(--mdc-theme-shadow, rgba(0, 0, 0, 0.1));
+  --shadow-color-medium: var(--mdc-theme-shadow, rgba(0, 0, 0, 0.15));
+}
+
+.producto-sabores-container {
+  padding: 0 16px;
+  min-height: 100%;
+}
+
+// ✅ HEADER SECTION
+.header-section {
+  margin-bottom: 24px;
+
+  .header-content {
+    .title-section {
+      margin-bottom: 20px;
+
+      .section-title {
+        display: flex;
+        align-items: center;
+        margin: 0 0 8px 0;
+        font-size: 24px;
+        font-weight: 500;
+
+        .section-icon {
+          margin-right: 12px;
+          font-size: 28px;
+          color: var(--primary-color);
+        }
+      }
+
+      .section-subtitle {
+        margin: 0;
+        font-size: 16px;
+        color: var(--text-secondary);
+        font-weight: 400;
+      }
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+
+      .stat-card {
+        border-radius: 12px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px var(--shadow-color-medium);
+        }
+
+        .stat-content {
+          display: flex;
+          align-items: center;
+          padding: 8px 0;
+
+          .stat-icon {
+            font-size: 32px;
+            width: 32px;
+            height: 32px;
+            margin-right: 16px;
+          }
+
+          .stat-info {
+            display: flex;
+            flex-direction: column;
+
+            .stat-number {
+              font-size: 24px;
+              font-weight: 600;
+              line-height: 1;
+              margin-bottom: 4px;
+            }
+
+            .stat-label {
+              font-size: 12px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              color: var(--text-secondary);
+            }
+          }
+        }
+
+        &.stat-primary {
+          border-left: 4px solid var(--primary-color);
+          .stat-icon { color: var(--primary-color); }
+          .stat-number { color: var(--primary-color); }
+        }
+
+        &.stat-success {
+          border-left: 4px solid var(--success-color);
+          .stat-icon { color: var(--success-color); }
+          .stat-number { color: var(--success-color); }
+        }
+
+        &.stat-info {
+          border-left: 4px solid var(--primary-color);
+          .stat-icon { color: var(--primary-color); }
+          .stat-number { color: var(--primary-color); }
+        }
+
+        &.stat-accent {
+          border-left: 4px solid var(--warning-color);
+          .stat-icon { color: var(--warning-color); }
+          .stat-number { color: var(--warning-color); }
+        }
+      }
+    }
+  }
+}
+
+// ✅ FILTERS SECTION
+.filters-section {
+  margin-bottom: 24px;
+
+  .filters-card {
+    border-radius: 12px;
+
+    .filters-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: flex-end;
+      margin-bottom: 16px;
+
+      .search-section {
+        flex: 1;
+        min-width: 300px;
+
+        .search-field {
+          width: 100%;
+        }
+      }
+
+      .filter-section {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+
+        .filter-field {
+          min-width: 150px;
+        }
+      }
+
+      .clear-filters-section {
+        .clear-filters-btn {
+          color: var(--text-secondary);
+        }
+      }
+    }
+
+    .actions-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+
+      .primary-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .secondary-actions {
+        display: flex;
+        gap: 8px;
+      }
+    }
+
+    .results-info {
+      .results-text {
+        font-size: 14px;
+        color: var(--text-secondary);
+        font-style: italic;
+      }
+    }
+  }
+}
+
+// ✅ LOADING, ERROR, EMPTY STATES
+.loading-section,
+.error-section,
+.empty-section,
+.no-results-section {
+  margin-bottom: 24px;
+
+  .loading-card,
+  .error-card,
+  .empty-card,
+  .no-results-card {
+    border-radius: 12px;
+    text-align: center;
+    padding: 40px 20px;
+
+    .loading-content,
+    .error-content,
+    .empty-content,
+    .no-results-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+
+      .loading-icon,
+      .error-icon,
+      .empty-icon,
+      .no-results-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+      }
+
+      .loading-icon { color: var(--primary-color); }
+      .error-icon { color: var(--error-color); }
+      .empty-icon { color: var(--text-secondary); }
+      .no-results-icon { color: var(--warning-color); }
+
+      h3 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 500;
+      }
+
+      p {
+        margin: 0;
+        color: var(--text-secondary);
+        max-width: 400px;
+      }
+    }
+  }
+}
+
+// ✅ TABLA PRINCIPAL
+.sabores-table-section {
+  margin-bottom: 24px;
+
+  .table-card {
+    border-radius: 12px;
+
+    .table-content {
+      padding: 0;
+
+      .table-container {
+        overflow-x: auto;
+
+        .sabores-table {
+          width: 100%;
+          border-collapse: collapse;
+
+          // Columnas principales
+          .expand-column {
+            width: 60px;
+            text-align: center;
+
+            .expand-button {
+              transition: transform 0.2s ease;
+
+              &:hover {
+                transform: scale(1.1);
+              }
+            }
+          }
+
+          .nombre-column {
+            width: 250px;
+
+            .sabor-info {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+
+              .sabor-icon {
+                font-size: 24px;
+                width: 24px;
+                height: 24px;
+              }
+
+              .sabor-details {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+
+                .sabor-nombre {
+                  font-weight: 500;
+                  font-size: 16px;
+                }
+
+                .sabor-descripcion {
+                  font-size: 12px;
+                  color: var(--text-secondary);
+                  font-style: italic;
+                }
+              }
+            }
+          }
+
+          .categoria-column {
+            width: 150px;
+            text-align: center;
+          }
+
+          .variaciones-column {
+            width: 120px;
+            text-align: center;
+
+            .variaciones-count {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 2px;
+
+              .count-total {
+                font-weight: 600;
+                font-size: 16px;
+                color: var(--primary-color);
+              }
+
+              .count-separator {
+                font-size: 12px;
+                color: var(--text-disabled);
+              }
+
+              .count-active {
+                font-weight: 500;
+              font-size: 14px;
+                color: var(--success-color);
+              }
+
+              .count-label {
+                font-size: 10px;
+                color: var(--text-disabled);
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              }
+            }
+          }
+
+          .estado-column {
+            width: 120px;
+            text-align: center;
+          }
+
+          .actions-column {
+            width: 150px;
+            text-align: center;
+
+            .actions-cell {
+            display: flex;
+            justify-content: center;
+              gap: 8px;
+
+              // Estilo para el botón de eliminar en el menú
+              ::ng-deep .delete-action {
+                color: var(--warn-color, #f44336);
+
+                .mat-icon {
+                  color: var(--warn-color, #f44336);
+                }
+              }
+            }
+          }
+
+          // Filas
+          .sabor-row {
+            transition: background-color 0.2s ease;
+
+            &:hover {
+              background-color: var(--hover-bg);
+            }
+
+            &.expanded {
+              background-color: var(--hover-bg-light);
+            }
+          }
+
+                    // Fila expandible (Angular Material pattern)
+          .variaciones-detail-row {
+            height: 0;
+          }
+
+          .sabor-row {
+            &:not(.expanded):hover {
+              background: var(--hover-bg);
+            }
+
+            &:not(.expanded):active {
+              background: var(--hover-bg-light);
+            }
+
+            // Quitar borde inferior cuando está expandida
+            &.expanded td {
+              border-bottom-width: 0;
+            }
+          }
+
+          .variaciones-detail {
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            border-top: 1px solid var(--border-color);
+
+              .variaciones-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+                padding-bottom: 16px;
+                                  border-bottom: 2px solid var(--border-color);
+
+                .variaciones-title {
+                  h4 {
+                    margin: 0 0 8px 0;
+                    font-size: 18px;
+                    font-weight: 500;
+                    color: var(--primary-color);
+                  }
+
+                  .variaciones-subtitle {
+                    font-size: 14px;
+                    color: var(--text-secondary);
+                  }
+                }
+
+                .variaciones-actions {
+                  display: flex;
+                  gap: 12px;
+                }
+              }
+
+              // Tabla de variaciones
+              .variaciones-table-container {
+                margin-bottom: 20px;
+
+                .variaciones-subtable {
+                  width: 100%;
+                  border-collapse: collapse;
+                  border-radius: 8px;
+                  overflow: hidden;
+                  box-shadow: 0 2px 8px var(--shadow-color);
+
+                  th {
+                    padding: 12px 16px;
+                    text-align: left;
+                    font-weight: 500;
+                    font-size: 14px;
+                    color: var(--text-primary);
+                    border-bottom: 1px solid var(--border-color);
+                  }
+
+                  td {
+                    padding: 12px 16px;
+                    border-bottom: 1px solid var(--border-light);
+                    font-size: 14px;
+                  }
+
+                  tr:hover {
+                    background-color: var(--hover-bg);
+                  }
+
+                  // Columnas específicas de variaciones
+                  .variacion-nombre-column {
+                    width: 250px;
+
+                    .variacion-nombre {
+                      display: flex;
+                      flex-direction: column;
+                      gap: 4px;
+
+                      .nombre-principal {
+                        font-weight: 500;
+                      }
+
+                      .sku {
+                        font-size: 12px;
+                        color: var(--text-secondary);
+                        font-family: monospace;
+                      }
+                    }
+                  }
+
+                  .presentacion-column {
+                    width: 120px;
+                    text-align: center;
+                  }
+
+                  .multiplicador-column {
+                    width: 100px;
+                    text-align: center;
+
+                    .multiplicador-value {
+                      font-weight: 500;
+                      color: var(--primary-color);
+                    }
+                  }
+
+                  .costo-column,
+                  .precio-column {
+                    width: 100px;
+                    text-align: right;
+
+                    .costo-value,
+                    .precio-value {
+                      font-family: monospace;
+                      font-weight: 500;
+                    }
+
+                    .costo-value { color: var(--error-color); }
+                    .precio-value { color: var(--success-color); }
+                  }
+
+                  .margen-column {
+                    width: 120px;
+                    text-align: right;
+
+                    .margen-info {
+                      display: flex;
+                      flex-direction: column;
+                      gap: 2px;
+
+                      .margen-valor {
+                        font-weight: 500;
+                        font-family: monospace;
+                      }
+
+                      .margen-porcentaje {
+                        font-size: 12px;
+                        opacity: 0.8;
+                      }
+                    }
+
+                    .margen-na {
+                      color: var(--text-disabled);
+                      font-style: italic;
+                    }
+
+                    // ✅ Estilos para colores de margen
+                    .margen-success {
+                      .margen-valor,
+                      .margen-porcentaje {
+                        color: var(--success-color);
+                      }
+                    }
+
+                    .margen-warning {
+                      .margen-valor,
+                      .margen-porcentaje {
+                        color: var(--warning-color);
+                      }
+                    }
+
+                    .margen-danger {
+                      .margen-valor,
+                      .margen-porcentaje {
+                        color: var(--error-color);
+                      }
+                    }
+                  }
+
+                  // ✅ NUEVA: Columna de estado de precios
+                  .precios-column {
+                    width: 100px;
+                    text-align: center;
+
+                    .precios-status {
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      gap: 4px;
+
+                      .precios-configurados {
+                        color: var(--success-color);
+                      }
+
+                      .precios-sin-configurar {
+                        color: var(--text-disabled);
+                      }
+
+                      .precios-count {
+                        font-size: 12px;
+                        font-weight: 500;
+                        color: var(--text-secondary);
+                        background: var(--surface);
+                        border: 1px solid var(--border-color);
+                        border-radius: 10px;
+                        padding: 2px 6px;
+                        min-width: 20px;
+                        text-align: center;
+                      }
+                    }
+                  }
+
+                  .estado-variacion-column {
+                    width: 100px;
+                    text-align: center;
+                  }
+
+                  .actions-variacion-column {
+                    width: 120px;
+                    text-align: center;
+
+                    .variacion-actions {
+                      display: flex;
+                      justify-content: center;
+                      gap: 8px;
+
+                      // Estilo para el botón de eliminar en el menú
+                      ::ng-deep .delete-action {
+                        color: var(--warn-color);
+
+                        .mat-icon {
+                          color: var(--warn-color);
+                        }
+                }
+              }
+            }
+          }
+        }
+
+              // Estado vacío para variaciones
+              .variaciones-empty {
+          display: flex;
+                justify-content: center;
+          align-items: center;
+                min-height: 200px;
+                padding: 40px 20px;
+
+                .empty-content {
+                  text-align: center;
+                  max-width: 400px;
+
+                  .empty-icon {
+                    font-size: 64px;
+                    width: 64px;
+                    height: 64px;
+                    margin-bottom: 16px;
+                    color: var(--text-disabled);
+                    opacity: 0.7;
+                  }
+
+                  .empty-title {
+                    margin: 0 0 12px 0;
+                    font-size: 18px;
+                    font-weight: 500;
+                    color: var(--text-primary);
+                  }
+
+                  .empty-description {
+                    margin: 0 0 24px 0;
+                    font-size: 14px;
+                    line-height: 1.5;
+                    color: var(--text-secondary);
+                  }
+
+                  .empty-actions {
+            display: flex;
+                    justify-content: center;
+                    gap: 12px;
+
+            button {
+                      min-width: 160px;
+                    }
+                  }
+                }
+              }
+
+              // Contenedor de variaciones
+              .variaciones-content {
+                min-height: 100px;
+              }
+            }
+          }
+        }
+      }
+
+
+    }
+  }
+
+// ✅ DARK THEME SUPPORT
+@media (prefers-color-scheme: dark) {
+  :host {
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --text-disabled: #888888;
+    --border-color: rgba(255, 255, 255, 0.12);
+    --border-light: rgba(255, 255, 255, 0.08);
+    --hover-bg: rgba(255, 255, 255, 0.04);
+    --hover-bg-light: rgba(255, 255, 255, 0.08);
+    --shadow-color: rgba(255, 255, 255, 0.1);
+    --shadow-color-medium: rgba(255, 255, 255, 0.15);
+  }
+}
+
+// ✅ ANGULAR MATERIAL DARK THEME SUPPORT
+.mat-app-background {
+  :host {
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --text-disabled: #888888;
+    --border-color: rgba(255, 255, 255, 0.12);
+    --border-light: rgba(255, 255, 255, 0.08);
+    --hover-bg: rgba(255, 255, 255, 0.04);
+    --hover-bg-light: rgba(255, 255, 255, 0.08);
+    --shadow-color: rgba(255, 255, 255, 0.1);
+    --shadow-color-medium: rgba(255, 255, 255, 0.15);
+  }
+}
+
+// ✅ RESPONSIVE DESIGN
+@media (max-width: 768px) {
+  .producto-sabores-container {
+    padding: 0 8px;
+  }
+
+  .filters-section {
+    .filters-card {
+  .filters-row {
+        flex-direction: column;
+        gap: 12px;
+
+    .search-section {
+          min-width: auto;
+    }
+
+    .filter-section {
+      justify-content: space-between;
+
+      .filter-field {
+            min-width: 120px;
+      }
+    }
+  }
+
+  .actions-row {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+
+    .primary-actions {
+          justify-content: center;
+        }
+
+        .secondary-actions {
+          justify-content: center;
+        }
+      }
+    }
+  }
+
+}
+
+// ✅ UTILITIES
+.mat-mdc-chip.mat-mdc-chip-selected {
+  font-weight: 500;
+}
+
+.mat-mdc-slide-toggle {
+  margin: 0;
+}
+
+.mat-mdc-button,
+.mat-mdc-raised-button {
+  border-radius: 8px;
+}
+
+.mat-mdc-card {
+  border-radius: 12px;
+      box-shadow: 0 2px 8px var(--shadow-color);
+}

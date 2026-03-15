@@ -1,25 +1,23 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseModel } from '../base.entity';
-import type { PresentacionSabor } from './presentacion-sabor.entity';
-import type { IntercambioIngrediente } from './intercambio-ingrediente.entity';
+import { Producto } from './producto.entity';
 
-/**
- * Entity representing a product flavor
- */
-@Entity('producto_sabores')
+@Entity('sabor')
 export class Sabor extends BaseModel {
-  @Column()
-  nombre!: string;
+  @Column({ type: 'varchar', length: 100 })
+  nombre!: string; // "Calabresa", "Pepperoni"
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', length: 100 })
+  categoria!: string; // "PIZZA", "HAMBURGUESA", "PASTA"
+
+  @Column({ type: 'text', nullable: true })
   descripcion?: string;
 
-  @Column({ default: true })
+  @Column({ type: 'boolean', default: true })
   activo!: boolean;
 
-  @OneToMany('PresentacionSabor', 'sabor')
-  presentacionesSabores!: PresentacionSabor[];
-
-  @OneToMany('IntercambioIngrediente', 'sabor')
-  intercambioIngredientes!: IntercambioIngrediente[];
+  // Relationships
+  @ManyToOne(() => Producto, producto => producto.sabores)
+  @JoinColumn({ name: 'producto_id' })
+  producto!: Producto;
 }

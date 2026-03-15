@@ -1,0 +1,178 @@
+.list-adicionales-container {
+  padding: 20px;
+  height: 100%;
+
+  .main-card {
+    height: 100%;
+
+    .mat-card-header {
+      margin-bottom: 20px;
+
+      .mat-card-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 24px;
+        font-weight: 500;
+      }
+
+      .mat-card-subtitle {
+        font-size: 14px;
+        color: rgba(0, 0, 0, 0.6);
+      }
+    }
+
+    .filters-section {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+
+      .search-field {
+        flex: 1;
+        min-width: 200px;
+      }
+
+      .filter-field {
+        min-width: 150px;
+      }
+
+      button {
+        white-space: nowrap;
+      }
+    }
+
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      gap: 15px;
+
+      p {
+        margin: 0;
+        color: rgba(0, 0, 0, 0.6);
+      }
+    }
+
+    .table-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      .adicionales-table {
+        width: 100%;
+
+        .mat-column-nombre {
+          min-width: 200px;
+        }
+
+        .mat-column-precioBase {
+          min-width: 120px;
+        }
+
+        .mat-column-categoria {
+          min-width: 150px;
+        }
+
+        .mat-column-receta {
+          min-width: 120px;
+        }
+
+        .mat-column-activo {
+          min-width: 100px;
+        }
+
+        .mat-column-acciones {
+          min-width: 120px;
+        }
+
+        .adicional-info {
+          .adicional-nombre {
+            font-weight: 500;
+          }
+        }
+
+        .actions-container {
+          display: flex;
+          gap: 5px;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .text-center {
+          text-align: center;
+        }
+      }
+
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        text-align: center;
+
+        mat-icon {
+          font-size: 64px;
+          width: 64px;
+          height: 64px;
+          color: rgba(0, 0, 0, 0.3);
+          margin-bottom: 20px;
+        }
+
+        h3 {
+          margin: 0 0 10px 0;
+          font-size: 20px;
+          font-weight: 500;
+          color: rgba(0, 0, 0, 0.7);
+        }
+
+        p {
+          margin: 0 0 20px 0;
+          color: rgba(0, 0, 0, 0.6);
+          font-size: 14px;
+        }
+
+        button {
+          margin-top: 10px;
+        }
+      }
+    }
+
+    mat-paginator {
+      margin-top: 20px;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .list-adicionales-container {
+    padding: 10px;
+
+    .main-card {
+      height: 100%;
+
+      .filters-section {
+        flex-direction: column;
+        align-items: stretch;
+
+        .search-field,
+        .filter-field {
+          min-width: auto;
+        }
+      }
+
+      .table-container {
+        overflow-x: auto;
+
+        .adicionales-table {
+          min-width: 600px;
+        }
+      }
+    }
+  }
+}

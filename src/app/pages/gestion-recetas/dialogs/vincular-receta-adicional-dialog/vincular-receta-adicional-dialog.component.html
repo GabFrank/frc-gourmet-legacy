@@ -1,0 +1,185 @@
+<div class="vincular-receta-adicional-dialog-container">
+  <h2 mat-dialog-title>
+    <mat-icon>link</mat-icon>
+    {{isEditMode ? 'Editar Adicional Vinculado a ' + data.receta.nombre : 'Vincular Adicional a ' + data.receta.nombre}}
+  </h2>
+
+  <mat-dialog-content>
+    <form [formGroup]="adicionalForm" class="adicional-form">
+
+      <!-- Selección de Adicional -->
+      <div class="adicional-selection">
+        <label class="form-label">Adicional *</label>
+
+        <!-- Adicional Seleccionado -->
+        <div class="selected-adicional" *ngIf="hayAdicionalSeleccionado">
+          <div class="adicional-info">
+            <span class="adicional-name">{{adicionalNombre}}</span>
+            <span class="adicional-price">{{adicionalPrecio | number:'1.0-2'}}</span>
+            <span class="adicional-status">
+              <mat-chip [color]="adicionalEstado ? 'accent' : 'warn'" selected>
+                {{adicionalEstado ? 'ACTIVO' : 'INACTIVO'}}
+              </mat-chip>
+            </span>
+          </div>
+          <button mat-icon-button
+                  color="warn"
+                  (click)="onCambiarAdicional()"
+                  matTooltip="Cambiar adicional"
+                  *ngIf="!isEditMode">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <!-- Botón para seleccionar adicional -->
+        <button *ngIf="!hayAdicionalSeleccionado"
+                mat-stroked-button
+                type="button"
+                (click)="openAdicionalSearch()"
+                class="select-adicional-btn">
+          <mat-icon>search</mat-icon>
+          Seleccionar Adicional
+        </button>
+
+        <div *ngIf="!hayAdicionalSeleccionado" class="info-message">
+          Selecciona un adicional para vincular a la receta
+        </div>
+      </div>
+
+            <!-- Información de la receta -->
+      <div class="receta-info">
+        <label class="form-label">Receta del Adicional</label>
+        <div class="receta-details">
+                    <!-- ✅ NUEVO: Mostrar la receta que compone el adicional -->
+          <div class="receta-composicion" *ngIf="adicionalSeleccionado?.receta">
+            <span class="receta-name">{{adicionalSeleccionado?.receta?.nombre}}</span>
+            <span class="receta-description">(Receta que compone este adicional)</span>
+          </div>
+
+          <!-- ✅ NUEVO: Mostrar mensaje si el adicional no tiene receta -->
+          <div class="receta-sin-receta" *ngIf="!adicionalSeleccionado?.receta">
+            <span class="receta-name">Sin receta asociada</span>
+            <span class="receta-description">(Este adicional no tiene una receta propia)</span>
+          </div>
+
+
+
+          <!-- ✅ NUEVO: Información de unidad de la receta -->
+          <div class="receta-unidad-info" *ngIf="unidadReceta">
+            <mat-icon>info</mat-icon>
+            <span>Unidad de la receta: <strong>{{unidadReceta}}</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Configuración de la vinculación -->
+      <div class="vinculacion-config">
+        <label class="form-label">Configuración de la Vinculación</label>
+
+        <!-- Precio Adicional -->
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Precio Adicional</mat-label>
+            <input matInput
+                   type="number"
+                   formControlName="precioAdicional"
+                   placeholder="0.00"
+                   step="0.01"
+                   min="0"
+                   required>
+            <mat-error *ngIf="adicionalForm.get('precioAdicional')?.hasError('required')">
+              El precio es requerido
+            </mat-error>
+            <mat-error *ngIf="adicionalForm.get('precioAdicional')?.hasError('min')">
+              El precio debe ser mayor o igual a 0
+            </mat-error>
+          </mat-form-field>
+
+          <div class="checkbox-field">
+            <mat-checkbox formControlName="sinPrecio" color="primary">
+              Sin precio (gratis)
+            </mat-checkbox>
+            <p class="help-text">Marcar si el adicional no tiene costo adicional</p>
+          </div>
+        </div>
+
+        <!-- ✅ NUEVO: Cantidad y Unidad -->
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Cantidad de Ingrediente</mat-label>
+            <input matInput
+                   type="number"
+                   formControlName="cantidad"
+                   placeholder="1"
+                   step="0.01"
+                   min="0.01"
+                   required>
+            <mat-error *ngIf="adicionalForm.get('cantidad')?.hasError('required')">
+              La cantidad es requerida
+            </mat-error>
+            <mat-error *ngIf="adicionalForm.get('cantidad')?.hasError('min')">
+              La cantidad debe ser mayor a 0
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Unidad de Medida</mat-label>
+            <mat-select formControlName="unidad" required>
+              <mat-option *ngFor="let unidad of unidadesFiltradas" [value]="unidad.valor">
+                {{unidad.texto}}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="adicionalForm.get('unidad')?.hasError('required')">
+              La unidad es requerida
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- ✅ NUEVO: Información sobre unidades compatibles -->
+        <div class="unidad-info" *ngIf="unidadReceta !== 'UNIDADES'">
+          <p class="help-text">
+            <mat-icon>info</mat-icon>
+            Se muestran solo unidades compatibles con la receta ({{unidadReceta}})
+          </p>
+        </div>
+
+        <!-- Información de cantidad formateada -->
+        <div class="cantidad-info" *ngIf="cantidadFormateada">
+          <p class="help-text">
+            <mat-icon>info</mat-icon>
+            Cantidad configurada: <strong>{{cantidadFormateada}}</strong>
+          </p>
+        </div>
+
+        <!-- Estado -->
+        <div class="form-row">
+          <div class="checkbox-field">
+            <mat-checkbox formControlName="activo" color="primary">
+              Adicional activo
+            </mat-checkbox>
+            <p class="help-text">Los adicionales inactivos no aparecerán en las opciones</p>
+          </div>
+        </div>
+      </div>
+
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button
+            type="button"
+            (click)="onCancel()"
+            [disabled]="loading">
+      Cancelar
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="submit"
+            (click)="onSubmit()"
+            [disabled]="!adicionalForm.valid || !hayAdicionalSeleccionado || loading">
+      <mat-icon>{{isEditMode ? 'save' : 'link'}}</mat-icon>
+      <span *ngIf="!loading">{{isEditMode ? 'Guardar Cambios' : 'Vincular Adicional'}}</span>
+      <span *ngIf="loading">{{isEditMode ? 'Guardando...' : 'Vinculando...'}}</span>
+    </button>
+  </mat-dialog-actions>
+</div>

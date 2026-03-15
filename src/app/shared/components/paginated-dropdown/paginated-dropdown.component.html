@@ -1,0 +1,83 @@
+<div class="paginated-dropdown-container">
+  <mat-form-field appearance="outline" class="dropdown-field">
+    <mat-label>{{ placeholderText }}</mat-label>
+
+    <mat-select
+      [value]="selectedValue"
+      [disabled]="config.disabled"
+      (openedChange)="$event ? onDropdownOpen() : onDropdownClose()"
+      (selectionChange)="onOptionSelect($event.value)">
+
+      <!-- Campo de búsqueda -->
+      <mat-option *ngIf="config.showSearch" class="search-option" disabled>
+        <div class="search-container" (click)="$event.stopPropagation()">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>{{ searchPlaceholderText }}</mat-label>
+            <input matInput
+                   [value]="searchTerm"
+                   (input)="onSearchInputChange($event)"
+                   (click)="$event.stopPropagation()"
+                   autocomplete="off">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+        </div>
+      </mat-option>
+
+      <!-- Separador después del buscador -->
+      <mat-divider *ngIf="config.showSearch"></mat-divider>
+
+      <!-- Loading -->
+      <mat-option *ngIf="loading" disabled class="loading-option">
+        <div class="loading-container">
+          <mat-spinner diameter="20"></mat-spinner>
+          <span>Cargando...</span>
+        </div>
+      </mat-option>
+
+      <!-- Opciones -->
+      <mat-option
+        *ngFor="let option of filteredOptions"
+        [value]="option.value"
+        [disabled]="option.disabled"
+        class="data-option">
+        <div class="option-content">
+          <span class="option-label">{{ option.label }}</span>
+          <span *ngIf="option.description" class="option-description">{{ option.description }}</span>
+        </div>
+      </mat-option>
+
+      <!-- Opción "Cargar más" -->
+      <mat-option *ngIf="showLoadMoreOption"
+                  value="load-more"
+                  class="load-more-option">
+        <div class="load-more-container">
+          <mat-icon>expand_more</mat-icon>
+          <span>{{ loadMoreText }}</span>
+        </div>
+      </mat-option>
+
+      <!-- Mensaje cuando no hay datos -->
+      <mat-option *ngIf="showNoDataMessage" disabled class="no-data-option">
+        <div class="no-data-container">
+          <mat-icon>info</mat-icon>
+          <span>{{ noDataText }}</span>
+        </div>
+      </mat-option>
+
+    </mat-select>
+
+    <!-- Botón para limpiar selección -->
+    <button *ngIf="config.clearable && selectedValue && !config.disabled"
+            mat-icon-button
+            matSuffix
+            (click)="onClearSelection()"
+            matTooltip="Limpiar selección"
+            type="button">
+      <mat-icon>close</mat-icon>
+    </button>
+
+    <!-- Icono de dropdown -->
+    <mat-icon *ngIf="!config.clearable || !selectedValue" matSuffix>arrow_drop_down</mat-icon>
+
+  </mat-form-field>
+</div>

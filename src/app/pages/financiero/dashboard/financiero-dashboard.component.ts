@@ -12,7 +12,6 @@ import { ConfigMonedasDialogComponent } from '../monedas/config-monedas/config-m
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ListCajasComponent } from '../cajas/list-cajas.component';
-import { TipoPrecioComponent } from '../tipo-precio/tipo-precio.component';
 import { ListDispositivosComponent } from '../dispositivos/list-dispositivos.component';
 import { ListMonedasComponent } from '../monedas/list-monedas/list-monedas.component';
 import { CreateEditFormaPagoComponent } from '../formas-pago/create-edit-forma-pago.component';
@@ -102,7 +101,7 @@ export class FinancieroDashboardComponent implements OnInit {
         this.tabsService.openTab('Monedas', ListMonedasComponent);
         break;
       case 'tipo-precio':
-        this.tabsService.openTab('Tipos de Precio', TipoPrecioComponent);
+        // this.tabsService.openTab('Tipos de Precio', TipoPrecioComponent);
         break;
       case 'dispositivos':
         this.tabsService.openTab('Dispositivos y Puntos de Venta', ListDispositivosComponent);

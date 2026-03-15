@@ -1,2320 +1,1387 @@
 import { ipcMain, IpcMainInvokeEvent } from 'electron';
-import { DataSource, Like, Not } from 'typeorm';
-import { Categoria } from '../../src/app/database/entities/productos/categoria.entity';
-import { Subcategoria } from '../../src/app/database/entities/productos/subcategoria.entity';
+import { DataSource } from 'typeorm';
+import { Usuario } from '../../src/app/database/entities/personas/usuario.entity';
+import { setEntityUserTracking } from '../utils/entity.utils';
+
+// Import all productos entities
+import { Familia } from '../../src/app/database/entities/productos/familia.entity';
+import { Subfamilia } from '../../src/app/database/entities/productos/subfamilia.entity';
 import { Producto } from '../../src/app/database/entities/productos/producto.entity';
 import { Presentacion } from '../../src/app/database/entities/productos/presentacion.entity';
-import { Codigo } from '../../src/app/database/entities/productos/codigo.entity';
-import { Sabor } from '../../src/app/database/entities/productos/sabor.entity';
-import { PresentacionSabor } from '../../src/app/database/entities/productos/presentacion-sabor.entity';
-import { Receta } from '../../src/app/database/entities/productos/receta.entity';
-import { RecetaItem } from '../../src/app/database/entities/productos/receta-item.entity';
-import { Ingrediente } from '../../src/app/database/entities/productos/ingrediente.entity';
-import { RecetaVariacion } from '../../src/app/database/entities/productos/receta-variacion.entity';
-import { RecetaVariacionItem } from '../../src/app/database/entities/productos/receta-variacion-item.entity';
-import { MovimientoStock, TipoReferencia } from '../../src/app/database/entities/productos/movimiento-stock.entity';
-import { setEntityUserTracking } from '../utils/entity.utils';
-import { Usuario } from '../../src/app/database/entities/personas/usuario.entity';
+import { CodigoBarra } from '../../src/app/database/entities/productos/codigo-barra.entity';
 import { PrecioVenta } from '../../src/app/database/entities/productos/precio-venta.entity';
+import { PrecioCosto } from '../../src/app/database/entities/productos/precio-costo.entity';
+import { Receta } from '../../src/app/database/entities/productos/receta.entity';
+import { RecetaIngrediente } from '../../src/app/database/entities/productos/receta-ingrediente.entity';
+import { TamanhoPizza } from '../../src/app/database/entities/productos/tamanho-pizza.entity';
+import { SaborPizza } from '../../src/app/database/entities/productos/sabor-pizza.entity';
+import { EnsambladoPizza } from '../../src/app/database/entities/productos/ensamblado-pizza.entity';
+import { EnsambladoPizzaSabor } from '../../src/app/database/entities/productos/ensamblado-pizza-sabor.entity';
+import { Produccion } from '../../src/app/database/entities/productos/produccion.entity';
+import { ProduccionIngrediente } from '../../src/app/database/entities/productos/produccion-ingrediente.entity';
+import { StockMovimiento } from '../../src/app/database/entities/productos/stock-movimiento.entity';
+import { Combo } from '../../src/app/database/entities/productos/combo.entity';
+import { ComboProducto } from '../../src/app/database/entities/productos/combo-producto.entity';
+import { Promocion } from '../../src/app/database/entities/productos/promocion.entity';
+import { PromocionPresentacion } from '../../src/app/database/entities/productos/promocion-presentacion.entity';
+import { ConversionMoneda } from '../../src/app/database/entities/productos/conversion-moneda.entity';
+import { ConfiguracionMonetaria } from '../../src/app/database/entities/productos/configuracion-monetaria.entity';
 import { Observacion } from '../../src/app/database/entities/productos/observacion.entity';
-import { ObservacionProducto } from '../../src/app/database/entities/productos/observacion-producto.entity';
-import { ObservacionProductoVentaItem } from '../../src/app/database/entities/productos/observacion-producto-venta-item.entity';
-import { Adicional } from '../../src/app/database/entities/productos/adicional.entity';
-import { ProductoAdicional } from '../../src/app/database/entities/productos/producto-adicional.entity';
-import { ProductoAdicionalVentaItem } from '../../src/app/database/entities/productos/producto-adicional-venta-item.entity';
-import { CostoPorProducto } from '../../src/app/database/entities/productos/costo-por-producto.entity';
+import { ProductoObservacion } from '../../src/app/database/entities/productos/producto-observacion.entity';
+import { RecetaIngredienteIntercambiable } from '../../src/app/database/entities/productos/receta-ingrediente-intercambiable.entity';
 import { Moneda } from '../../src/app/database/entities/financiero/moneda.entity';
-import { MonedaCambio } from '../../src/app/database/entities/financiero/moneda-cambio.entity';
+import { TipoPrecio } from '../../src/app/database/entities/financiero/tipo-precio.entity';
+import { Not, Like, In } from 'typeorm';
+import { Sabor } from '../../src/app/database/entities/productos/sabor.entity';
+import { RecetaPresentacion } from '../../src/app/database/entities/productos/receta-presentacion.entity';
 
 export function registerProductosHandlers(dataSource: DataSource, getCurrentUser: () => Usuario | null) {
-  // Helper function to enrich products with principal presentation and price information
-  async function enrichProductWithPrincipalData(producto: Producto) {
-    // Find principal presentation
-    const presentacionRepo = dataSource.getRepository(Presentacion);
-    const principalPresentacion = await presentacionRepo.findOne({
-      where: { productoId: producto.id, principal: true, activo: true }
-    });
-    
-    if (principalPresentacion) {
-      // Add principal presentation to producto
-      (producto as any).principalPresentacion = principalPresentacion;
-      
-      // Find principal price for this presentation
-      const precioVentaRepo = dataSource.getRepository(PrecioVenta);
-      const principalPrecio = await precioVentaRepo.findOne({
-        where: { presentacionId: principalPresentacion.id, principal: true, activo: true },
-        relations: ['moneda']
+
+  // Helper function to calculate virtual properties for presentacion
+  const calculatePresentacionVirtualProps = (presentacion: Presentacion) => {
+    // Calculate precioPrincipal
+    if (presentacion.preciosVenta && presentacion.preciosVenta.length > 0) {
+      const precioPrincipal = presentacion.preciosVenta.find(p => p.principal);
+      presentacion.precioPrincipal = precioPrincipal
+        ? precioPrincipal.valor
+        : presentacion.preciosVenta[0].valor;
+    } else {
+      presentacion.precioPrincipal = null;
+    }
+
+    // Calculate codigoPrincipal
+    if (presentacion.codigosBarras && presentacion.codigosBarras.length > 0) {
+      const codigoPrincipal = presentacion.codigosBarras.find(c => c.principal);
+      presentacion.codigoPrincipal = codigoPrincipal
+        ? codigoPrincipal.codigo
+        : presentacion.codigosBarras[0].codigo;
+    } else {
+      presentacion.codigoPrincipal = null;
+    }
+
+    return presentacion;
+  };
+
+  // --- Familia Handlers ---
+  ipcMain.handle('get-familias', async () => {
+    try {
+      const familiaRepository = dataSource.getRepository(Familia);
+      return await familiaRepository.find({
+        where: { activo: true },
+        order: { nombre: 'ASC' }
       });
-      
-      if (principalPrecio) {
-        // Add principal price to producto
-        (producto as any).principalPrecio = principalPrecio;
+    } catch (error) {
+      console.error('Error getting familias:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('get-familia', async (_event: any, familiaId: number) => {
+    try {
+      const familiaRepository = dataSource.getRepository(Familia);
+      return await familiaRepository.findOne({
+        where: { id: familiaId },
+        relations: ['subfamilias']
+      });
+    } catch (error) {
+      console.error('Error getting familia:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('create-familia', async (_event: any, familiaData: any) => {
+    try {
+      const familiaRepository = dataSource.getRepository(Familia);
+      const currentUser = getCurrentUser();
+
+      const familia = familiaRepository.create({
+        nombre: familiaData.nombre,
+        activo: familiaData.activo !== undefined ? familiaData.activo : true
+      });
+
+      await setEntityUserTracking(dataSource, familia, currentUser?.id, false);
+      const savedFamilia = await familiaRepository.save(familia);
+      return savedFamilia;
+    } catch (error) {
+      console.error('Error creating familia:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('update-familia', async (_event: any, familiaId: number, familiaData: any) => {
+    try {
+      const familiaRepository = dataSource.getRepository(Familia);
+      const currentUser = getCurrentUser();
+      const familia = await familiaRepository.findOneBy({ id: familiaId });
+
+      if (!familia) {
+        return { success: false, message: 'Familia not found' };
       }
-    }
-  }
 
-  async function enrichPresentacionWithPrincipalData(presentacion: Presentacion) {
-    const precioVentaRepo = dataSource.getRepository(PrecioVenta);
-    const principalPrecio = await precioVentaRepo.findOne({
-      where: { presentacionId: presentacion.id, principal: true, activo: true },
-      relations: ['moneda']
-    });
-    if (principalPrecio) {
-      (presentacion as any).principalPrecio = principalPrecio;
-    }
-  }
-  // --- Categoria Handlers ---
-  ipcMain.handle('getCategorias', async () => {
-    try {
-      const repo = dataSource.getRepository(Categoria);
-      return await repo.find({ order: { posicion: 'ASC', nombre: 'ASC' } });
+      if (familiaData.nombre !== undefined) familia.nombre = familiaData.nombre;
+      if (familiaData.activo !== undefined) familia.activo = familiaData.activo;
+
+      await setEntityUserTracking(dataSource, familia, currentUser?.id, true);
+      const savedFamilia = await familiaRepository.save(familia);
+      return { success: true, familia: savedFamilia };
     } catch (error) {
-      console.error('Error getting categorias:', error);
+      console.error('Error updating familia:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('getCategoria', async (_event: any, id: number) => {
+  ipcMain.handle('delete-familia', async (_event: any, familiaId: number) => {
     try {
-      const repo = dataSource.getRepository(Categoria);
-      return await repo.findOneBy({ id });
+      const familiaRepository = dataSource.getRepository(Familia);
+      const currentUser = getCurrentUser();
+      const familia = await familiaRepository.findOneBy({ id: familiaId });
+
+      if (!familia) {
+        return { success: false, message: 'Familia not found' };
+      }
+
+      familia.activo = false;
+      await setEntityUserTracking(dataSource, familia, currentUser?.id, true);
+      await familiaRepository.save(familia);
+      return { success: true };
     } catch (error) {
-      console.error(`Error getting categoria ID ${id}:`, error);
+      console.error('Error deleting familia:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('createCategoria', async (_event: any, data: any) => {
+  // --- Subfamilia Handlers ---
+  ipcMain.handle('get-subfamilias', async () => {
     try {
-      const repo = dataSource.getRepository(Categoria);
-      const entity = repo.create(data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
+      const subfamiliaRepository = dataSource.getRepository(Subfamilia);
+      return await subfamiliaRepository.find({
+        where: { activo: true },
+        relations: ['familia'],
+        order: { nombre: 'ASC' }
+      });
     } catch (error) {
-      console.error('Error creating categoria:', error);
+      console.error('Error getting subfamilias:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('updateCategoria', async (_event: any, id: number, data: any) => {
+  ipcMain.handle('get-subfamilias-by-familia', async (_event: any, familiaId: number) => {
     try {
-      const repo = dataSource.getRepository(Categoria);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Categoria ID ${id} not found`);
-      repo.merge(entity, data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
+      const subfamiliaRepository = dataSource.getRepository(Subfamilia);
+      // adicionar familia a la respuesta
+      return await subfamiliaRepository.find({
+        where: { familia: { id: familiaId }, activo: true },
+        order: { nombre: 'ASC' },
+        relations: ['familia']
+      });
     } catch (error) {
-      console.error(`Error updating categoria ID ${id}:`, error);
+      console.error('Error getting subfamilias by familia:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('deleteCategoria', async (_event: any, id: number) => {
-    // Note: This is a hard delete. Consider soft delete (activo=false) if needed.
+  ipcMain.handle('get-subfamilia', async (_event: any, subfamiliaId: number) => {
     try {
-      const repo = dataSource.getRepository(Categoria);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Categoria ID ${id} not found`);
-       // Check dependencies (Subcategorias) before deleting
-       const subcategoriaRepo = dataSource.getRepository(Subcategoria);
-       const subcategoriasCount = await subcategoriaRepo.count({ where: { categoriaId: id } });
-       if (subcategoriasCount > 0) {
-           throw new Error(`No se puede eliminar la categoría porque tiene ${subcategoriasCount} subcategorías asociadas.`);
-       }
-      return await repo.remove(entity);
+      const subfamiliaRepository = dataSource.getRepository(Subfamilia);
+      return await subfamiliaRepository.findOne({
+        where: { id: subfamiliaId },
+        relations: ['familia']
+      });
     } catch (error) {
-      console.error(`Error deleting categoria ID ${id}:`, error);
+      console.error('Error getting subfamilia:', error);
       throw error;
     }
   });
 
-  // --- Subcategoria Handlers ---
-  ipcMain.handle('getSubcategorias', async () => {
+  ipcMain.handle('create-subfamilia', async (_event: any, subfamiliaData: any) => {
     try {
-      const repo = dataSource.getRepository(Subcategoria);
-      return await repo.find({ relations: ['categoria'], order: { posicion: 'ASC', nombre: 'ASC' } });
+      const subfamiliaRepository = dataSource.getRepository(Subfamilia);
+      const familiaRepository = dataSource.getRepository(Familia);
+      const currentUser = getCurrentUser();
+
+      const familia = await familiaRepository.findOneBy({ id: subfamiliaData.familiaId });
+      if (!familia) {
+        return { success: false, message: 'Familia not found' };
+      }
+
+      const subfamilia = subfamiliaRepository.create({
+        nombre: subfamiliaData.nombre,
+        familia: familia,
+        activo: subfamiliaData.activo !== undefined ? subfamiliaData.activo : true
+      });
+
+      await setEntityUserTracking(dataSource, subfamilia, currentUser?.id, false);
+      const savedSubfamilia = await subfamiliaRepository.save(subfamilia);
+      return savedSubfamilia;
     } catch (error) {
-      console.error('Error getting subcategorias:', error);
+      console.error('Error creating subfamilia:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('getSubcategoria', async (_event: any, id: number) => {
+  ipcMain.handle('update-subfamilia', async (_event: any, subfamiliaId: number, subfamiliaData: any) => {
     try {
-      const repo = dataSource.getRepository(Subcategoria);
-      return await repo.findOne({ where: { id }, relations: ['categoria'] });
-    } catch (error) {
-      console.error(`Error getting subcategoria ID ${id}:`, error);
-      throw error;
-    }
-  });
+      const subfamiliaRepository = dataSource.getRepository(Subfamilia);
+      const familiaRepository = dataSource.getRepository(Familia);
+      const currentUser = getCurrentUser();
 
-  ipcMain.handle('getSubcategoriasByCategoria', async (_event: any, categoriaId: number) => {
-    try {
-      const repo = dataSource.getRepository(Subcategoria);
-      return await repo.find({ where: { categoriaId }, order: { posicion: 'ASC', nombre: 'ASC' } });
-    } catch (error) {
-      console.error(`Error getting subcategorias for categoria ID ${categoriaId}:`, error);
-      throw error;
-    }
-  });
+      const subfamilia = await subfamiliaRepository.findOneBy({ id: subfamiliaId });
+      if (!subfamilia) {
+        return { success: false, message: 'Subfamilia not found' };
+      }
 
-  ipcMain.handle('createSubcategoria', async (_event: any, data: any) => {
-    try {
-      const repo = dataSource.getRepository(Subcategoria);
-      const entity = repo.create(data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error('Error creating subcategoria:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('updateSubcategoria', async (_event: any, id: number, data: any) => {
-    try {
-      const repo = dataSource.getRepository(Subcategoria);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Subcategoria ID ${id} not found`);
-      repo.merge(entity, data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error(`Error updating subcategoria ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('deleteSubcategoria', async (_event: any, id: number) => {
-    // Note: Hard delete. Consider soft delete.
-    try {
-      const repo = dataSource.getRepository(Subcategoria);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Subcategoria ID ${id} not found`);
-        // Check dependencies (Productos) before deleting
-        const productoRepo = dataSource.getRepository(Producto);
-        const productosCount = await productoRepo.count({ where: { subcategoriaId: id } });
-        if (productosCount > 0) {
-            throw new Error(`No se puede eliminar la subcategoría porque tiene ${productosCount} productos asociados.`);
+      // Update familia if provided
+      if (subfamiliaData.familiaId !== undefined) {
+        const familia = await familiaRepository.findOneBy({ id: subfamiliaData.familiaId });
+        if (!familia) {
+          return { success: false, message: 'Familia not found' };
         }
-      return await repo.remove(entity);
+        subfamilia.familia = familia;
+      }
+
+      // Update other fields
+      if (subfamiliaData.nombre !== undefined) {
+        subfamilia.nombre = subfamiliaData.nombre;
+      }
+      if (subfamiliaData.activo !== undefined) {
+        subfamilia.activo = subfamiliaData.activo;
+      }
+
+      await setEntityUserTracking(dataSource, subfamilia, currentUser?.id, true);
+      const updatedSubfamilia = await subfamiliaRepository.save(subfamilia);
+      return { success: true, subfamilia: updatedSubfamilia };
     } catch (error) {
-      console.error(`Error deleting subcategoria ID ${id}:`, error);
+      console.error('Error updating subfamilia:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('delete-subfamilia', async (_event: any, subfamiliaId: number) => {
+    try {
+      const subfamiliaRepository = dataSource.getRepository(Subfamilia);
+      const currentUser = getCurrentUser();
+
+      const subfamilia = await subfamiliaRepository.findOneBy({ id: subfamiliaId });
+      if (!subfamilia) {
+        return { success: false, message: 'Subfamilia not found' };
+      }
+
+      // Check if subfamilia is being used by any productos
+      const productoRepository = dataSource.getRepository(Producto);
+      const productosUsingSubfamilia = await productoRepository.count({
+        where: { subfamilia: { id: subfamiliaId } }
+      });
+
+      if (productosUsingSubfamilia > 0) {
+        return {
+          success: false,
+          message: `Cannot delete subfamilia. It is being used by ${productosUsingSubfamilia} product(s).`
+        };
+      }
+
+      // Soft delete by setting activo to false
+      subfamilia.activo = false;
+      await setEntityUserTracking(dataSource, subfamilia, currentUser?.id, true);
+      await subfamiliaRepository.save(subfamilia);
+
+      return { success: true, message: 'Subfamilia deleted successfully' };
+    } catch (error) {
+      console.error('Error deleting subfamilia:', error);
       throw error;
     }
   });
 
   // --- Producto Handlers ---
-  ipcMain.handle('getProductos', async () => {
+  ipcMain.handle('get-productos', async () => {
     try {
-      const repo = dataSource.getRepository(Producto);
-      const productos = await repo.find({ relations: ['subcategoria', 'subcategoria.categoria', 'recetaVariacion', 'recetaVariacion.receta'], order: { nombre: 'ASC' } });
-      
-      // Enrich each product with principal data
-      for (const producto of productos) {
-        await enrichProductWithPrincipalData(producto);
-      }
-      
-      return productos;
+      const productoRepository = dataSource.getRepository(Producto);
+      return await productoRepository.find({
+        where: { activo: true },
+        relations: ['subfamilia', 'subfamilia.familia', 'receta', 'presentaciones'],
+        order: { nombre: 'ASC' }
+      });
     } catch (error) {
       console.error('Error getting productos:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('getProducto', async (_event: any, id: number) => {
+  ipcMain.handle('get-productos-with-filters', async (_event: any, filters: any) => {
     try {
-      const repo = dataSource.getRepository(Producto);
-      const producto = await repo.findOne({ where: { id }, relations: ['subcategoria', 'subcategoria.categoria', 'recetaVariacion', 'recetaVariacion.receta'] });
-      
-      if (producto) {
-        await enrichProductWithPrincipalData(producto);
+      const productoRepository = dataSource.getRepository(Producto);
+
+      // Construir where conditions
+      const whereConditions: any = {};
+
+      // Filtro por búsqueda
+      if (filters.search) {
+        whereConditions.nombre = Like(`%${filters.search}%`);
       }
-      
-      return producto;
+
+      // Filtro por tipo
+      if (filters.tipo && filters.tipo !== '') {
+        whereConditions.tipo = filters.tipo;
+      }
+
+      // Filtro por estado activo
+      if (filters.activo && filters.activo !== 'all') {
+        whereConditions.activo = filters.activo === 'active';
+      }
+
+      // Filtro por esVendible
+      if (filters.esVendible && filters.esVendible !== 'all') {
+        whereConditions.esVendible = filters.esVendible === 'true';
+      }
+
+      // Filtro por esComprable
+      if (filters.esComprable && filters.esComprable !== 'all') {
+        whereConditions.esComprable = filters.esComprable === 'true';
+      }
+
+      // Filtro por controlaStock
+      if (filters.controlaStock && filters.controlaStock !== 'all') {
+        whereConditions.controlaStock = filters.controlaStock === 'true';
+      }
+
+      // Filtro por esIngrediente
+      if (filters.esIngrediente && filters.esIngrediente !== 'all') {
+        whereConditions.esIngrediente = filters.esIngrediente === 'true';
+      }
+
+      // Configurar paginación
+      const page = filters.page || 0;
+      const pageSize = filters.pageSize || 10;
+      const skip = page * pageSize;
+
+      // Obtener total de registros
+      const total = await productoRepository.count({ where: whereConditions });
+
+      // Obtener productos con paginación
+      const productos = await productoRepository.find({
+        where: whereConditions,
+        relations: ['subfamilia', 'subfamilia.familia'],
+        order: { nombre: 'ASC' },
+        skip: skip,
+        take: pageSize
+      });
+
+      return {
+        items: productos,
+        total: total
+      };
     } catch (error) {
-      console.error(`Error getting producto ID ${id}:`, error);
+      console.error('Error getting productos with filters:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('getProductosBySubcategoria', async (_event: any, subcategoriaId: number) => {
+  ipcMain.handle('get-producto', async (_event: any, productoId: number) => {
     try {
-      const repo = dataSource.getRepository(Producto);
-      const productos = await repo.find({ where: { subcategoriaId }, order: { nombre: 'ASC' } });
-      
-      // Enrich each product with principal data
-      for (const producto of productos) {
-        await enrichProductWithPrincipalData(producto);
-      }
-      
-      return productos;
+      const productoRepository = dataSource.getRepository(Producto);
+      return await productoRepository.findOne({
+        where: { id: productoId },
+        relations: ['subfamilia', 'subfamilia.familia', 'receta', 'presentaciones', 'preciosCosto']
+      });
     } catch (error) {
-      console.error(`Error getting productos for subcategoria ID ${subcategoriaId}:`, error);
+      console.error('Error getting producto:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('createProducto', async (_event: any, data: any) => {
+  ipcMain.handle('create-producto', async (_event: any, productoData: any) => {
     try {
-      const repo = dataSource.getRepository(Producto);
-      const entity = repo.create(data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
+      const productoRepository = dataSource.getRepository(Producto);
+      const subfamiliaRepository = dataSource.getRepository(Subfamilia);
+      const currentUser = getCurrentUser();
+
+      const subfamilia = await subfamiliaRepository.findOneBy({ id: productoData.subfamiliaId });
+      if (!subfamilia) {
+        return { success: false, message: 'Subfamilia not found' };
+      }
+
+      const producto = productoRepository.create({
+        nombre: productoData.nombre,
+        tipo: productoData.tipo,
+        unidadBase: productoData.unidadBase,
+        subfamilia: subfamilia,
+        activo: productoData.activo !== undefined ? productoData.activo : true,
+        // Campos de configuración booleanos
+        esVendible: productoData.esVendible !== undefined ? productoData.esVendible : true,
+        esComprable: productoData.esComprable !== undefined ? productoData.esComprable : false,
+        controlaStock: productoData.controlaStock !== undefined ? productoData.controlaStock : true,
+        esIngrediente: productoData.esIngrediente !== undefined ? productoData.esIngrediente : false,
+        stockMinimo: productoData.stockMinimo,
+        stockMaximo: productoData.stockMaximo
+      });
+
+      await setEntityUserTracking(dataSource, producto, currentUser?.id, false);
+      const savedProducto = await productoRepository.save(producto);
+      return savedProducto;
     } catch (error) {
       console.error('Error creating producto:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('updateProducto', async (_event: any, id: number, data: any) => {
+  ipcMain.handle('update-producto', async (_event: any, productoId: number, productoData: any) => {
     try {
-      const repo = dataSource.getRepository(Producto);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Producto ID ${id} not found`);
-      repo.merge(entity, data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      console.log('currentUser', currentUser);
-      // if currentuser is null throw error
-      if (!currentUser) throw new Error('No current user found');
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
+      const productoRepository = dataSource.getRepository(Producto);
+      const subfamiliaRepository = dataSource.getRepository(Subfamilia);
+      const currentUser = getCurrentUser();
+
+      const producto = await productoRepository.findOne({
+        where: { id: productoId },
+        relations: ['subfamilia', 'subfamilia.familia']
+      });
+
+      if (!producto) {
+        return { success: false, message: 'Producto not found' };
+      }
+
+      // Actualizar campos básicos
+      if (productoData.nombre !== undefined) producto.nombre = productoData.nombre;
+      if (productoData.tipo !== undefined) producto.tipo = productoData.tipo;
+      if (productoData.unidadBase !== undefined) producto.unidadBase = productoData.unidadBase;
+      if (productoData.activo !== undefined) producto.activo = productoData.activo;
+
+      // Actualizar campos de configuración booleanos
+      if (productoData.esVendible !== undefined) producto.esVendible = productoData.esVendible;
+      if (productoData.esComprable !== undefined) producto.esComprable = productoData.esComprable;
+      if (productoData.controlaStock !== undefined) producto.controlaStock = productoData.controlaStock;
+      if (productoData.esIngrediente !== undefined) producto.esIngrediente = productoData.esIngrediente;
+
+      // Actualizar campos de control de stock
+      if (productoData.stockMinimo !== undefined) producto.stockMinimo = productoData.stockMinimo;
+      if (productoData.stockMaximo !== undefined) producto.stockMaximo = productoData.stockMaximo;
+
+      // Actualizar subfamilia si se proporciona
+      if (productoData.subfamiliaId !== undefined) {
+        const subfamilia = await subfamiliaRepository.findOneBy({ id: productoData.subfamiliaId });
+        if (subfamilia) {
+          producto.subfamilia = subfamilia;
+        }
+      }
+
+      // Actualizar receta si se proporciona
+      if (productoData.recetaId !== undefined) {
+        if (productoData.recetaId === null) {
+          producto.receta = undefined;
+        } else {
+          const recetaRepository = dataSource.getRepository(Receta);
+          const receta = await recetaRepository.findOneBy({ id: productoData.recetaId });
+          if (receta) {
+            producto.receta = receta;
+          }
+        }
+      }
+
+      await setEntityUserTracking(dataSource, producto, currentUser?.id, true);
+      const updatedProducto = await productoRepository.save(producto);
+      return { success: true, producto: updatedProducto };
     } catch (error) {
-      console.error(`Error updating producto ID ${id}:`, error);
+      console.error('Error updating producto:', error);
       throw error;
     }
   });
-
-  ipcMain.handle('deleteProducto', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(Producto);
-      const presentacionRepo = dataSource.getRepository(Presentacion);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Producto ID ${id} not found`);
-
-      // Attempt soft delete first by setting activo = false
-      entity.activo = false;
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      await repo.save(entity);
-      console.log(`Producto ID ${id} marked as inactive.`);
-
-      // Optionally: Consider also deactivating related Presentaciones
-       const presentaciones = await presentacionRepo.find({ where: { productoId: id, activo: true } });
-       for (const pres of presentaciones) {
-           pres.activo = false;
-           await setEntityUserTracking(dataSource, pres, currentUser?.id, true);
-           await presentacionRepo.save(pres);
-       }
-       console.log(`Marked ${presentaciones.length} related presentaciones as inactive for Producto ID ${id}.`);
-
-      return { success: true, deleted: false, deactivated: true }; // Indicate soft delete
-
-    } catch (error) {
-      console.error(`Error deactivating producto ID ${id}:`, error);
-      // Attempt hard delete only if soft delete fails and specifically allowed
-      // For now, just re-throw the error from the soft delete attempt
-      throw error;
-    }
-  });
-
 
   // --- Presentacion Handlers ---
-  ipcMain.handle('getPresentacionesByProducto', async (_event: any, productoId: number) => {
+  ipcMain.handle('get-presentaciones', async () => {
     try {
-      const repo = dataSource.getRepository(Presentacion);
-      return await repo.find({ where: { productoId }, order: { principal: 'DESC', descripcion: 'ASC' } });
+      const presentacionRepository = dataSource.getRepository(Presentacion);
+      const presentaciones = await presentacionRepository.find({
+        where: { activo: true },
+        relations: ['producto', 'codigosBarras', 'preciosVenta'],
+        order: { cantidad: 'ASC' }
+      });
+
+      // Calculate virtual properties for each presentacion
+      return presentaciones.map(presentacion => calculatePresentacionVirtualProps(presentacion));
+    } catch (error) {
+      console.error('Error getting presentaciones:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('get-presentaciones-by-producto', async (_event: any, productoId: number, page = 0, pageSize = 10, filtroActivo = 'activos') => {
+    try {
+      const presentacionRepository = dataSource.getRepository(Presentacion);
+
+      // Construir el where clause según el filtro
+      const whereClause: any = { producto: { id: productoId } };
+
+      if (filtroActivo === 'activos') {
+        whereClause.activo = true;
+      } else if (filtroActivo === 'inactivos') {
+        whereClause.activo = false;
+      }
+      // Si filtroActivo === 'todos', no agregamos filtro de activo
+
+      // Get total count
+      const total = await presentacionRepository.count({
+        where: whereClause
+      });
+
+      // Get paginated data
+      const presentaciones = await presentacionRepository.find({
+        where: whereClause,
+        relations: ['producto', 'codigosBarras', 'preciosVenta'],
+        order: { cantidad: 'ASC' },
+        skip: page * pageSize,
+        take: pageSize
+      });
+
+      // Calculate virtual properties for each presentacion
+      const presentacionesWithVirtualProps = presentaciones.map(presentacion =>
+        calculatePresentacionVirtualProps(presentacion)
+      );
+
+      return {
+        data: presentacionesWithVirtualProps,
+        total: total,
+        page: page,
+        pageSize: pageSize
+      };
     } catch (error) {
       console.error('Error getting presentaciones by producto:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('createPresentacion', async (_event: any, data: any) => {
+  ipcMain.handle('create-presentacion', async (_event: any, presentacionData: any) => {
     try {
-      const repo = dataSource.getRepository(Presentacion);
-      const entity = repo.create(data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
+      const presentacionRepository = dataSource.getRepository(Presentacion);
+      const productoRepository = dataSource.getRepository(Producto);
+      const currentUser = getCurrentUser();
+
+      const producto = await productoRepository.findOneBy({ id: presentacionData.productoId });
+      if (!producto) {
+        return { success: false, message: 'Producto not found' };
+      }
+
+      // Si la nueva presentación será principal, desmarcar todas las demás
+      if (presentacionData.principal) {
+        await presentacionRepository.update(
+          { producto: { id: presentacionData.productoId }, activo: true },
+          { principal: false }
+        );
+      }
+
+      const presentacion = presentacionRepository.create({
+        nombre: presentacionData.nombre,
+        cantidad: presentacionData.cantidad,
+        principal: presentacionData.principal,
+        producto: producto,
+        activo: presentacionData.activo !== undefined ? presentacionData.activo : true
+      });
+
+      await setEntityUserTracking(dataSource, presentacion, currentUser?.id, false);
+      const savedPresentacion = await presentacionRepository.save(presentacion);
+      return savedPresentacion;
     } catch (error) {
       console.error('Error creating presentacion:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('updatePresentacion', async (_event: any, id: number, data: any) => {
+  ipcMain.handle('update-presentacion', async (_event: any, presentacionId: number, presentacionData: any) => {
     try {
-      const repo = dataSource.getRepository(Presentacion);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Presentacion ID ${id} not found`);
-      repo.merge(entity, data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error(`Error updating presentacion ID ${id}:`, error);
-      throw error;
-    }
-  });
+      const presentacionRepository = dataSource.getRepository(Presentacion);
+      const currentUser = getCurrentUser();
 
-  ipcMain.handle('deletePresentacion', async (_event: any, id: number) => {
-    try {
-      // Get repositories
-      const presentacionRepo = dataSource.getRepository(Presentacion);
-      const precioVentaRepo = dataSource.getRepository(PrecioVenta);
-      const codigoRepo = dataSource.getRepository(Codigo);
-      const presentacionSaborRepo = dataSource.getRepository(PresentacionSabor);
-      const productoAdicionalRepo = dataSource.getRepository(ProductoAdicional);
-
-      // Find the presentacion
-      const entity = await presentacionRepo.findOneBy({ id });
-      if (!entity) throw new Error(`Presentacion ID ${id} not found`);
-
-      // Start a transaction to ensure atomicity
-      await dataSource.transaction(async transactionalEntityManager => {
-        console.log(`Starting cascade deletion for Presentacion ID ${id}`);
-        
-        // 1. Delete all related PrecioVenta records
-        const preciosVenta = await precioVentaRepo.find({ where: { presentacionId: id } });
-        if (preciosVenta.length > 0) {
-          console.log(`Deleting ${preciosVenta.length} related PrecioVenta records`);
-          await transactionalEntityManager.remove(preciosVenta);
-        }
-        
-        // 2. Delete all related Codigo records
-        const codigos = await codigoRepo.find({ where: { presentacionId: id } });
-        if (codigos.length > 0) {
-          console.log(`Deleting ${codigos.length} related Codigo records`);
-          await transactionalEntityManager.remove(codigos);
-        }
-        
-        // 3. Delete all related PresentacionSabor records
-        const presentacionSabores = await presentacionSaborRepo.find({ where: { presentacionId: id } });
-        if (presentacionSabores.length > 0) {
-          console.log(`Deleting ${presentacionSabores.length} related PresentacionSabor records`);
-          await transactionalEntityManager.remove(presentacionSabores);
-        }
-        
-        // 4. Delete all related ProductoAdicional records
-        const productosAdicionales = await productoAdicionalRepo.find({ where: { presentacionId: id } });
-        if (productosAdicionales.length > 0) {
-          console.log(`Deleting ${productosAdicionales.length} related ProductoAdicional records`);
-          await transactionalEntityManager.remove(productosAdicionales);
-        }
-        
-        // 5. Finally delete the Presentacion
-        console.log(`Deleting Presentacion ID ${id}`);
-        await transactionalEntityManager.remove(entity);
+      const presentacion = await presentacionRepository.findOne({
+        where: { id: presentacionId },
+        relations: ['producto']
       });
 
-      return { success: true, message: `Presentación eliminada correctamente junto con ${entity.id ? 1 : 0} registros relacionados` };
-    } catch (error) {
-      console.error(`Error deleting presentacion ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  // --- Codigo Handlers ---
-  ipcMain.handle('getCodigosByPresentacion', async (_event: any, presentacionId: number) => {
-    try {
-      const repo = dataSource.getRepository(Codigo);
-      return await repo.find({ where: { presentacionId }, order: { principal: 'DESC', codigo: 'ASC' } });
-    } catch (error) {
-      console.error('Error getting codigos by presentacion:', error);
-      throw error;
-    }
-  });
-
-  // alsos return presentacion.producto
-  ipcMain.handle('getCodigos', async () => {
-    try {
-      const repo = dataSource.getRepository(Codigo);
-      return await repo.find({ order: { principal: 'DESC', codigo: 'ASC' }, relations: ['presentacion', 'presentacion.producto'] });
-    } catch (error) {
-      console.error('Error getting codigos:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('createCodigo', async (_event: any, data: any) => {
-    try {
-      const repo = dataSource.getRepository(Codigo);
-      const entity = repo.create(data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error('Error creating codigo:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('updateCodigo', async (_event: any, id: number, data: any) => {
-    try {
-      const repo = dataSource.getRepository(Codigo);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Codigo ID ${id} not found`);
-      repo.merge(entity, data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error(`Error updating codigo ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('deleteCodigo', async (_event: any, id: number) => {
-    // Note: Hard delete.
-    try {
-      const repo = dataSource.getRepository(Codigo);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Codigo ID ${id} not found`);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      return await repo.remove(entity);
-    } catch (error) {
-      console.error(`Error deleting codigo ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  // --- Sabor Handlers ---
-  ipcMain.handle('getSabores', async () => {
-    try {
-      const repo = dataSource.getRepository(Sabor);
-      return await repo.find({ order: { nombre: 'ASC' } });
-    } catch (error) {
-      console.error('Error getting sabores:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getSabor', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(Sabor);
-      return await repo.findOneBy({ id });
-    } catch (error) {
-      console.error(`Error getting sabor ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('createSabor', async (_event: any, data: any) => {
-    try {
-      const repo = dataSource.getRepository(Sabor);
-      const entity = repo.create(data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error('Error creating sabor:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('updateSabor', async (_event: any, id: number, data: any) => {
-    try {
-      const repo = dataSource.getRepository(Sabor);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Sabor ID ${id} not found`);
-      repo.merge(entity, data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error(`Error updating sabor ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('deleteSabor', async (_event: any, id: number) => {
-    // Note: Hard delete.
-    try {
-      const repo = dataSource.getRepository(Sabor);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Sabor ID ${id} not found`);
-       // Add dependency checks (PresentacionSabor)
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      return await repo.remove(entity);
-    } catch (error) {
-      console.error(`Error deleting sabor ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  // --- PresentacionSabor Handlers ---
-  ipcMain.handle('getPresentacionSaboresByPresentacion', async (_event: any, presentacionId: number) => {
-    try {
-      const repo = dataSource.getRepository(PresentacionSabor);
-      return await repo.find({ where: { presentacionId }, relations: ['sabor', 'receta', 'variacion'], order: { id: 'ASC' } });
-    } catch (error) {
-      console.error(`Error getting presentacion sabores for presentacion ID ${presentacionId}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getPresentacionSabor', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(PresentacionSabor);
-      return await repo.findOneBy({ id });
-    } catch (error) {
-      console.error(`Error getting presentacion sabor ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('createPresentacionSabor', async (_event: any, data: any) => {
-    try {
-      const repo = dataSource.getRepository(PresentacionSabor);
-      const entity = repo.create(data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error('Error creating presentacion sabor:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('updatePresentacionSabor', async (_event: any, id: number, data: any) => {
-    try {
-      const repo = dataSource.getRepository(PresentacionSabor);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`PresentacionSabor ID ${id} not found`);
-      repo.merge(entity, data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error(`Error updating presentacion sabor ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('deletePresentacionSabor', async (_event: any, id: number) => {
-    // Note: Hard delete.
-    try {
-      const repo = dataSource.getRepository(PresentacionSabor);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`PresentacionSabor ID ${id} not found`);
-       // Add dependency checks (e.g., PrecioVenta specific to sabor)
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      return await repo.remove(entity);
-    } catch (error) {
-      console.error(`Error deleting presentacion sabor ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  // --- Receta Handlers ---
-  ipcMain.handle('getRecetas', async () => {
-    try {
-      const repo = dataSource.getRepository(Receta);
-      return await repo.find({ order: { nombre: 'ASC' } });
-    } catch (error) {
-      console.error('Error getting recetas:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getReceta', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(Receta);
-      return await repo.findOneBy({ id });
-    } catch (error) {
-      console.error(`Error getting receta ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('createReceta', async (_event: any, data: any) => {
-    try {
-      const repo = dataSource.getRepository(Receta);
-      const entity = repo.create(data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error('Error creating receta:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('updateReceta', async (_event: any, id: number, data: any) => {
-    try {
-      const repo = dataSource.getRepository(Receta);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Receta ID ${id} not found`);
-      repo.merge(entity, data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error(`Error updating receta ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('deleteReceta', async (_event: any, id: number) => {
-    // Note: Hard delete.
-    try {
-      const repo = dataSource.getRepository(Receta);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Receta ID ${id} not found`);
-      return await repo.remove(entity);
-    } catch (error) {
-      console.error(`Error deleting receta ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  // --- RecetaItem Handlers ---
-  ipcMain.handle('getRecetaItems', async (_event: any, recetaId: number) => {
-    try {
-      const repo = dataSource.getRepository(RecetaItem);
-      return await repo.find({ where: { recetaId }, relations: ['ingrediente'], order: { id: 'ASC' } });
-    } catch (error) {
-      console.error(`Error getting receta items for receta ID ${recetaId}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getRecetaItem', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(RecetaItem);
-      return await repo.findOne({ where: { id }, relations: ['ingrediente'] }); // Include relation
-    } catch (error) {
-      console.error(`Error getting receta item ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('createRecetaItem', async (_event: any, data: any) => {
-    try {
-      const repo = dataSource.getRepository(RecetaItem);
-      const entity = repo.create(data);
-      // No user tracking on items usually, but can be added if needed
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error('Error creating receta item:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('updateRecetaItem', async (_event: any, id: number, data: any) => {
-    try {
-      const repo = dataSource.getRepository(RecetaItem);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`RecetaItem ID ${id} not found`);
-      repo.merge(entity, data);
-      // No user tracking on items usually
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error(`Error updating receta item ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('deleteRecetaItem', async (_event: any, id: number) => {
-    // Note: Hard delete.
-    try {
-      const repo = dataSource.getRepository(RecetaItem);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`RecetaItem ID ${id} not found`);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      return await repo.remove(entity);
-    } catch (error) {
-      console.error(`Error deleting receta item ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  // --- Ingrediente Handlers ---
-  ipcMain.handle('getIngredientes', async () => {
-    try {
-      const repo = dataSource.getRepository(Ingrediente);
-      return await repo.find({ order: { descripcion: 'ASC' } });
-    } catch (error) {
-      console.error('Error getting ingredientes:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getIngrediente', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(Ingrediente);
-      return await repo.findOneBy({ id });
-    } catch (error) {
-      console.error(`Error getting ingrediente ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('createIngrediente', async (_event: any, data: any) => {
-    try {
-      const repo = dataSource.getRepository(Ingrediente);
-      const entity = repo.create(data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error('Error creating ingrediente:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('updateIngrediente', async (_event: any, id: number, data: any) => {
-    try {
-      const repo = dataSource.getRepository(Ingrediente);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Ingrediente ID ${id} not found`);
-      repo.merge(entity, data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error(`Error updating ingrediente ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('deleteIngrediente', async (_event: any, id: number) => {
-    // Note: Hard delete. Consider soft delete.
-    try {
-      const repo = dataSource.getRepository(Ingrediente);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Ingrediente ID ${id} not found`);
-       // Add dependency checks (RecetaItem, RecetaVariacionItem, CompraDetalle etc.)
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      return await repo.remove(entity);
-    } catch (error) {
-      console.error(`Error deleting ingrediente ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('searchIngredientesByDescripcion', async (_event: IpcMainInvokeEvent, searchText: string) => {
-    try {
-      const repo = dataSource.getRepository(Ingrediente);
-      if (!searchText || searchText.trim() === '') {
-        return await repo.find({ order: { descripcion: 'ASC' }, take: 10 });
-      }
-      return await repo.createQueryBuilder('ingrediente')
-        .where('LOWER(ingrediente.descripcion) LIKE LOWER(:searchText)', { searchText: `%${searchText}%` })
-        .orWhere('CAST(ingrediente.id AS TEXT) LIKE :searchText', { searchText: `%${searchText}%` })
-        .orderBy('ingrediente.descripcion', 'ASC')
-        .getMany();
-    } catch (error) {
-      console.error('Error searching ingredientes:', error);
-      throw error;
-    }
-  });
-
-  // Search ingredientes directly from database
-  ipcMain.handle('searchIngredientes', async (_event: IpcMainInvokeEvent, query: string) => {
-    try {
-      const ingredienteRepo = dataSource.getRepository(Ingrediente);
-      const ingredients = await ingredienteRepo.createQueryBuilder('ingrediente')
-        .where('LOWER(ingrediente.descripcion) LIKE LOWER(:query)', { query: `%${query}%` })
-        .andWhere('ingrediente.activo = :activo', { activo: true })
-        .orderBy('ingrediente.descripcion', 'ASC')
-        .take(50)
-        .getMany();
-      
-      return ingredients;
-    } catch (error) {
-      console.error('Error searching ingredientes:', error);
-      return [];
-    }
-  });
-  
-  // Search recetas directly from database
-  ipcMain.handle('searchRecetasByNombre', async (_event: IpcMainInvokeEvent, query: string) => {
-    try {
-      const recetaRepo = dataSource.getRepository(Receta);
-      const recetas = await recetaRepo.createQueryBuilder('receta')
-        .where('LOWER(receta.nombre) LIKE LOWER(:query)', { query: `%${query}%` })
-        .andWhere('receta.activo = :activo', { activo: true })
-        .orderBy('receta.nombre', 'ASC')
-        .take(50)
-        .getMany();
-      
-      return recetas;
-    } catch (error) {
-      console.error('Error searching recetas:', error);
-      return [];
-    }
-  });
-
-  async function getRecetaVariacionCosto(variacionId: number) {
-    // remove all console.log
-    try {
-      const repoRecetaVariacion = dataSource.getRepository(RecetaVariacion);
-      const repoRecetaVariacionItem = dataSource.getRepository(RecetaVariacionItem);
-      const repoMoneda = dataSource.getRepository(Moneda);
-      const repoMonedaCambio = dataSource.getRepository(MonedaCambio);
-      const variacion = await repoRecetaVariacion.findOneBy({ id: variacionId });
-      // to find costo, we need to find all receta variacionItems.ingrediente, and then get the costo from the ingrediente
-      const variacionItems = await repoRecetaVariacionItem.find({ where: { variacionId: variacionId }, relations: ['ingrediente'] });
-      const costo = variacionItems.reduce((acc, item) => acc + item.ingrediente.costo, 0);
-      // each ingrediente can has different moneda, so we need to get the costo in moneda principal using moneda cambio
-      // first get the moneda principal
-      const monedaPrincipal = await repoMoneda.findOneBy({ principal: true });
-      if (!monedaPrincipal) throw new Error('Moneda principal not found');
-      // if monedaPrincipal is same as ingrediente.monedaId, sum the costo in a variable
-      let costoEnMonedaPrincipal = 0;
-      for (const item of variacionItems) {
-        if (item.ingrediente.monedaId === monedaPrincipal.id) {
-          costoEnMonedaPrincipal += item.ingrediente.costo * item.cantidad;
-        } else {
-          // if monedaPrincipal is not same as ingrediente.monedaId, we need to convert the costo to the moneda principal using moneda cambio
-          const monedaCambio = await repoMonedaCambio.findOne({ where: { monedaOrigen: { id: monedaPrincipal.id }, monedaDestino: { id: item.ingrediente.monedaId } } });
-          if (!monedaCambio) throw new Error('Moneda cambio not found');
-          costoEnMonedaPrincipal += item.ingrediente.costo * item.cantidad * monedaCambio.compraOficial;
-        }
-      }
-      return costoEnMonedaPrincipal;
-    } catch (error) {
-      console.error(`Error getting receta variacion costo for ID ${variacionId}:`, error);
-      throw error;
-    }
-  }
-
-  // --- RecetaVariacion Handlers ---
-  ipcMain.handle('getRecetaVariaciones', async (_event: any, recetaId: number) => {
-    try {
-      const repo = dataSource.getRepository(RecetaVariacion);
-      const variaciones = await repo.find({ where: { recetaId }, relations: ['receta'], order: { nombre: 'ASC' } });
-      // before returning, lets find costo based on the recetavariacionitem.ingrediente.costo
-      for (const variacion of variaciones) {
-        variacion.costo = await getRecetaVariacionCosto(variacion.id);
-      }
-      return variaciones;
-    } catch (error) {
-      console.error(`Error getting variations for recipe ID ${recetaId}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getRecetaVariacion', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(RecetaVariacion);
-      const variacion = await repo.findOne({ where: { id }, relations: ['receta'] });
-      if (!variacion) throw new Error(`RecetaVariacion ID ${id} not found`);
-      variacion.costo = await getRecetaVariacionCosto(variacion.id);
-      return variacion;
-    } catch (error) {
-      console.error(`Error getting variation ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('createRecetaVariacion', async (_event: any, data: any) => {
-    try {
-      const repo = dataSource.getRepository(RecetaVariacion);
-      const entity = repo.create(data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error('Error creating recipe variation:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('updateRecetaVariacion', async (_event: any, id: number, data: any) => {
-    try {
-      const repo = dataSource.getRepository(RecetaVariacion);
-      const entity = await repo.findOne({ where: { id }, relations: ['receta'] });
-      if (!entity) throw new Error(`RecetaVariacion ID ${id} not found`);
-      repo.merge(entity, data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error(`Error updating recipe variation ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('deleteRecetaVariacion', async (_event: any, id: number) => {
-    // Note: Hard delete.
-    try {
-      const repo = dataSource.getRepository(RecetaVariacion);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`RecetaVariacion ID ${id} not found`);
-      return await repo.remove(entity);
-    } catch (error) {
-      console.error(`Error deleting recipe variation ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getRecetaVariacionCosto', async (_event: any, variacionId: number) => {
-    try {
-      return await getRecetaVariacionCosto(variacionId);
-    } catch (error) {
-      console.error(`Error getting recipe variation cost for ID ${variacionId}:`, error);
-      throw error;
-    }
-  });
-  
-
-
-  // --- RecetaVariacionItem Handlers ---
-  ipcMain.handle('getRecetaVariacionItems', async (_event: any, variacionId: number) => {
-    try {
-      const repo = dataSource.getRepository(RecetaVariacionItem);
-      return await repo.find({ where: { variacionId }, relations: ['ingrediente', 'ingrediente.moneda'] });
-    } catch (error) {
-      console.error(`Error getting items for recipe variation ID ${variacionId}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getRecetaVariacionItem', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(RecetaVariacionItem);
-      return await repo.findOne({ where: { id }, relations: ['ingrediente', 'ingrediente.moneda'] }); // Include relation
-    } catch (error) {
-      console.error(`Error getting recipe variation item ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('createRecetaVariacionItem', async (_event: any, data: any) => {
-    try {
-      const repo = dataSource.getRepository(RecetaVariacionItem);
-      const entity = repo.create(data);
-      // No user tracking on items usually
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error('Error creating recipe variation item:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('updateRecetaVariacionItem', async (_event: any, id: number, data: any) => {
-    try {
-      const repo = dataSource.getRepository(RecetaVariacionItem);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`RecetaVariacionItem ID ${id} not found`);
-      repo.merge(entity, data);
-      // No user tracking on items usually
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error(`Error updating recipe variation item ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('deleteRecetaVariacionItem', async (_event: any, id: number) => {
-    // Note: Hard delete.
-    try {
-      const repo = dataSource.getRepository(RecetaVariacionItem);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`RecetaVariacionItem ID ${id} not found`);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      return await repo.remove(entity);
-    } catch (error) {
-      console.error(`Error deleting recipe variation item ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  // --- MovimientoStock Handlers ---
-  ipcMain.handle('getMovimientosStock', async () => {
-    try {
-      const repo = dataSource.getRepository(MovimientoStock);
-      return await repo.find({ 
-        relations: ['producto', 'ingrediente'],
-        where: { activo: true }, 
-        order: { createdAt: 'DESC' } 
-      });
-    } catch (error) {
-      console.error('Error getting movimientos stock:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getMovimientoStock', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(MovimientoStock);
-      return await repo.findOne({ 
-        where: { id }, 
-        relations: ['producto', 'ingrediente'] 
-      });
-    } catch (error) {
-      console.error(`Error getting movimiento stock ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getMovimientosStockByProducto', async (_event: any, productoId: number) => {
-    try {
-      const repo = dataSource.getRepository(MovimientoStock);
-      return await repo.find({ 
-        where: { productoId, activo: true }, 
-        order: { createdAt: 'DESC' } 
-      });
-    } catch (error) {
-      console.error(`Error getting movimientos stock for producto ID ${productoId}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getMovimientosStockByIngrediente', async (_event: any, ingredienteId: number) => {
-    try {
-      const repo = dataSource.getRepository(MovimientoStock);
-      return await repo.find({ 
-        where: { ingredienteId, activo: true }, 
-        order: { createdAt: 'DESC' } 
-      });
-    } catch (error) {
-      console.error(`Error getting movimientos stock for ingrediente ID ${ingredienteId}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getMovimientosStockByTipoReferencia', async (_event: any, tipoReferencia: TipoReferencia) => {
-    try {
-      const repo = dataSource.getRepository(MovimientoStock);
-      return await repo.find({ 
-        where: { tipoReferencia, activo: true }, 
-        relations: ['producto', 'ingrediente'],
-        order: { createdAt: 'DESC' } 
-      });
-    } catch (error) {
-      console.error(`Error getting movimientos stock for tipo referencia ${tipoReferencia}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getMovimientosStockByReferenciaAndTipo', async (_event: any, referencia: number, tipoReferencia: TipoReferencia) => {
-    try {
-      const repo = dataSource.getRepository(MovimientoStock);
-      return await repo.find({ 
-        where: { 
-          referencia, 
-          tipoReferencia,
-          activo: true
-        }, 
-        relations: ['producto', 'ingrediente'],
-        order: { createdAt: 'DESC' } 
-      });
-    } catch (error) {
-      console.error(`Error getting movimientos stock for referencia ${referencia} and tipo ${tipoReferencia}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getCurrentStockByProducto', async (_event: any, productoId: number) => {
-    try {
-      const repo = dataSource.getRepository(MovimientoStock);
-      // Get the most recent active stock movement for this product
-      const movimiento = await repo.findOne({
-        where: { productoId, activo: true },
-        order: { createdAt: 'DESC' }
-      });
-      return movimiento || { cantidadActual: 0 };
-    } catch (error) {
-      console.error(`Error getting current stock for producto ID ${productoId}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getCurrentStockByIngrediente', async (_event: any, ingredienteId: number) => {
-    try {
-      const repo = dataSource.getRepository(MovimientoStock);
-      // Get the most recent active stock movement for this ingredient
-      const movimiento = await repo.findOne({
-        where: { ingredienteId, activo: true },
-        order: { createdAt: 'DESC' }
-      });
-      return movimiento || { cantidadActual: 0 };
-    } catch (error) {
-      console.error(`Error getting current stock for ingrediente ID ${ingredienteId}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('createMovimientoStock', async (_event: any, data: any) => {
-    try {
-      const repo = dataSource.getRepository(MovimientoStock);
-      const entity = repo.create(data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error('Error creating movimiento stock:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('updateMovimientoStock', async (_event: any, id: number, data: any) => {
-    try {
-      const repo = dataSource.getRepository(MovimientoStock);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`MovimientoStock ID ${id} not found`);
-      repo.merge(entity, data);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error(`Error updating movimiento stock ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('deleteMovimientoStock', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(MovimientoStock);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`MovimientoStock ID ${id} not found`);
-      
-      // Attempt soft delete by setting activo = false
-      entity.activo = false;
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      await repo.save(entity);
-      console.log(`MovimientoStock ID ${id} marked as inactive.`);
-      
-      return { success: true, deactivated: true };
-    } catch (error) {
-      console.error(`Error deactivating movimiento stock ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  // --- PrecioVenta Handlers ---
-  ipcMain.handle('getPreciosVenta', async (_event: any, active: boolean) => {
-    try {
-      const repo = dataSource.getRepository(PrecioVenta);
-      return await repo.find({ where: { activo: active } });
-    } catch (error) {
-      console.error('Error getting precios venta:', error);
-      throw error;
-    }
-  }); 
-
-  ipcMain.handle('getPrecioVenta', async (_event: any, id: number, active: boolean) => {
-    try {
-      const repo = dataSource.getRepository(PrecioVenta);
-      return await repo.findOne({ where: { id, activo: active } });
-    } catch (error) {
-      console.error('Error getting precio venta:', error);
-      throw error;
-    }   
-  });
-
-  ipcMain.handle('getPreciosVentaByPresentacion', async (_event: any, presentacionId: number, active: boolean) => {
-    try {
-      const repo = dataSource.getRepository(PrecioVenta);
-      const preciosVenta = await repo.find({ where: { presentacionId, activo: active }, relations: ['moneda', 'tipoPrecio'] });
-      
-      // Get the principal moneda
-      const monedaRepo = dataSource.getRepository(Moneda);
-      const monedaPrincipal = await monedaRepo.findOneBy({ principal: true });
-      
-      if (monedaPrincipal) {
-        // Get all exchange rates
-        const monedaCambioRepo = dataSource.getRepository(MonedaCambio);
-        const monedasCambio = await monedaCambioRepo.find({ 
-          relations: ['monedaOrigen', 'monedaDestino'],
-          where: { activo: true } 
-        });
-        
-        // Calculate valorMonedaPrincipal for each PrecioVenta
-        for (const precioVenta of preciosVenta) {
-          if (precioVenta.monedaId === monedaPrincipal.id) {
-            // If the moneda is already the principal one, use the original value
-            precioVenta.valorMonedaPrincipal = precioVenta.valor;
-          } else {
-            // Find the exchange rate from this moneda to the principal moneda
-            const cambio = monedasCambio.find(
-              c => c.monedaOrigen && c.monedaDestino && 
-                   c.monedaDestino.id === precioVenta.monedaId && 
-                   c.monedaOrigen.id === monedaPrincipal.id
-            );
-            
-            if (cambio && cambio.compraOficial) {
-              // Use compraOficial to calculate the equivalent in principal currency
-              precioVenta.valorMonedaPrincipal = precioVenta.valor * cambio.compraOficial;
-            }
-          }
-        }
-      }
-      
-      return preciosVenta;
-    } catch (error) {
-      console.error('Error getting precios venta por presentacion:', error);
-      throw error;
-    }
-  });
-  
-  ipcMain.handle('getPreciosVentaByPresentacionSabor', async (_event: any, presentacionSaborId: number, active: boolean) => {
-    try {
-      const repo = dataSource.getRepository(PrecioVenta);
-      const preciosVenta = await repo.find({ 
-        where: { presentacionSaborId, activo: active },
-        relations: ['moneda', 'tipoPrecio'] 
-      });
-      
-      // Get the principal moneda
-      const monedaRepo = dataSource.getRepository(Moneda);
-      const monedaPrincipal = await monedaRepo.findOneBy({ principal: true });
-      
-      if (monedaPrincipal) {
-        // Get all exchange rates
-        const monedaCambioRepo = dataSource.getRepository(MonedaCambio);
-        const monedasCambio = await monedaCambioRepo.find({ 
-          relations: ['monedaOrigen', 'monedaDestino'],
-          where: { activo: true } 
-        });
-        
-        // Calculate valorMonedaPrincipal for each PrecioVenta
-        for (const precioVenta of preciosVenta) {
-          if (precioVenta.monedaId === monedaPrincipal.id) {
-            // If the moneda is already the principal one, use the original value
-            precioVenta.valorMonedaPrincipal = precioVenta.valor;
-          } else {
-            // Find the exchange rate from this moneda to the principal moneda
-            const cambio = monedasCambio.find(
-              c => c.monedaOrigen && c.monedaDestino && 
-                   c.monedaDestino.id === precioVenta.monedaId && 
-                   c.monedaOrigen.id === monedaPrincipal.id
-            );
-            
-            if (cambio && cambio.compraOficial) {
-              // Use compraOficial to calculate the equivalent in principal currency
-              precioVenta.valorMonedaPrincipal = precioVenta.valor * cambio.compraOficial;
-            }
-          }
-        }
-      }
-      
-      return preciosVenta;
-    } catch (error) {
-      console.error('Error getting precios venta por presentacion sabor:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('createPrecioVenta', async (_event: any, data: any) => {
-    try {
-      const repo = dataSource.getRepository(PrecioVenta);
-      const entity = repo.create(data);
-      // No user tracking needed usually for prices
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error('Error creating precio venta:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('updatePrecioVenta', async (_event: any, id: number, data: any) => {
-    try {
-      const repo = dataSource.getRepository(PrecioVenta);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`PrecioVenta ID ${id} not found`);
-      repo.merge(entity, data);
-      // No user tracking needed usually
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error(`Error updating precio venta ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('deletePrecioVenta', async (_event: any, id: number) => {
-    // Note: Hard delete.
-    try {
-      const repo = dataSource.getRepository(PrecioVenta);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`PrecioVenta ID ${id} not found`);
-      const currentUser = getCurrentUser(); // Get current user at time of call
-      return await repo.remove(entity);
-    } catch (error) {
-      console.error(`Error deleting precio venta ID ${id}:`, error);
-      throw error;
-    }
-  });
-  
-  // --- Search Handlers ---
-  ipcMain.handle('searchProductos', async (_event: any, params: { 
-    searchTerm: string, 
-    page: number, 
-    pageSize: number,
-    exactMatch?: boolean
-  }) => {
-    try {
-      // Add more detailed logging to help debug issues
-      console.log('searchProductos called with params:', JSON.stringify(params));
-      
-      if (!params || typeof params !== 'object') {
-        console.error('Invalid params received:', params);
-        return { items: [], total: 0 };
-      }
-      
-      // Ensure params object exists and has default values
-      const page = Number(params.page || 1);
-      const pageSize = Number(params.pageSize || 10);
-      const exactMatch = Boolean(params.exactMatch || false);
-      
-      // Ensure searchTerm is a string and log what type we received
-      console.log('searchTerm type:', typeof params.searchTerm);
-      const searchTerm = typeof params.searchTerm === 'string' ? params.searchTerm : String(params.searchTerm || '');
-      const skip = (page - 1) * pageSize;
-      
-      // Only uppercase if it's a non-empty string
-      const searchTermUpper = searchTerm ? searchTerm.toUpperCase() : '';
-      
-      console.log('Using searchTerm:', searchTerm, 'Uppercase:', searchTermUpper);
-      
-      if (!searchTerm || searchTerm.trim() === '') {
-        console.log('Empty search term, returning empty results');
-        return { items: [], total: 0 };
+      if (!presentacion) {
+        return { success: false, message: 'Presentacion not found' };
       }
 
-      // First try to find an exact match by código if exactMatch is true
-      if (exactMatch) {
-        const codigoRepo = dataSource.getRepository(Codigo);
-        const matchingCodigos = await codigoRepo.find({
-          where: { 
-            codigo: searchTermUpper,
-            activo: true 
-          },
-          relations: ['presentacion', 'presentacion.producto']
-        });
-
-        if (matchingCodigos.length > 0) {
-          // Map to a unique list of products from the codes
-          const productos = matchingCodigos
-            .map(codigo => codigo.presentacion.producto)
-            .filter((producto, index, self) => 
-              producto.activo && 
-              index === self.findIndex(p => p.id === producto.id)
-            );
-
-          // Get total count
-          const total = productos.length;
-          
-          // Apply pagination manually since we're working with in-memory results
-          const paginatedProductos = productos.slice(skip, skip + pageSize);
-          
-          // Enrich each product with principal data
-          for (const producto of paginatedProductos) {
-            await enrichProductWithPrincipalData(producto);
-          }
-          
-          return { 
-            items: paginatedProductos, 
-            total,
-            exactMatch: true
-          };
-        }
+      // Si se está marcando como principal, desmarcar todas las demás del mismo producto
+      if (presentacionData.principal && !presentacion.principal) {
+        await presentacionRepository.update(
+          { producto: { id: presentacion.producto.id }, activo: true },
+          { principal: false }
+        );
       }
-      
-      // If no exact codigo match or exactMatch is false, search by name
-      const productoRepo = dataSource.getRepository(Producto);
-      
-      // Create query builder for more flexible querying
-      const queryBuilder = productoRepo.createQueryBuilder('producto')
-        .leftJoinAndSelect('producto.subcategoria', 'subcategoria')
-        .leftJoinAndSelect('subcategoria.categoria', 'categoria')
-        .where('producto.activo = :activo', { activo: true })
-        .andWhere(
-          '(UPPER(producto.nombre) LIKE :searchTerm OR UPPER(producto.nombreAlternativo) LIKE :searchTerm)',
-          { searchTerm: `%${searchTermUpper}%` }
-        )
-        .orderBy('producto.nombre', 'ASC');
-      
-      // Get total count for pagination
-      const total = await queryBuilder.getCount();
-      
-      // Apply pagination
-      const productos = await queryBuilder
-        .skip(skip)
-        .take(pageSize)
-        .getMany();
-      
-      // Enrich each product with principal data
-      for (const producto of productos) {
-        await enrichProductWithPrincipalData(producto);
+
+      // Actualizar solo los campos permitidos
+      if (presentacionData.nombre !== undefined) {
+        presentacion.nombre = presentacionData.nombre;
       }
-      
-      return { 
-        items: productos, 
-        total,
-        exactMatch: false
+      if (presentacionData.cantidad !== undefined) {
+        presentacion.cantidad = presentacionData.cantidad;
+      }
+      if (presentacionData.principal !== undefined) {
+        presentacion.principal = presentacionData.principal;
+      }
+      if (presentacionData.activo !== undefined) {
+        presentacion.activo = presentacionData.activo;
+      }
+
+      await setEntityUserTracking(dataSource, presentacion, currentUser?.id, true);
+      const updatedPresentacion = await presentacionRepository.save(presentacion);
+      return updatedPresentacion;
+    } catch (error) {
+      console.error('Error updating presentacion:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('set-presentacion-principal', async (_event: any, presentacionId: number) => {
+    try {
+      const presentacionRepository = dataSource.getRepository(Presentacion);
+      const currentUser = getCurrentUser();
+
+      // Obtener la presentación que se quiere marcar como principal
+      const presentacion = await presentacionRepository.findOne({
+        where: { id: presentacionId },
+        relations: ['producto']
+      });
+
+      if (!presentacion) {
+        return { success: false, message: 'Presentacion not found' };
+      }
+
+      // Verificar que la presentación esté activa
+      if (!presentacion.activo) {
+        return { success: false, message: 'No se puede marcar como principal una presentación inactiva' };
+      }
+
+      // Desmarcar todas las presentaciones del mismo producto como principales
+      await presentacionRepository.update(
+        { producto: { id: presentacion.producto.id }, activo: true },
+        { principal: false }
+      );
+
+      // Marcar la presentación seleccionada como principal
+      presentacion.principal = true;
+      await setEntityUserTracking(dataSource, presentacion, currentUser?.id, true);
+      const updatedPresentacion = await presentacionRepository.save(presentacion);
+
+      return {
+        success: true,
+        presentacion: updatedPresentacion,
+        message: `"${presentacion.nombre}" marcada como presentación principal`
       };
     } catch (error) {
-      console.error('Error searching productos:', error);
+      console.error('Error setting presentacion as principal:', error);
       throw error;
     }
   });
 
-  // Also add a handler to search by codigo only (for barcode scanning)
-  ipcMain.handle('searchProductosByCode', async (_event: any, code: string) => {
+  ipcMain.handle('toggle-presentacion-activo', async (_event: any, presentacionId: number) => {
     try {
-      // Log what we received to help debug
-      if (code === undefined || code === null) {
-        console.warn('searchProductosByCode received null/undefined code');
-        return null;
-      }
-      
-      // Ensure code is a string
-      const searchCode = typeof code === 'string' ? code : String(code || '');
-      
-      if (!searchCode || searchCode.trim() === '') {
-        return null;
-      }
+      const presentacionRepository = dataSource.getRepository(Presentacion);
+      const currentUser = getCurrentUser();
 
-      const codigoRepo = dataSource.getRepository(Codigo);
-      const matchingCodigo = await codigoRepo.findOne({
-        where: { 
-          codigo: searchCode.toUpperCase(),
-          activo: true 
-        },
-        relations: ['presentacion', 'presentacion.producto']
+      // Obtener la presentación
+      const presentacion = await presentacionRepository.findOne({
+        where: { id: presentacionId },
+        relations: ['producto']
       });
 
-      if (matchingCodigo && matchingCodigo.presentacion.producto.activo) {
-        const producto = matchingCodigo.presentacion.producto;
-        await enrichPresentacionWithPrincipalData(matchingCodigo.presentacion);
-        // await enrichProductWithPrincipalData(producto);
-        return { 
-          product: producto, 
-          presentacion: matchingCodigo.presentacion 
+      if (!presentacion) {
+        return { success: false, message: 'Presentacion not found' };
+      }
+
+      // Verificar que no se esté intentando desactivar la presentación principal
+      if (presentacion.principal && presentacion.activo) {
+        return {
+          success: false,
+          message: 'No se puede desactivar la presentación principal. Primero debe marcar otra presentación como principal.'
         };
       }
-      
-      return null;
+
+      // Cambiar el estado activo
+      const nuevoEstado = !presentacion.activo;
+      presentacion.activo = nuevoEstado;
+
+      // Si se está activando y es la única presentación activa, marcarla como principal
+      if (nuevoEstado) {
+        const presentacionesActivas = await presentacionRepository.count({
+          where: { producto: { id: presentacion.producto.id }, activo: true }
+        });
+
+        if (presentacionesActivas === 0) {
+          presentacion.principal = true;
+        }
+      }
+
+      await setEntityUserTracking(dataSource, presentacion, currentUser?.id, true);
+      const updatedPresentacion = await presentacionRepository.save(presentacion);
+
+      const estadoTexto = nuevoEstado ? 'activada' : 'desactivada';
+      return {
+        success: true,
+        presentacion: updatedPresentacion,
+        message: `Presentación "${presentacion.nombre}" ${estadoTexto}`
+      };
     } catch (error) {
-      console.error('Error searching producto by code:', error);
+      console.error('Error toggling presentacion activo:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('get-presentacion', async (_event: any, presentacionId: number) => {
+    try {
+      const presentacionRepository = dataSource.getRepository(Presentacion);
+      const presentacion = await presentacionRepository.findOne({
+        where: { id: presentacionId },
+        relations: ['producto', 'codigosBarras', 'preciosVenta']
+      });
+
+      if (!presentacion) {
+        return { success: false, message: 'Presentacion not found' };
+      }
+
+      // Calculate virtual properties for the presentacion
+      const presentacionWithVirtualProps = calculatePresentacionVirtualProps(presentacion);
+      return { success: true, presentacion: presentacionWithVirtualProps };
+    } catch (error) {
+      console.error('Error getting presentacion:', error);
+      throw error;
+    }
+  });
+
+  // --- Codigo Barra Handlers ---
+  ipcMain.handle('create-codigo-barra', async (_event: any, codigoBarraData: any) => {
+    try {
+      console.log('Creating codigo barra with data:', codigoBarraData);
+
+      const codigoBarraRepository = dataSource.getRepository(CodigoBarra);
+      const presentacionRepository = dataSource.getRepository(Presentacion);
+      const currentUser = getCurrentUser();
+
+      const presentacion = await presentacionRepository.findOneBy({ id: codigoBarraData.presentacionId });
+      if (!presentacion) {
+        return { success: false, message: 'Presentacion not found' };
+      }
+
+      // If this is marked as principal, unmark other codes as principal
+      if (codigoBarraData.principal) {
+        console.log('Marking as principal, unmarking others...');
+        await codigoBarraRepository.update(
+          { presentacion: { id: codigoBarraData.presentacionId }, principal: true },
+          { principal: false }
+        );
+      }
+
+      const codigoBarra = codigoBarraRepository.create({
+        codigo: codigoBarraData.codigo,
+        presentacion: presentacion,
+        principal: codigoBarraData.principal !== undefined ? codigoBarraData.principal : false,
+        activo: codigoBarraData.activo !== undefined ? codigoBarraData.activo : true
+      });
+
+      console.log('Created codigo barra entity:', codigoBarra);
+
+      await setEntityUserTracking(dataSource, codigoBarra, currentUser?.id, false);
+      const savedCodigoBarra = await codigoBarraRepository.save(codigoBarra);
+
+      console.log('Saved codigo barra:', savedCodigoBarra);
+      return savedCodigoBarra;
+    } catch (error) {
+      console.error('Error creating codigo barra:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('update-codigo-barra', async (_event: any, codigoBarraId: number, codigoBarraData: any) => {
+    try {
+      const codigoBarraRepository = dataSource.getRepository(CodigoBarra);
+      const currentUser = getCurrentUser();
+
+      const codigoBarra = await codigoBarraRepository.findOne({
+        where: { id: codigoBarraId },
+        relations: ['presentacion']
+      });
+
+      if (!codigoBarra) {
+        return { success: false, message: 'Codigo barra not found' };
+      }
+
+      // If this is being marked as principal, unmark other codes as principal
+      if (codigoBarraData.principal && !codigoBarra.principal) {
+        await codigoBarraRepository.update(
+          { presentacion: { id: codigoBarra.presentacion.id }, principal: true },
+          { principal: false }
+        );
+      }
+
+      // Update fields
+      if (codigoBarraData.codigo !== undefined) {
+        codigoBarra.codigo = codigoBarraData.codigo;
+      }
+      if (codigoBarraData.principal !== undefined) {
+        codigoBarra.principal = codigoBarraData.principal;
+      }
+      if (codigoBarraData.activo !== undefined) {
+        codigoBarra.activo = codigoBarraData.activo;
+      }
+
+      await setEntityUserTracking(dataSource, codigoBarra, currentUser?.id, true);
+      const updatedCodigoBarra = await codigoBarraRepository.save(codigoBarra);
+      return updatedCodigoBarra;
+    } catch (error) {
+      console.error('Error updating codigo barra:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('delete-codigo-barra', async (_event: any, codigoBarraId: number) => {
+    try {
+      const codigoBarraRepository = dataSource.getRepository(CodigoBarra);
+      const currentUser = getCurrentUser();
+
+      const codigoBarra = await codigoBarraRepository.findOne({
+        where: { id: codigoBarraId },
+        relations: ['presentacion']
+      });
+
+      if (!codigoBarra) {
+        return { success: false, message: 'Codigo barra not found' };
+      }
+
+      // Soft delete by setting activo to false
+      codigoBarra.activo = false;
+      await setEntityUserTracking(dataSource, codigoBarra, currentUser?.id, true);
+      await codigoBarraRepository.save(codigoBarra);
+
+      return { success: true, message: 'Codigo barra deleted successfully' };
+    } catch (error) {
+      console.error('Error deleting codigo barra:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('get-codigos-barra-by-presentacion', async (_event: any, presentacionId: number) => {
+    try {
+      const codigoBarraRepository = dataSource.getRepository(CodigoBarra);
+      const codigosBarra = await codigoBarraRepository.find({
+        where: { presentacion: { id: presentacionId } },
+        relations: ['presentacion'],
+        order: { principal: 'DESC', id: 'ASC' }
+      });
+      return codigosBarra;
+    } catch (error) {
+      console.error('Error getting codigos barra by presentacion:', error);
+      throw error;
+    }
+  });
+
+  // --- Stock Movimiento Handlers ---
+  ipcMain.handle('get-stock-movimientos', async () => {
+    try {
+      const stockMovimientoRepository = dataSource.getRepository(StockMovimiento);
+      return await stockMovimientoRepository.find({
+        where: { activo: true },
+        relations: ['producto'],
+        order: { fecha: 'DESC' }
+      });
+    } catch (error) {
+      console.error('Error getting stock movimientos:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('create-stock-movimiento', async (_event: any, stockMovimientoData: any) => {
+    try {
+      const stockMovimientoRepository = dataSource.getRepository(StockMovimiento);
+      const productoRepository = dataSource.getRepository(Producto);
+      const currentUser = getCurrentUser();
+
+      const producto = await productoRepository.findOneBy({ id: stockMovimientoData.productoId });
+      if (!producto) {
+        return { success: false, message: 'Producto not found' };
+      }
+
+      const stockMovimiento = stockMovimientoRepository.create({
+        cantidad: stockMovimientoData.cantidad,
+        tipo: stockMovimientoData.tipo,
+        referencia: stockMovimientoData.referencia,
+        tipoReferencia: stockMovimientoData.tipoReferencia,
+        observaciones: stockMovimientoData.observaciones,
+        fecha: stockMovimientoData.fecha || new Date(),
+        producto: producto,
+        activo: stockMovimientoData.activo !== undefined ? stockMovimientoData.activo : true
+      });
+
+      await setEntityUserTracking(dataSource, stockMovimiento, currentUser?.id, false);
+      const savedStockMovimiento = await stockMovimientoRepository.save(stockMovimiento);
+      return savedStockMovimiento;
+    } catch (error) {
+      console.error('Error creating stock movimiento:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('get-stock-movimientos-by-producto', async (_event: any, productoId: number) => {
+    try {
+      const stockMovimientoRepository = dataSource.getRepository(StockMovimiento);
+      return await stockMovimientoRepository.find({
+        where: { producto: { id: productoId }, activo: true },
+        relations: ['producto'],
+        order: { fecha: 'DESC' }
+      });
+    } catch (error) {
+      console.error('Error getting stock movimientos by producto:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('update-stock-movimiento', async (_event: any, stockMovimientoId: number, stockMovimientoData: any) => {
+    try {
+      const stockMovimientoRepository = dataSource.getRepository(StockMovimiento);
+      const stockMovimiento = await stockMovimientoRepository.findOneBy({ id: stockMovimientoId });
+
+      if (!stockMovimiento) {
+        return { success: false, message: 'Stock movimiento not found' };
+      }
+
+      // Actualizar campos
+      if (stockMovimientoData.cantidad !== undefined) stockMovimiento.cantidad = stockMovimientoData.cantidad;
+      if (stockMovimientoData.tipo !== undefined) stockMovimiento.tipo = stockMovimientoData.tipo;
+      if (stockMovimientoData.referencia !== undefined) stockMovimiento.referencia = stockMovimientoData.referencia;
+      if (stockMovimientoData.tipoReferencia !== undefined) stockMovimiento.tipoReferencia = stockMovimientoData.tipoReferencia;
+      if (stockMovimientoData.observaciones !== undefined) stockMovimiento.observaciones = stockMovimientoData.observaciones;
+      if (stockMovimientoData.fecha !== undefined) stockMovimiento.fecha = stockMovimientoData.fecha;
+      if (stockMovimientoData.activo !== undefined) stockMovimiento.activo = stockMovimientoData.activo;
+
+      const currentUser = getCurrentUser();
+      await setEntityUserTracking(dataSource, stockMovimiento, currentUser?.id, true);
+      const updatedStockMovimiento = await stockMovimientoRepository.save(stockMovimiento);
+      return { success: true, stockMovimiento: updatedStockMovimiento };
+    } catch (error) {
+      console.error('Error updating stock movimiento:', error);
       throw error;
     }
   });
 
   // --- Observacion Handlers ---
-  ipcMain.handle('getObservaciones', async () => {
+  ipcMain.handle('get-observaciones', async () => {
     try {
-      const repo = dataSource.getRepository(Observacion);
-      return await repo.find({ order: { nombre: 'ASC' } });
+      const observacionRepository = dataSource.getRepository(Observacion);
+      return await observacionRepository.find({ where: { activo: true }, order: { descripcion: 'ASC' } });
     } catch (error) {
       console.error('Error getting observaciones:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('getObservacion', async (_event: any, id: number) => {
+  // --- ProductoObservacion Handlers ---
+  ipcMain.handle('get-observaciones-by-producto', async (_event: any, productoId: number) => {
     try {
-      const repo = dataSource.getRepository(Observacion);
-      return await repo.findOneBy({ id });
+      const productoObservacionRepository = dataSource.getRepository(ProductoObservacion);
+      return await productoObservacionRepository.find({
+        where: { producto: { id: productoId }, activo: true },
+        relations: ['observacion']
+      });
     } catch (error) {
-      console.error(`Error getting observacion ID ${id}:`, error);
+      console.error('Error getting observaciones by producto:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('createObservacion', async (_event: any, data: any) => {
+  // --- Helper Methods ---
+  ipcMain.handle('search-productos-by-codigo', async (_event: any, codigo: string) => {
     try {
-      const repo = dataSource.getRepository(Observacion);
-      const entity = repo.create(data);
-      const currentUser = getCurrentUser();
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
+      const codigoBarraRepository = dataSource.getRepository(CodigoBarra);
+      const codigoBarra = await codigoBarraRepository.findOne({
+        where: { codigo: codigo, activo: true },
+        relations: ['presentacion', 'presentacion.producto']
+      });
+
+      return codigoBarra ? {
+        presentacion: codigoBarra.presentacion,
+        producto: codigoBarra.presentacion.producto
+      } : null;
     } catch (error) {
-      console.error('Error creating observacion:', error);
+      console.error('Error searching producto by codigo:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('updateObservacion', async (_event: any, id: number, data: any) => {
+  // --- RecetaIngredienteIntercambiable Handlers ---
+  ipcMain.handle('get-receta-ingredientes-intercambiables', async (_event: any, recetaIngredienteId: number) => {
     try {
-      const repo = dataSource.getRepository(Observacion);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Observacion ID ${id} not found`);
-      repo.merge(entity, data);
-      const currentUser = getCurrentUser();
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
+      const repo = dataSource.getRepository(RecetaIngredienteIntercambiable);
+      return await repo.find({
+        where: { recetaIngrediente: { id: recetaIngredienteId }, activo: true },
+        relations: ['ingredienteOpcion']
+      });
     } catch (error) {
-      console.error(`Error updating observacion ID ${id}:`, error);
+      console.error('Error getting receta ingredientes intercambiables:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('deleteObservacion', async (_event: any, id: number) => {
+  // --- PrecioVenta Handlers ---
+  ipcMain.handle('get-precios-venta', async () => {
     try {
-      const repo = dataSource.getRepository(Observacion);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Observacion ID ${id} not found`);
-      
-      // Check dependencies (ObservacionProducto) before deleting
-      const obsProductoRepo = dataSource.getRepository(ObservacionProducto);
-      const obsProductoCount = await obsProductoRepo.count({ where: { observacionId: id } });
-      if (obsProductoCount > 0) {
-        throw new Error(`No se puede eliminar la observación porque tiene ${obsProductoCount} productos asociados.`);
+      const repo = dataSource.getRepository(PrecioVenta);
+      return await repo.find({
+        where: { activo: true },
+        relations: ['presentacion', 'moneda', 'tipoPrecio'],
+        order: { id: 'ASC' }
+      });
+    } catch (error) {
+      console.error('Error getting precios venta:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('get-precios-venta-by-presentacion', async (_event: any, presentacionId: number, activo: boolean) => {
+    try {
+      const repo = dataSource.getRepository(PrecioVenta);
+      // filttrar por activo solo si no es null
+      const where: any = { presentacion: { id: presentacionId } };
+      if (activo !== null) {
+        where.activo = activo;
       }
-      
-      return await repo.remove(entity);
+      return await repo.find({
+        where: where,
+        relations: ['moneda', 'tipoPrecio'],
+        order: { principal: 'DESC', id: 'ASC' }
+      });
     } catch (error) {
-      console.error(`Error deleting observacion ID ${id}:`, error);
+      console.error('Error getting precios venta by presentacion:', error);
       throw error;
     }
   });
 
-  // search observaciones by nombre, add pagination
-  ipcMain.handle('searchObservaciones', async (_event: any, searchTerm: string, page: number, pageSize: number) => {
+  ipcMain.handle('get-precios-venta-by-receta', async (_event: any, recetaId: number, activo: boolean) => {
     try {
-      const repo = dataSource.getRepository(Observacion);
-      const skip = (page - 1) * pageSize;
-      // improve the search query using like and wildcard, order by nombre
-      const observaciones = await repo.find({ 
-        where: { nombre: Like(`%${searchTerm}%`) },
-        order: { nombre: 'ASC' },
-        skip,
-        take: pageSize
-      });
-      return observaciones;
-    } catch (error) {
-      console.error('Error searching observaciones:', error);
-      throw error;
-    }
-  });
-
-  // --- ObservacionProducto Handlers ---
-  ipcMain.handle('getObservacionesProductos', async () => {
-    try {
-      const repo = dataSource.getRepository(ObservacionProducto);
-      return await repo.find({ 
-        relations: ['producto', 'observacion'],
-        order: { productoId: 'ASC' } 
-      });
-    } catch (error) {
-      console.error('Error getting observaciones productos:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getObservacionesProductosByProducto', async (_event: any, productoId: number) => {
-    try {
-      const repo = dataSource.getRepository(ObservacionProducto);
-      return await repo.find({ 
-        where: { productoId },
-        relations: ['observacion'],
-        order: { observacionId: 'ASC' } 
-      });
-    } catch (error) {
-      console.error(`Error getting observaciones for producto ID ${productoId}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getObservacionProducto', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(ObservacionProducto);
-      return await repo.findOne({ 
-        where: { id },
-        relations: ['producto', 'observacion'] 
-      });
-    } catch (error) {
-      console.error(`Error getting observacion producto ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('createObservacionProducto', async (_event: any, data: any) => {
-    try {
-      const repo = dataSource.getRepository(ObservacionProducto);
-      
-      // Check if an observation with the same productoId and observacionId already exists
-      const existingObservacionProducto = await repo.findOne({
-        where: {
-          productoId: data.productoId,
-          observacionId: data.observacionId
-        }
-      });
-      
-      if (existingObservacionProducto) {
-        // Return a specific error to be handled by the client
-        return {
-          success: false,
-          error: 'duplicate',
-          message: 'Ya existe una observación asociada a este producto con el mismo nombre. No se permiten observaciones duplicadas.'
-        };
+      const repo = dataSource.getRepository(PrecioVenta);
+      // filttrar por activo solo si no es null
+      const where: any = { receta: { id: recetaId } };
+      if (activo !== null) {
+        where.activo = activo;
       }
-      
-      const entity = repo.create(data);
-      const currentUser = getCurrentUser();
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      const savedEntity = await repo.save(entity);
-      return {
-        success: true,
-        data: savedEntity
-      };
-    } catch (error: any) {
-      console.error('Error creating observacion producto:', error);
-      return {
-        success: false,
-        error: 'unknown',
-        message: error.message || 'Error al crear la observación para este producto'
-      };
-    }
-  });
-
-  ipcMain.handle('updateObservacionProducto', async (_event: any, id: number, data: any) => {
-    try {
-      const repo = dataSource.getRepository(ObservacionProducto);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`ObservacionProducto ID ${id} not found`);
-      repo.merge(entity, data);
-      const currentUser = getCurrentUser();
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error(`Error updating observacion producto ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('deleteObservacionProducto', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(ObservacionProducto);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`ObservacionProducto ID ${id} not found`);
-      
-      // Check dependencies (ObservacionProductoVentaItem) before deleting
-      const obsProductoVentaItemRepo = dataSource.getRepository(ObservacionProductoVentaItem);
-      const obsProductoVentaItemCount = await obsProductoVentaItemRepo.count({ where: { observacionProductoId: id } });
-      if (obsProductoVentaItemCount > 0) {
-        throw new Error(`No se puede eliminar la observación de producto porque tiene ${obsProductoVentaItemCount} items de venta asociados.`);
-      }
-      
-      return await repo.remove(entity);
-    } catch (error) {
-      console.error(`Error deleting observacion producto ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  // --- ObservacionProductoVentaItem Handlers ---
-  ipcMain.handle('getObservacionesProductosVentasItems', async (_event: any, ventaItemId: number) => {
-    try {
-      const repo = dataSource.getRepository(ObservacionProductoVentaItem);
-      return await repo.find({ 
-        where: { ventaItemId },
-        relations: ['observacionProducto', 'observacionProducto.observacion'],
-        order: { id: 'ASC' } 
+      return await repo.find({
+        where: where,
+        relations: ['moneda', 'tipoPrecio'],
+        order: { principal: 'DESC', id: 'ASC' }
       });
     } catch (error) {
-      console.error(`Error getting observaciones for venta item ID ${ventaItemId}:`, error);
+      console.error('Error getting precios venta by receta:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('getObservacionProductoVentaItem', async (_event: any, id: number) => {
+  ipcMain.handle('create-precio-venta', async (_event: any, precioVentaData: any) => {
     try {
-      const repo = dataSource.getRepository(ObservacionProductoVentaItem);
-      return await repo.findOne({ 
-        where: { id },
-        relations: ['observacionProducto', 'ventaItem', 'observacionProducto.observacion'] 
-      });
-    } catch (error) {
-      console.error(`Error getting observacion producto venta item ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('createObservacionProductoVentaItem', async (_event: any, data: any) => {
-    try {
-      const repo = dataSource.getRepository(ObservacionProductoVentaItem);
-      const entity = repo.create(data);
-      const currentUser = getCurrentUser();
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error('Error creating observacion producto venta item:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('updateObservacionProductoVentaItem', async (_event: any, id: number, data: any) => {
-    try {
-      const repo = dataSource.getRepository(ObservacionProductoVentaItem);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`ObservacionProductoVentaItem ID ${id} not found`);
-      repo.merge(entity, data);
-      const currentUser = getCurrentUser();
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error(`Error updating observacion producto venta item ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('deleteObservacionProductoVentaItem', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(ObservacionProductoVentaItem);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`ObservacionProductoVentaItem ID ${id} not found`);
-      return await repo.remove(entity);
-    } catch (error) {
-      console.error(`Error deleting observacion producto venta item ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  // --- Adicional Handlers ---
-  ipcMain.handle('getAdicionales', async () => {
-    try {
-      const repo = dataSource.getRepository(Adicional);
-      return await repo.find({ 
-        relations: ['ingrediente', 'receta', 'moneda'],
-        order: { nombre: 'ASC' } 
-      });
-    } catch (error) {
-      console.error('Error getting adicionales:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getAdicionalesFiltered', async (_event: any, filters: {
-    nombre?: string;
-    ingredienteId?: number;
-    recetaId?: number;
-    monedaId?: number;
-    activo?: boolean;
-    pageIndex?: number;
-    pageSize?: number;
-  }) => {
-    try {
-      const repo = dataSource.getRepository(Adicional);
-      const queryBuilder = repo.createQueryBuilder('adicional')
-        .leftJoinAndSelect('adicional.ingrediente', 'ingrediente')
-        .leftJoinAndSelect('adicional.receta', 'receta')
-        .leftJoinAndSelect('adicional.moneda', 'moneda')
-        .orderBy('adicional.nombre', 'ASC');
-      
-      // Apply filters
-      if (filters.nombre) {
-        queryBuilder.andWhere('adicional.nombre LIKE :nombre', { nombre: `%${filters.nombre}%` });
-      }
-      
-      if (filters.ingredienteId !== undefined && filters.ingredienteId !== null) {
-        queryBuilder.andWhere('adicional.ingredienteId = :ingredienteId', { ingredienteId: filters.ingredienteId });
-      }
-      
-      if (filters.recetaId !== undefined && filters.recetaId !== null) {
-        queryBuilder.andWhere('adicional.recetaId = :recetaId', { recetaId: filters.recetaId });
-      }
-      
-      if (filters.monedaId !== undefined && filters.monedaId !== null) {
-        queryBuilder.andWhere('adicional.monedaId = :monedaId', { monedaId: filters.monedaId });
-      }
-      
-      if (filters.activo !== undefined && filters.activo !== null) {
-        queryBuilder.andWhere('adicional.activo = :activo', { activo: filters.activo });
-      }
-      
-      // Get total count for pagination
-      const total = await queryBuilder.getCount();
-      
-      // Apply pagination
-      if (filters.pageIndex !== undefined && filters.pageSize !== undefined) {
-        const skip = filters.pageIndex * filters.pageSize;
-        queryBuilder.skip(skip).take(filters.pageSize);
-      }
-      
-      // Execute the query
-      const items = await queryBuilder.getMany();
-      
-      return { items, total };
-    } catch (error) {
-      console.error('Error getting filtered adicionales:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getAdicional', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(Adicional);
-      return await repo.findOne({ 
-        where: { id },
-        relations: ['ingrediente', 'receta', 'moneda'] 
-      });
-    } catch (error) {
-      console.error(`Error getting adicional ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  // add error handling like in createObservacionProducto
-  ipcMain.handle('createAdicional', async (_event: any, data: any) => {
-    try {
-      const repo = dataSource.getRepository(Adicional);
-      const entity = repo.create(data);
-      const currentUser = getCurrentUser();
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error('Error creating adicional:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('updateAdicional', async (_event: any, id: number, data: any) => {
-    try {
-      const repo = dataSource.getRepository(Adicional);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Adicional ID ${id} not found`);
-      repo.merge(entity, data);
-      const currentUser = getCurrentUser();
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error(`Error updating adicional ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('deleteAdicional', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(Adicional);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Adicional ID ${id} not found`);
-      
-      // Check dependencies (ProductoAdicional) before deleting
-      const productoAdicionalRepo = dataSource.getRepository(ProductoAdicional);
-      const productoAdicionalCount = await productoAdicionalRepo.count({ where: { adicionalId: id } });
-      if (productoAdicionalCount > 0) {
-        throw new Error(`No se puede eliminar el adicional porque tiene ${productoAdicionalCount} productos asociados.`);
-      }
-      
-      return await repo.remove(entity);
-    } catch (error) {
-      console.error(`Error deleting adicional ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  // --- ProductoAdicional Handlers ---
-  ipcMain.handle('getProductosAdicionales', async () => {
-    try {
-      const repo = dataSource.getRepository(ProductoAdicional);
-      return await repo.find({ 
-        relations: ['producto', 'adicional'],
-        order: { productoId: 'ASC' } 
-      });
-    } catch (error) {
-      console.error('Error getting productos adicionales:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getProductosAdicionalesByProducto', async (_event: any, productoId: number) => {
-    try {
-      const repo = dataSource.getRepository(ProductoAdicional);
-      return await repo.find({ 
-        where: { productoId },
-        relations: ['adicional', 'presentacion', 'adicional.ingrediente'],
-        order: { adicionalId: 'ASC' } 
-      });
-    } catch (error) {
-      console.error(`Error getting adicionales for producto ID ${productoId}:`, error);
-      throw error;
-    }
-  });
-
-  // get by presentacion id
-  ipcMain.handle('getProductosAdicionalesByPresentacion', async (_event: any, presentacionId: number) => {
-    try {
-      const repo = dataSource.getRepository(ProductoAdicional);
-      return await repo.find({ 
-        where: { presentacionId },
-        relations: ['producto', 'adicional', 'presentacion', 'adicional.ingrediente'] 
-      });
-    } catch (error) {
-      console.error(`Error getting producto adicionales by presentacion ID ${presentacionId}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getProductoAdicional', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(ProductoAdicional);
-      return await repo.findOne({ 
-        where: { id },
-        relations: ['producto', 'adicional', 'presentacion', 'adicional.ingrediente'] 
-      });
-    } catch (error) {
-      console.error(`Error getting producto adicional ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  // add error handling like in createObservacionProducto
-  ipcMain.handle('createProductoAdicional', async (_event: any, data: any) => {
-    try {
-      const repo = dataSource.getRepository(ProductoAdicional);
-      // check if already exists a producto adicional with the same productoId and adicionalId and presentacionId
-      const existing = await repo.findOne({ where: { productoId: data.productoId, adicionalId: data.adicionalId, presentacionId: data.presentacionId } });
-      if (existing) {
-        return {
-          success: false,
-          error: 'ProductoAdicional ya existe',
-          message: 'Ya existe un producto adicional con el mismo producto, adicional y presentación.'
-        };
-      }
-      const entity = repo.create(data);
-      const currentUser = getCurrentUser();
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
-    } catch (error) {
-      return {
-        success: false,
-        error: 'unknown',
-        message: error || 'Error al crear el producto adicional.'
-      };
-    }
-  });
-
-  ipcMain.handle('updateProductoAdicional', async (_event: any, id: number, data: any) => {
-    try {
-      const repo = dataSource.getRepository(ProductoAdicional);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`ProductoAdicional ID ${id} not found`);
-      repo.merge(entity, data);
-      const currentUser = getCurrentUser();
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error(`Error updating producto adicional ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('deleteProductoAdicional', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(ProductoAdicional);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`ProductoAdicional ID ${id} not found`);
-      
-      // Check dependencies (ProductoAdicionalVentaItem) before deleting
-      const productoAdicionalVentaItemRepo = dataSource.getRepository(ProductoAdicionalVentaItem);
-      const productoAdicionalVentaItemCount = await productoAdicionalVentaItemRepo.count({ where: { productoAdicionalId: id } });
-      if (productoAdicionalVentaItemCount > 0) {
-        throw new Error(`No se puede eliminar el adicional de producto porque tiene ${productoAdicionalVentaItemCount} items de venta asociados.`);
-      }
-      
-      return await repo.remove(entity);
-    } catch (error) {
-      console.error(`Error deleting producto adicional ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  // --- ProductoAdicionalVentaItem Handlers ---
-  ipcMain.handle('getProductosAdicionalesVentasItems', async (_event: any, ventaItemId: number) => {
-    try {
-      const repo = dataSource.getRepository(ProductoAdicionalVentaItem);
-      return await repo.find({ 
-        where: { ventaItemId },
-        relations: ['productoAdicional', 'productoAdicional.adicional'],
-        order: { id: 'ASC' } 
-      });
-    } catch (error) {
-      console.error(`Error getting adicionales for venta item ID ${ventaItemId}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('getProductoAdicionalVentaItem', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(ProductoAdicionalVentaItem);
-      return await repo.findOne({ 
-        where: { id },
-        relations: ['productoAdicional', 'ventaItem', 'productoAdicional.adicional'] 
-      });
-    } catch (error) {
-      console.error(`Error getting producto adicional venta item ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('createProductoAdicionalVentaItem', async (_event: any, data: any) => {
-    try {
-      const repo = dataSource.getRepository(ProductoAdicionalVentaItem);
-      const entity = repo.create(data);
-      const currentUser = getCurrentUser();
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error('Error creating producto adicional venta item:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('updateProductoAdicionalVentaItem', async (_event: any, id: number, data: any) => {
-    try {
-      const repo = dataSource.getRepository(ProductoAdicionalVentaItem);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`ProductoAdicionalVentaItem ID ${id} not found`);
-      repo.merge(entity, data);
-      const currentUser = getCurrentUser();
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error(`Error updating producto adicional venta item ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('deleteProductoAdicionalVentaItem', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(ProductoAdicionalVentaItem);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`ProductoAdicionalVentaItem ID ${id} not found`);
-      return await repo.remove(entity);
-    } catch (error) {
-      console.error(`Error deleting producto adicional venta item ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  // --- CostoPorProducto Handlers ---
-  ipcMain.handle('getCostosPorProducto', async () => {
-    try {
-      const repo = dataSource.getRepository(CostoPorProducto);
-      const costos = await repo.find({ 
-        relations: ['producto', 'moneda'],
-        order: { 
-          productoId: 'ASC',
-          createdAt: 'DESC'
-        }
-      });
-      
-      // Get the principal moneda
+      const repo = dataSource.getRepository(PrecioVenta);
+      const presentacionRepo = dataSource.getRepository(Presentacion);
+      const recetaRepo = dataSource.getRepository(Receta);
       const monedaRepo = dataSource.getRepository(Moneda);
-      const monedaPrincipal = await monedaRepo.findOneBy({ principal: true });
-      
-      if (monedaPrincipal) {
-        // Get all exchange rates
-        const monedaCambioRepo = dataSource.getRepository(MonedaCambio);
-        const monedasCambio = await monedaCambioRepo.find({ 
-          relations: ['monedaOrigen', 'monedaDestino'],
-          where: { activo: true } 
-        });
-        
-        // Calculate valorMonedaPrincipal for each CostoPorProducto
-        for (const costo of costos) {
-          if (costo.monedaId === monedaPrincipal.id) {
-            // If the moneda is already the principal one, use the original value
-            costo.valorMonedaPrincipal = costo.valor;
-          } else {
-            // Find the exchange rate from this moneda to the principal moneda
-            const cambio = monedasCambio.find(
-              c => c.monedaOrigen && c.monedaDestino && 
-                   c.monedaDestino.id === costo.monedaId && 
-                   c.monedaOrigen.id === monedaPrincipal.id
-            );
-            
-            if (cambio && cambio.compraOficial) {
-              // Use compraOficial to calculate the equivalent in principal currency
-              costo.valorMonedaPrincipal = costo.valor * cambio.compraOficial;
-            }
+      const tipoPrecioRepo = dataSource.getRepository(TipoPrecio);
+      const currentUser = getCurrentUser();
+
+      // Get related entities
+      let presentacion = null;
+      let receta = null;
+
+      if (precioVentaData.presentacionId) {
+        presentacion = await presentacionRepo.findOneBy({ id: precioVentaData.presentacionId });
+      if (!presentacion) {
+        throw new Error('Presentacion not found');
+        }
+      } else if (precioVentaData.recetaId) {
+        receta = await recetaRepo.findOneBy({ id: precioVentaData.recetaId });
+        if (!receta) {
+          throw new Error('Receta not found');
+        }
+      } else {
+        throw new Error('Either presentacionId or recetaId must be provided');
+      }
+
+      const moneda = await monedaRepo.findOneBy({ id: precioVentaData.monedaId });
+      if (!moneda) {
+        throw new Error('Moneda not found');
+      }
+
+      const tipoPrecio = await tipoPrecioRepo.findOneBy({ id: precioVentaData.tipoPrecioId });
+      if (!tipoPrecio) {
+        throw new Error('TipoPrecio not found');
+      }
+
+      // If this is marked as principal, unmark others
+      if (precioVentaData.principal) {
+        if (presentacion) {
+          const existingPrincipals = await repo.find({
+            where: { presentacion: { id: presentacion.id }, principal: true }
+          });
+          for (const existing of existingPrincipals) {
+            existing.principal = false;
+            await repo.save(existing);
+          }
+        } else if (receta) {
+          const existingPrincipals = await repo.find({
+            where: { receta: { id: receta.id }, principal: true }
+          });
+          for (const existing of existingPrincipals) {
+            existing.principal = false;
+            await repo.save(existing);
           }
         }
       }
-      
-      return costos;
+
+      const precioVenta = repo.create({
+        valor: precioVentaData.valor,
+        principal: precioVentaData.principal || false,
+        activo: precioVentaData.activo !== undefined ? precioVentaData.activo : true,
+        moneda: moneda,
+        tipoPrecio: tipoPrecio,
+        ...(presentacion && { presentacion }),
+        ...(receta && { receta })
+      });
+
+      await setEntityUserTracking(dataSource, precioVenta, currentUser?.id, false);
+      const savedPrecioVenta = await repo.save(precioVenta);
+      return savedPrecioVenta;
     } catch (error) {
-      console.error('Error getting costos por producto:', error);
+      console.error('Error creating precio venta:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('getCostosPorProductoByProducto', async (_event: any, productoId: number) => {
+  ipcMain.handle('update-precio-venta', async (_event: any, precioVentaId: number, precioVentaData: any) => {
     try {
-      const repo = dataSource.getRepository(CostoPorProducto);
-      const costos = await repo.find({ 
-        where: { productoId },
-        relations: ['moneda'],
+      const repo = dataSource.getRepository(PrecioVenta);
+      const monedaRepo = dataSource.getRepository(Moneda);
+      const tipoPrecioRepo = dataSource.getRepository(TipoPrecio);
+      const currentUser = getCurrentUser();
+
+      const precioVenta = await repo.findOne({
+        where: { id: precioVentaId },
+        relations: ['presentacion', 'receta', 'moneda', 'tipoPrecio']
+      });
+
+      if (!precioVenta) {
+        throw new Error('PrecioVenta not found');
+      }
+
+      // Update fields
+      if (precioVentaData.valor !== undefined) precioVenta.valor = precioVentaData.valor;
+      if (precioVentaData.activo !== undefined) precioVenta.activo = precioVentaData.activo;
+
+      // Handle principal flag
+      if (precioVentaData.principal !== undefined) {
+        if (precioVentaData.principal) {
+          // Unmark other precios as principal
+          if (precioVenta.presentacion) {
+            const existingPrincipals = await repo.find({
+              where: { presentacion: { id: precioVenta.presentacion.id }, principal: true, id: Not(precioVentaId) }
+            });
+            for (const existing of existingPrincipals) {
+              existing.principal = false;
+              await repo.save(existing);
+            }
+          } else if (precioVenta.receta) {
+            const existingPrincipals = await repo.find({
+              where: { receta: { id: precioVenta.receta.id }, principal: true, id: Not(precioVentaId) }
+            });
+            for (const existing of existingPrincipals) {
+              existing.principal = false;
+              await repo.save(existing);
+            }
+          }
+        }
+        precioVenta.principal = precioVentaData.principal;
+      }
+
+      // Update related entities if provided
+      if (precioVentaData.monedaId) {
+        const moneda = await monedaRepo.findOneBy({ id: precioVentaData.monedaId });
+        if (moneda) {
+          precioVenta.moneda = moneda;
+        }
+      }
+
+      if (precioVentaData.tipoPrecioId) {
+        const tipoPrecio = await tipoPrecioRepo.findOneBy({ id: precioVentaData.tipoPrecioId });
+        if (tipoPrecio) {
+          precioVenta.tipoPrecio = tipoPrecio;
+        }
+      }
+
+      await setEntityUserTracking(dataSource, precioVenta, currentUser?.id, true);
+      const updatedPrecioVenta = await repo.save(precioVenta);
+      return updatedPrecioVenta;
+    } catch (error) {
+      console.error('Error updating precio venta:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('delete-precio-venta', async (_event: any, precioVentaId: number) => {
+    try {
+      const repo = dataSource.getRepository(PrecioVenta);
+      const currentUser = getCurrentUser();
+
+      const precioVenta = await repo.findOneBy({ id: precioVentaId });
+      if (!precioVenta) {
+        throw new Error('PrecioVenta not found');
+      }
+
+      // Soft delete
+      precioVenta.activo = false;
+      await setEntityUserTracking(dataSource, precioVenta, currentUser?.id, true);
+      await repo.save(precioVenta);
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting precio venta:', error);
+      throw error;
+    }
+  });
+
+  // --- PrecioCosto Handlers ---
+  ipcMain.handle('get-precios-costo', async () => {
+    try {
+      const repo = dataSource.getRepository(PrecioCosto);
+      return await repo.find({
+        relations: ['producto', 'moneda'],
         order: { createdAt: 'DESC' }
       });
-      
-      // Get the principal moneda
-      const monedaRepo = dataSource.getRepository(Moneda);
-      const monedaPrincipal = await monedaRepo.findOneBy({ principal: true });
-      
-      if (monedaPrincipal) {
-        // Get all exchange rates
-        const monedaCambioRepo = dataSource.getRepository(MonedaCambio);
-        const monedasCambio = await monedaCambioRepo.find({ 
-          relations: ['monedaOrigen', 'monedaDestino'],
-          where: { activo: true } 
-        });
-        
-        // Calculate valorMonedaPrincipal for each CostoPorProducto
-        for (const costo of costos) {
-          if (costo.monedaId === monedaPrincipal.id) {
-            // If the moneda is already the principal one, use the original value
-            costo.valorMonedaPrincipal = costo.valor;
-          } else {
-            // Find the exchange rate from this moneda to the principal moneda
-            const cambio = monedasCambio.find(
-              c => c.monedaOrigen && c.monedaDestino && 
-                   c.monedaDestino.id === costo.monedaId && 
-                   c.monedaOrigen.id === monedaPrincipal.id
-            );
-            
-            if (cambio && cambio.compraOficial) {
-              // Use compraOficial to calculate the equivalent in principal currency
-              costo.valorMonedaPrincipal = costo.valor * cambio.compraOficial;
-            }
-          }
-        }
-      }
-      
-      return costos;
     } catch (error) {
-      console.error(`Error getting costos por producto for producto ID ${productoId}:`, error);
+      console.error('Error getting precios costo:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('getCostoPorProducto', async (_event: any, id: number) => {
+  ipcMain.handle('get-precios-costo-by-producto', async (_event: any, productoId: number) => {
     try {
-      const repo = dataSource.getRepository(CostoPorProducto);
-      const costo = await repo.findOne({ 
-        where: { id },
+      const repo = dataSource.getRepository(PrecioCosto);
+      return await repo.find({
+        where: { producto: { id: productoId } },
+        relations: ['producto', 'moneda'],
+        order: { createdAt: 'DESC' }
+      });
+    } catch (error) {
+      console.error('Error getting precios costo by producto:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('create-precio-costo', async (_event: any, precioCostoData: any) => {
+    try {
+      const repo = dataSource.getRepository(PrecioCosto);
+      const productoRepo = dataSource.getRepository(Producto);
+      const monedaRepo = dataSource.getRepository(Moneda);
+      const currentUser = getCurrentUser();
+
+      // Get related entities
+      const producto = await productoRepo.findOneBy({ id: precioCostoData.productoId });
+      if (!producto) {
+        throw new Error('Producto not found');
+      }
+
+      const moneda = await monedaRepo.findOneBy({ id: precioCostoData.monedaId });
+      if (!moneda) {
+        throw new Error('Moneda not found');
+      }
+
+      const precioCosto = repo.create({
+        fuente: precioCostoData.fuente,
+        valor: precioCostoData.valor,
+        fecha: precioCostoData.fecha,
+        activo: precioCostoData.activo !== undefined ? precioCostoData.activo : true,
+        producto: producto,
+        moneda: moneda
+      });
+
+      await setEntityUserTracking(dataSource, precioCosto, currentUser?.id, false);
+      const savedPrecioCosto = await repo.save(precioCosto);
+      return savedPrecioCosto;
+    } catch (error) {
+      console.error('Error creating precio costo:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('update-precio-costo', async (_event: any, precioCostoId: number, precioCostoData: any) => {
+    try {
+      const repo = dataSource.getRepository(PrecioCosto);
+      const monedaRepo = dataSource.getRepository(Moneda);
+      const currentUser = getCurrentUser();
+
+      const precioCosto = await repo.findOne({
+        where: { id: precioCostoId },
         relations: ['producto', 'moneda']
       });
-      
-      if (costo) {
-        // Get the principal moneda
-        const monedaRepo = dataSource.getRepository(Moneda);
-        const monedaPrincipal = await monedaRepo.findOneBy({ principal: true });
-        
-        if (monedaPrincipal) {
-          if (costo.monedaId === monedaPrincipal.id) {
-            // If the moneda is already the principal one, use the original value
-            costo.valorMonedaPrincipal = costo.valor;
-          } else {
-            // Get exchange rates
-            const monedaCambioRepo = dataSource.getRepository(MonedaCambio);
-            const monedasCambio = await monedaCambioRepo.find({
-              where: { activo: true },
-              relations: ['monedaOrigen', 'monedaDestino']
-            });
-            
-            // Find the exchange rate from this moneda to the principal moneda
-            const cambio = monedasCambio.find(
-              c => c.monedaOrigen && c.monedaDestino && 
-                   c.monedaDestino.id === costo.monedaId && 
-                   c.monedaOrigen.id === monedaPrincipal.id
-            );
-            
-            if (cambio && cambio.compraOficial) {
-              // Use compraOficial to calculate the equivalent in principal currency
-              costo.valorMonedaPrincipal = costo.valor * cambio.compraOficial;
-            }
-          }
+
+      if (!precioCosto) {
+        throw new Error('PrecioCosto not found');
+      }
+
+      // Update fields
+      if (precioCostoData.fuente !== undefined) precioCosto.fuente = precioCostoData.fuente;
+      if (precioCostoData.valor !== undefined) precioCosto.valor = precioCostoData.valor;
+      if (precioCostoData.fecha !== undefined) precioCosto.fecha = precioCostoData.fecha;
+      if (precioCostoData.activo !== undefined) precioCosto.activo = precioCostoData.activo;
+
+      // Update related entities if provided
+      if (precioCostoData.monedaId) {
+        const moneda = await monedaRepo.findOneBy({ id: precioCostoData.monedaId });
+        if (moneda) {
+          precioCosto.moneda = moneda;
         }
       }
-      
-      return costo;
+
+      await setEntityUserTracking(dataSource, precioCosto, currentUser?.id, true);
+      const updatedPrecioCosto = await repo.save(precioCosto);
+      return updatedPrecioCosto;
     } catch (error) {
-      console.error(`Error getting costo por producto ID ${id}:`, error);
+      console.error('Error updating precio costo:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('createCostoPorProducto', async (_event: any, data: any) => {
+  ipcMain.handle('delete-precio-costo', async (_event: any, precioCostoId: number) => {
     try {
-      const repo = dataSource.getRepository(CostoPorProducto);
-      
-      // If principal is true, update other costs to not be principal
-      if (data.principal === true) {
-        await repo.update(
-          { 
-            productoId: data.productoId, 
-            principal: true 
-          }, 
-          { principal: false }
-        );
-      }
-      
-      // Create the entity after potentially updating other costs
-      const entity = repo.create(data);
+      const repo = dataSource.getRepository(PrecioCosto);
       const currentUser = getCurrentUser();
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, false);
-      return await repo.save(entity);
-    } catch (error) {
-      console.error('Error creating costo por producto:', error);
-      throw error;
-    }
-  });
 
-  ipcMain.handle('updateCostoPorProducto', async (_event: any, id: number, data: any) => {
-    try {
-      const repo = dataSource.getRepository(CostoPorProducto);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Costo por producto ID ${id} not found`);
-      
-      // If setting to principal, update others first
-      if (data.principal === true) {
-        await repo.update(
-          { 
-            productoId: entity.productoId, 
-            principal: true,
-            id: Not(id)  // Exclude this entity by ID directly
-          }, 
-          { principal: false }
-        );
+      const precioCosto = await repo.findOneBy({ id: precioCostoId });
+      if (!precioCosto) {
+        throw new Error('PrecioCosto not found');
       }
-      
-      repo.merge(entity, data);
-      const currentUser = getCurrentUser();
-      await setEntityUserTracking(dataSource, entity, currentUser?.id, true);
-      return await repo.save(entity);
+
+      // Soft delete
+      precioCosto.activo = false;
+      await setEntityUserTracking(dataSource, precioCosto, currentUser?.id, true);
+      await repo.save(precioCosto);
+      return { success: true };
     } catch (error) {
-      console.error(`Error updating costo por producto ID ${id}:`, error);
+      console.error('Error deleting precio costo:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('deleteCostoPorProducto', async (_event: any, id: number) => {
+  // ✅ NUEVO: Handler para el asistente de ingredientes
+  ipcMain.handle('get-recetas-ids-por-variacion-ids', async (_event: any, variacionIds: number[]) => {
     try {
-      const repo = dataSource.getRepository(CostoPorProducto);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`Costo por producto ID ${id} not found`);
-      await repo.remove(entity);
-      return true;
+      const variacionRepository = dataSource.getRepository(RecetaPresentacion);
+      const variaciones = await variacionRepository.find({
+        where: {
+          id: In(variacionIds)
+        },
+        relations: ['receta']
+      });
+
+      const mapeo: { [variacionId: number]: number } = {};
+      for (const variacion of variaciones) {
+        if (variacion.receta && variacion.receta.id) {
+          mapeo[variacion.id] = variacion.receta.id;
+        }
+      }
+
+      return mapeo;
     } catch (error) {
-      console.error(`Error deleting costo por producto ID ${id}:`, error);
+      console.error('Error en get-recetas-ids-por-variacion-ids:', error);
       throw error;
     }
   });
-} 
+
+}

@@ -1,0 +1,97 @@
+// ✅ ARCHIVO GLOBAL DE VARIABLES DE TEMA
+// Este archivo define las variables CSS para temas claros y oscuros
+
+// 🌞 TEMA CLARO (por defecto)
+:root {
+  // Colores de texto
+  --text-primary: #000000;
+  --text-secondary: #666666;
+  --text-disabled: #999999;
+
+  // Colores de superficie
+  --surface: #ffffff;
+  --surface-variant: #f5f5f5;
+  --card-background: #ffffff;
+  --background-color: #ffffff;
+
+  // Colores de borde
+  --border-color: rgba(0, 0, 0, 0.12);
+  --border-light: rgba(0, 0, 0, 0.08);
+
+  // Colores de hover
+  --hover-bg: rgba(0, 0, 0, 0.04);
+  --hover-bg-light: rgba(0, 0, 0, 0.08);
+
+  // Colores de sombra
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --shadow-color-medium: rgba(0, 0, 0, 0.15);
+}
+
+// 🌙 TEMA OSCURO
+.dark-theme,
+[data-theme="dark"],
+.mat-app-background.mat-app-background {
+  // Colores de texto
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --text-disabled: #666666;
+
+  // Colores de superficie
+  --surface: #424242;
+  --surface-variant: #616161;
+  --card-background: #424242;
+  --background-color: #303030;
+
+  // Colores de borde
+  --border-color: rgba(255, 255, 255, 0.12);
+  --border-light: rgba(255, 255, 255, 0.08);
+
+  // Colores de hover
+  --hover-bg: rgba(255, 255, 255, 0.04);
+  --hover-bg-light: rgba(255, 255, 255, 0.08);
+
+  // Colores de sombra
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --shadow-color-medium: rgba(0, 0, 0, 0.4);
+}
+
+// 📱 Detección automática del tema del sistema
+@media (prefers-color-scheme: dark) {
+  :root:not(.light-theme) {
+    // Colores de texto
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --text-disabled: #666666;
+
+    // Colores de superficie
+    --surface: #424242;
+    --surface-variant: #616161;
+    --card-background: #424242;
+    --background-color: #303030;
+
+    // Colores de borde
+    --border-color: rgba(255, 255, 255, 0.12);
+    --border-light: rgba(255, 255, 255, 0.08);
+
+    // Colores de hover
+    --hover-bg: rgba(255, 255, 255, 0.04);
+    --hover-bg-light: rgba(255, 255, 255, 0.08);
+
+    // Colores de sombra
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --shadow-color-medium: rgba(0, 0, 0, 0.4);
+  }
+}
+
+// 🎨 Colores de estado (consistentes en ambos temas)
+:root {
+  --success-color: #4caf50;
+  --warning-color: #ff9800;
+  --error-color: #f44336;
+  --info-color: #2196f3;
+
+  --success-text: #ffffff;
+  --warning-text: #ffffff;
+  --error-text: #ffffff;
+  --info-text: #ffffff;
+}

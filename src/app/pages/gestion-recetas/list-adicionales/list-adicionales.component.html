@@ -1,0 +1,170 @@
+<div class="list-adicionales-container">
+  <mat-card class="main-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>add_circle</mat-icon>
+        Gestión de Adicionales
+      </mat-card-title>
+      <mat-card-subtitle>
+        Administra los adicionales disponibles para las recetas
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content style="height: 100%; display: flex; flex-direction: column">
+      <!-- Filtros -->
+      <div class="filters-section">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Buscar adicionales</mat-label>
+          <input matInput
+                 [(ngModel)]="searchTerm"
+                 (keyup.enter)="applyFilter()"
+                 placeholder="Buscar por nombre...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Estado</mat-label>
+          <mat-select [(ngModel)]="activeFilter" (selectionChange)="onFilterChange()">
+            <mat-option value="all">Todos</mat-option>
+            <mat-option value="active">Activos</mat-option>
+            <mat-option value="inactive">Inactivos</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Categoría</mat-label>
+          <input matInput
+                 [(ngModel)]="categoriaFilter"
+                 (keyup.enter)="applyFilter()"
+                 placeholder="Filtrar por categoría...">
+        </mat-form-field>
+
+        <button mat-raised-button
+                color="primary"
+                (click)="applyFilter()"
+                [disabled]="loading">
+          <mat-icon>filter_list</mat-icon>
+          Filtrar
+        </button>
+
+        <button mat-raised-button
+                color="accent"
+                (click)="openCreateDialog()"
+                [disabled]="loading">
+          <mat-icon>add</mat-icon>
+          Nuevo Adicional
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="loading" class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Cargando adicionales...</p>
+      </div>
+
+      <!-- Tabla de Adicionales -->
+      <div *ngIf="!loading" class="table-container">
+        <table mat-table [dataSource]="dataSource" class="adicionales-table">
+
+          <!-- Nombre -->
+          <ng-container matColumnDef="nombre">
+            <th mat-header-cell *matHeaderCellDef>Nombre</th>
+            <td mat-cell *matCellDef="let adicional">
+              <div class="adicional-info">
+                <span class="adicional-nombre">{{adicional.nombre}}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Precio Base -->
+          <ng-container matColumnDef="precioBase">
+            <th mat-header-cell *matHeaderCellDef class="center">Precio Base</th>
+            <td mat-cell *matCellDef="let adicional" class="center">
+              {{adicional.precioBase | number:'1.0-2'}} USD
+            </td>
+          </ng-container>
+
+          <!-- Categoría -->
+          <ng-container matColumnDef="categoria">
+            <th mat-header-cell *matHeaderCellDef class="center">Categoría</th>
+            <td mat-cell *matCellDef="let adicional" class="center">
+              {{adicional.categoria || 'Sin categoría'}}
+            </td>
+          </ng-container>
+
+          <!-- Receta -->
+          <ng-container matColumnDef="receta">
+            <th mat-header-cell *matHeaderCellDef class="center">Receta</th>
+            <td mat-cell *matCellDef="let adicional" class="center">
+              {{adicional.receta?.nombre || 'Sin receta'}}
+            </td>
+          </ng-container>
+
+          <!-- Estado -->
+          <ng-container matColumnDef="activo">
+            <th mat-header-cell *matHeaderCellDef class="center">Estado</th>
+            <td mat-cell *matCellDef="let adicional" class="center">
+              <mat-chip-listbox>
+                <mat-chip [color]="adicional.activo ? 'accent' : 'warn'" selected>
+                  {{adicional.activo ? 'Activo' : 'Inactivo'}}
+                </mat-chip>
+              </mat-chip-listbox>
+            </td>
+          </ng-container>
+
+          <!-- Acciones -->
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef class="center">Acciones</th>
+            <td mat-cell *matCellDef="let adicional" class="center">
+              <div class="actions-container">
+                <button mat-icon-button
+                        [matMenuTriggerFor]="menu"
+                        (click)="$event.stopPropagation()">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #menu="matMenu">
+                  <button mat-menu-item (click)="editAdicional(adicional)">
+                    <mat-icon>edit</mat-icon>
+                    <span>Editar</span>
+                  </button>
+                  <button mat-menu-item (click)="viewReceta(adicional)">
+                    <mat-icon>restaurant_menu</mat-icon>
+                    <span>Ver Receta</span>
+                  </button>
+                  <button mat-menu-item (click)="deleteAdicional(adicional)">
+                    <mat-icon>delete</mat-icon>
+                    <span>Eliminar</span>
+                  </button>
+                </mat-menu>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <!-- Estado vacío -->
+        <div *ngIf="!loading && dataSource.data.length === 0" class="empty-state">
+          <mat-icon>add_circle_outline</mat-icon>
+          <h3>No hay adicionales</h3>
+          <p>No se encontraron adicionales con los filtros aplicados</p>
+          <button mat-raised-button
+                  color="primary"
+                  (click)="openCreateDialog()">
+            <mat-icon>add</mat-icon>
+            Crear Primer Adicional
+          </button>
+        </div>
+
+        <!-- Paginación -->
+        <mat-paginator [length]="totalItems"
+                      [pageSize]="pageSize"
+                      [pageIndex]="currentPage"
+                      [pageSizeOptions]="[5, 10, 25, 50]"
+                      (page)="onPageChange($event)">
+        </mat-paginator>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

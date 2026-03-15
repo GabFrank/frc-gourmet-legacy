@@ -1,0 +1,253 @@
+<div class="variacion-dialog-container">
+
+  <!-- Header -->
+  <div class="dialog-header">
+    <h2 mat-dialog-title>
+      <mat-icon class="header-icon">view_module</mat-icon>
+      {{ tituloDialog }}
+    </h2>
+    <div class="header-actions">
+      <button mat-icon-button (click)="toggleModo()" matTooltip="Cambiar modo"
+              *ngIf="!loading">
+        <mat-icon>{{ readonly ? 'edit' : 'visibility' }}</mat-icon>
+      </button>
+      <button mat-icon-button mat-dialog-close class="close-button">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <mat-dialog-content class="dialog-content">
+
+    <!-- Información de la Variación -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Información de la Variación
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+
+        <!-- Detalles de Relación -->
+        <div class="relation-info">
+          <div class="relation-item">
+            <span class="relation-label">Receta:</span>
+            <span class="relation-value">{{ informacionReceta.nombre || 'N/A' }}</span>
+          </div>
+          <div class="relation-item">
+            <span class="relation-label">Presentación:</span>
+            <span class="relation-value">{{ informacionPresentacion.nombre || 'N/A' }}</span>
+          </div>
+          <div class="relation-item">
+            <span class="relation-label">Sabor:</span>
+            <span class="relation-value">{{ informacionReceta.sabor?.nombre || 'N/A' }}</span>
+          </div>
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Formulario Principal -->
+    <form [formGroup]="variacionForm" (ngSubmit)="onSubmit()" class="variacion-form">
+
+      <!-- Nombre y SKU -->
+      <mat-card class="form-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>badge</mat-icon>
+            Identificación
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Nombre Generado</mat-label>
+              <input
+                matInput
+                formControlName="nombre_generado"
+                placeholder="Nombre completo de la variación"
+                maxlength="255">
+              <mat-icon matSuffix>title</mat-icon>
+              <mat-hint align="end">{{ variacionForm.get('nombre_generado')?.value?.length || 0 }}/255</mat-hint>
+              <mat-error>{{ nombreGeneradoError }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="sku-field">
+              <mat-label>SKU (Código)</mat-label>
+              <input
+                matInput
+                formControlName="sku"
+                placeholder="Código único del producto"
+                maxlength="50">
+              <mat-icon matSuffix>qr_code</mat-icon>
+              <mat-hint align="end">{{ variacionForm.get('sku')?.value?.length || 0 }}/50</mat-hint>
+              <mat-error>{{ skuError }}</mat-error>
+            </mat-form-field>
+
+            <button
+              mat-raised-button
+              type="button"
+              color="accent"
+              (click)="generarSKU()"
+              [disabled]="readonly || loading"
+              class="generate-sku-btn">
+              <mat-icon>auto_awesome</mat-icon>
+              Generar SKU
+            </button>
+          </div>
+
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Cantidad y Precios -->
+      <mat-card class="form-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>calculate</mat-icon>
+            Cantidad y Precios
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Precio de Venta</mat-label>
+              <input
+                matInput
+                type="number"
+                formControlName="precio_ajuste"
+                step="0.01"
+                min="0"
+                placeholder="0.00">
+              <span matTextPrefix>$&nbsp;</span>
+              <mat-icon matSuffix>attach_money</mat-icon>
+              <mat-hint>Precio específico para esta variación</mat-hint>
+              <mat-error>{{ precioAjusteError }}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Cálculo de Costos y Márgenes -->
+          <div class="cost-analysis" *ngIf="variacionForm.get('precio_ajuste')?.value">
+            <div class="cost-row">
+              <div class="cost-item">
+                <span class="cost-label">Costo Calculado:</span>
+                <span class="cost-value cost-primary">${{ costoFormateado }}</span>
+              </div>
+              <div class="cost-item">
+                <span class="cost-label">Precio de Venta:</span>
+                <span class="cost-value cost-success">${{ variacionForm.get('precio_ajuste')?.value?.toFixed(2) || '0.00' }}</span>
+              </div>
+            </div>
+
+            <div class="margin-row" *ngIf="esMargenPositivo">
+              <div class="margin-item">
+                <span class="margin-label">Margen:</span>
+                <span class="margin-value" [class]="'margin-' + colorMargen">${{ margenFormateado }}</span>
+              </div>
+              <div class="margin-item">
+                <span class="margin-label">% Margen:</span>
+                <span class="margin-percentage" [class]="'margin-' + colorMargen">{{ porcentajeMargenFormateado }}%</span>
+              </div>
+            </div>
+
+            <div class="recalculate-section">
+              <button
+                mat-button
+                color="primary"
+                type="button"
+                (click)="recalcularCosto()"
+                [disabled]="loading">
+                <mat-icon>refresh</mat-icon>
+                Recalcular Costo
+              </button>
+            </div>
+          </div>
+
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Estado -->
+      <mat-card class="form-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>toggle_on</mat-icon>
+            Estado
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+
+          <div class="form-row">
+            <mat-slide-toggle
+              formControlName="activo"
+              [disabled]="readonly || loading"
+              class="status-toggle">
+              {{ variacionForm.get('activo')?.value ? 'Activo' : 'Inactivo' }}
+            </mat-slide-toggle>
+          </div>
+
+          <mat-hint class="status-hint">
+            Las variaciones inactivas no aparecen en el punto de venta
+          </mat-hint>
+
+        </mat-card-content>
+      </mat-card>
+
+    </form>
+
+    <!-- Información Adicional (Solo lectura) -->
+    <mat-card class="additional-info-card" *ngIf="readonly">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>assessment</mat-icon>
+          Información Adicional
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+
+        <div class="additional-info">
+          <div class="info-item">
+            <span class="info-label">ID de Variación:</span>
+            <span class="info-value">{{ data.variacion.id }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Precios Configurados:</span>
+            <span class="info-value">{{ data.variacion.preciosVenta?.length || 0 }}</span>
+          </div>
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+
+  </mat-dialog-content>
+
+  <!-- Actions -->
+  <mat-dialog-actions class="dialog-actions">
+    <button
+      mat-button
+      type="button"
+      (click)="onCancel()"
+      [disabled]="loading"
+      class="cancel-button">
+      Cancelar
+    </button>
+
+    <button
+      mat-raised-button
+      color="primary"
+      type="submit"
+      (click)="onSubmit()"
+      [disabled]="(readonly ? false : variacionForm.invalid) || loading"
+      class="primary-button">
+      <mat-icon *ngIf="loading" class="loading-icon">hourglass_empty</mat-icon>
+      <mat-icon *ngIf="!loading && !readonly">save</mat-icon>
+      <mat-icon *ngIf="!loading && readonly">close</mat-icon>
+      {{ textoBotonPrimario }}
+    </button>
+  </mat-dialog-actions>
+
+</div>

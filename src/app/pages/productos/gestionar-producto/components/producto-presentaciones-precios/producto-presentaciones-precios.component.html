@@ -1,0 +1,258 @@
+<div class="presentaciones-container">
+  <!-- Header con título y botón de agregar -->
+  <div class="header-section">
+    <h3>Presentaciones y Precios</h3>
+    <p class="description" *ngIf="shouldShowPreciosVenta">
+      Gestiona las diferentes presentaciones del producto y sus precios de venta.
+    </p>
+    <p class="description" *ngIf="!shouldShowPreciosVenta">
+      Gestiona las diferentes presentaciones del producto para control de inventario y costos.
+    </p>
+  </div>
+
+  <!-- Formulario para nueva presentación -->
+  <mat-card class="form-card" [class.editing-mode]="isEditing">
+    <mat-card-header>
+      <mat-card-title class="titulo">
+        <mat-icon *ngIf="isEditing">edit</mat-icon>
+        {{ isEditing ? 'Editar Presentación con ID: ' + editingPresentacionId : 'Nueva Presentación' }}
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="presentacionForm" (ngSubmit)="crearPresentacion()">
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Nombre de la Presentación</mat-label>
+            <input matInput formControlName="nombre" placeholder="Ej: Lata 350ml, Botella 1.5L">
+            <mat-hint>Si no se proporciona un nombre, se usará "N/A"</mat-hint>
+            <mat-error *ngIf="presentacionForm.get('nombre')?.hasError('maxlength')">
+              El nombre no puede exceder 255 caracteres
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Cantidad</mat-label>
+            <input matInput type="number" formControlName="cantidad" min="0.001" step="0.001" style="text-align: right;">
+            <mat-error *ngIf="presentacionForm.get('cantidad')?.hasError('required')">
+              La cantidad es requerida
+            </mat-error>
+            <mat-error *ngIf="presentacionForm.get('cantidad')?.hasError('min')">
+              La cantidad debe ser mayor a 0
+            </mat-error>
+          </mat-form-field>
+
+          <mat-checkbox formControlName="principal" class="form-checkbox">
+            Presentación Principal
+          </mat-checkbox>
+
+          <mat-checkbox formControlName="activo" class="form-checkbox">
+            Activa
+          </mat-checkbox>
+        </div>
+
+        <div class="form-actions">
+          <button 
+            mat-raised-button 
+            color="primary" 
+            type="submit"
+            [disabled]="presentacionForm.invalid || isLoading"
+            (click)="isEditing ? actualizarPresentacion() : crearPresentacion()">
+            <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+            <span *ngIf="!isLoading">
+              {{ isEditing ? 'Actualizar' : 'Crear' }} Presentación
+            </span>
+          </button>
+          
+          <button 
+            mat-button 
+            type="button"
+            class="cancel-button"
+            *ngIf="isEditing"
+            (click)="cancelarEdicion()">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Tabla de presentaciones -->
+  <mat-card class="table-card">
+    <mat-card-header>
+      <mat-card-title class="titulo">Presentaciones del Producto</mat-card-title>
+    </mat-card-header>
+    <mat-card-content class="presentaciones-table-content">
+      <!-- Filtro de estado -->
+      <div class="filtro-container">
+        <mat-radio-group 
+          [formControl]="filtroActivoControl"
+          class="filtro-radio-group">
+          <mat-radio-button value="activos" class="filtro-radio">
+            Activas
+          </mat-radio-button>
+          <mat-radio-button value="inactivos" class="filtro-radio">
+            Inactivas
+          </mat-radio-button>
+          <mat-radio-button value="todos" class="filtro-radio">
+            Todas
+          </mat-radio-button>
+        </mat-radio-group>
+      </div>
+
+      <div class="loading-container" *ngIf="isLoading">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Cargando presentaciones...</p>
+      </div>
+
+      <div class="no-data" *ngIf="!isLoading && presentaciones.length === 0">
+        <mat-icon>inventory_2</mat-icon>
+        <p *ngIf="filtroActivo === 'activos'">
+          No hay presentaciones activas para este producto.
+        </p>
+        <p *ngIf="filtroActivo === 'inactivos'">
+          No hay presentaciones inactivas para este producto.
+        </p>
+        <p *ngIf="filtroActivo === 'todos'">
+          No hay presentaciones configuradas para este producto.
+        </p>
+        <p>Agrega una presentación usando el formulario de arriba.</p>
+      </div>
+
+      <!-- put tble inside a div with class table-container -->
+      <div class="table-container">
+      <table mat-table [dataSource]="presentaciones" class="presentaciones-table" 
+             *ngIf="!isLoading && presentaciones.length > 0"
+             [attr.dataSource]="presentaciones">
+        
+        <!-- Columna ID -->
+        <ng-container matColumnDef="id">
+          <th mat-header-cell *matHeaderCellDef>ID</th>
+          <td mat-cell *matCellDef="let presentacion">
+            <span class="presentacion-id">{{ presentacion.id }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Columna Nombre -->
+        <ng-container matColumnDef="nombre">
+          <th mat-header-cell *matHeaderCellDef>Presentación</th>
+          <td mat-cell *matCellDef="let presentacion">
+            <div class="presentacion-info">
+              <span class="presentacion-nombre">
+                {{ presentacion.nombre }}
+              </span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Columna Cantidad -->
+        <ng-container matColumnDef="cantidad">
+          <th mat-header-cell *matHeaderCellDef>Cantidad</th>
+          <td mat-cell *matCellDef="let presentacion">
+            {{ presentacion.cantidad }}
+          </td>
+        </ng-container>
+
+        <!-- Columna Precio Principal -->
+        <ng-container matColumnDef="precioPrincipal">
+          <th mat-header-cell *matHeaderCellDef>Precio Principal</th>
+          <td mat-cell *matCellDef="let presentacion">
+            <div class="precio-info" *ngIf="shouldShowPreciosVenta">
+              <span class="precio-valor">
+                {{ presentacion.precioPrincipal ? (presentacion.precioPrincipal | number: '1.0-2') : 'Sin precio' }}
+              </span>
+            </div>
+            <div class="precio-info" *ngIf="!shouldShowPreciosVenta">
+              <span class="precio-valor text-muted">No aplica</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Columna Código Principal -->
+        <ng-container matColumnDef="codigoPrincipal">
+          <th mat-header-cell *matHeaderCellDef>Código Principal</th>
+          <td mat-cell *matCellDef="let presentacion">
+            <div class="codigo-info">
+              <span class="codigo-valor">{{ presentacion.codigoPrincipal || 'Sin código' }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Columna Principal -->
+        <ng-container matColumnDef="principal">
+          <th mat-header-cell *matHeaderCellDef>Principal</th>
+          <td mat-cell *matCellDef="let presentacion">
+            <mat-radio-button 
+              [checked]="presentacion.principal"
+              (change)="marcarComoPrincipal(presentacion)"
+              [disabled]="!presentacion.activo || isLoading"
+              [matTooltip]="!presentacion.activo ? 'Presentación inactiva' : (presentacion.principal ? 'Ya es la presentación principal' : 'Marcar como presentación principal')"
+              class="principal-radio">
+            </mat-radio-button>
+          </td>
+        </ng-container>
+
+        <!-- Columna Activo -->
+        <ng-container matColumnDef="activo">
+          <th mat-header-cell *matHeaderCellDef>Activo</th>
+          <td mat-cell *matCellDef="let presentacion">
+            <mat-checkbox 
+              [checked]="presentacion.activo"
+              (change)="toggleActivo(presentacion)"
+              [disabled]="presentacion.principal || isLoading"
+              [matTooltip]="presentacion.principal ? 'No se puede desactivar la presentación principal' : (presentacion.activo ? 'Desactivar presentación' : 'Activar presentación')"
+              class="activo-checkbox">
+            </mat-checkbox>
+          </td>
+        </ng-container>
+
+        <!-- Columna Acciones -->
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef>Acciones</th>
+          <td mat-cell *matCellDef="let presentacion" style="display: flex; justify-content: center;">
+            <button mat-icon-button [matMenuTriggerFor]="menu"
+                    matTooltip="Acciones">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="editarPresentacion(presentacion)">
+                <mat-icon>edit</mat-icon>
+                <span>Editar</span>
+              </button>
+              <button mat-menu-item (click)="gestionarPrecios(presentacion)" *ngIf="shouldShowPreciosVenta">
+                <mat-icon>price_check</mat-icon>
+                <span>Gestionar precios</span>
+              </button>
+              <button mat-menu-item (click)="gestionarCodigos(presentacion)">
+                <mat-icon>qr_code</mat-icon>
+                <span>Gestionar códigos</span>
+              </button>
+              <mat-divider></mat-divider>
+              <button mat-menu-item (click)="eliminarPresentacion(presentacion)"
+                      [disabled]="presentacion.principal"
+                      class="delete-action">
+                <mat-icon class="delete-icon">delete</mat-icon>
+                <span class="delete-text">Eliminar</span>
+              </button>
+            </mat-menu>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+            [class.presentacion-principal]="row.principal"
+            [class.presentacion-inactiva]="!row.activo"></tr>
+      </table>
+      </div>
+      <!-- Paginación -->
+      <mat-paginator 
+        [length]="totalPresentaciones"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        [pageIndex]="currentPage"
+        (page)="onPageChange($event)"
+        showFirstLastButtons
+        aria-label="Seleccionar página de presentaciones">
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+</div>

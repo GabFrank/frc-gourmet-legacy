@@ -6,8 +6,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { Router } from '@angular/router';
 import { TabsService } from '../../../services/tabs.service';
-import { ListComprasComponent } from '../compras/list-compras.component';
-import { CreateEditCompraComponent } from '../compras/create-edit-compra.component';
 import { ListProveedoresComponent } from '../proveedores/list-proveedores.component';
 
 @Component({
@@ -63,13 +61,13 @@ export class ComprasDashboardComponent implements OnInit {
     console.log(`Navigating to: ${route}`);
 
     if (route === 'compras') {
-      this.tabsService.openTab(
-        'Compras',
-        ListComprasComponent,
-        { source: 'dashboard' },
-        'compras-tab',
-        true
-      );
+      // this.tabsService.openTab(
+      //   'Compras',
+      //   ListComprasComponent,
+      //   { source: 'dashboard' },
+      //   'compras-tab',
+      //   true
+      // );
     } else if (route === 'proveedores') {
       this.tabsService.openTab(
         'Proveedores',
@@ -83,13 +81,13 @@ export class ComprasDashboardComponent implements OnInit {
 
   // Create a new compra
   createCompra(): void {
-    this.tabsService.openTab(
-      'Nueva Compra',
-      CreateEditCompraComponent,
-      {}, // No specific data needed for new compra
-      `nueva-compra-${Date.now()}`, // Unique ID for the tab
-      true // Closable
-    );
+    // this.tabsService.openTab(
+    //   'Nueva Compra',
+    //   CreateEditCompraComponent,
+    //   {}, // No specific data needed for new compra
+    //   `nueva-compra-${Date.now()}`, // Unique ID for the tab
+    //   true // Closable
+    // );
   }
 
   // Used by the tab service

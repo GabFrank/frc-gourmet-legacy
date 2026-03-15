@@ -2,7 +2,7 @@ import { ipcMain, IpcMainInvokeEvent } from 'electron';
 import { DataSource, Not } from 'typeorm';
 import { Moneda } from '../../src/app/database/entities/financiero/moneda.entity';
 import { TipoPrecio } from '../../src/app/database/entities/financiero/tipo-precio.entity';
-import { PrecioVenta } from '../../src/app/database/entities/productos/precio-venta.entity';
+// import { PrecioVenta } from '../../src/app/database/entities/productos/precio-venta.entity';
 import { MonedaBillete } from '../../src/app/database/entities/financiero/moneda-billete.entity';
 import { Conteo } from '../../src/app/database/entities/financiero/conteo.entity';
 import { ConteoDetalle } from '../../src/app/database/entities/financiero/conteo-detalle.entity';
@@ -22,6 +22,16 @@ export function registerFinancieroHandlers(dataSource: DataSource, getCurrentUse
     try {
       const repo = dataSource.getRepository(Moneda);
       return await repo.find({ order: { principal: 'DESC', denominacion: 'ASC' } });
+    } catch (error) {
+      console.error('Error getting monedas:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('get-monedas', async () => {
+    try {
+      const repo = dataSource.getRepository(Moneda);
+      return await repo.find({ where: { activo: true }, order: { principal: 'DESC', denominacion: 'ASC' } });
     } catch (error) {
       console.error('Error getting monedas:', error);
       throw error;
@@ -98,27 +108,17 @@ export function registerFinancieroHandlers(dataSource: DataSource, getCurrentUse
   });
 
   // --- TipoPrecio Handlers ---
-  ipcMain.handle('getTipoPrecios', async () => {
+  ipcMain.handle('get-tipo-precios', async () => {
     try {
       const repo = dataSource.getRepository(TipoPrecio);
-      return await repo.find({ order: { descripcion: 'ASC' } });
+      return await repo.find({ where: { activo: true }, order: { descripcion: 'ASC' } });
     } catch (error) {
       console.error('Error getting tipos de precio:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('getTipoPrecio', async (_event: any, id: number) => {
-    try {
-      const repo = dataSource.getRepository(TipoPrecio);
-      return await repo.findOneBy({ id });
-    } catch (error) {
-      console.error(`Error getting tipo de precio ID ${id}:`, error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('createTipoPrecio', async (_event: any, data: any) => {
+  ipcMain.handle('create-tipo-precio', async (_event: any, data: any) => {
     try {
       const repo = dataSource.getRepository(TipoPrecio);
       const entity = repo.create(data);
@@ -130,7 +130,17 @@ export function registerFinancieroHandlers(dataSource: DataSource, getCurrentUse
     }
   });
 
-  ipcMain.handle('updateTipoPrecio', async (_event: any, id: number, data: any) => {
+  ipcMain.handle('get-tipo-precio', async (_event: any, id: number) => {
+    try {
+      const repo = dataSource.getRepository(TipoPrecio);
+      return await repo.findOneBy({ id });
+    } catch (error) {
+      console.error(`Error getting tipo de precio ${id}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('update-tipo-precio', async (_event: any, id: number, data: any) => {
     try {
       const repo = dataSource.getRepository(TipoPrecio);
       const entity = await repo.findOneBy({ id });
@@ -139,21 +149,22 @@ export function registerFinancieroHandlers(dataSource: DataSource, getCurrentUse
       await setEntityUserTracking(dataSource, entity, getCurrentUser()?.id, true);
       return await repo.save(entity);
     } catch (error) {
-      console.error(`Error updating tipo de precio ID ${id}:`, error);
+      console.error(`Error updating tipo de precio ${id}:`, error);
       throw error;
     }
   });
 
-  ipcMain.handle('deleteTipoPrecio', async (_event: any, id: number) => {
-    // Note: Hard delete. Consider dependencies (PrecioVenta)
+  ipcMain.handle('delete-tipo-precio', async (_event: any, id: number) => {
     try {
       const repo = dataSource.getRepository(TipoPrecio);
       const entity = await repo.findOneBy({ id });
       if (!entity) throw new Error(`TipoPrecio ID ${id} not found`);
-      // Add dependency checks here
-      return await repo.remove(entity);
+      // Soft delete
+      entity.activo = false;
+      await setEntityUserTracking(dataSource, entity, getCurrentUser()?.id, true);
+      return await repo.save(entity);
     } catch (error) {
-      console.error(`Error deleting tipo de precio ID ${id}:`, error);
+      console.error(`Error deleting tipo de precio ${id}:`, error);
       throw error;
     }
   });

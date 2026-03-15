@@ -1,11 +1,17 @@
 /* You can add global styles to this file, and also import other style files */
 @use '@angular/material' as mat;
 
+// ✅ Importar variables de tema globales
+@import './styles/theme-variables.scss';
+
 // Import custom material icons
 @import 'assets/custom-material-icons.scss';
 
 // Include the common styles for Angular Material
 @include mat.core();
+
+// Apply minimum density to all components
+@include mat.all-component-densities(minimum);
 
 // Custom palette definitions based on user requirements
 $custom-red-palette: (
@@ -137,7 +143,7 @@ $custom-light-theme: mat.define-light-theme((color: (primary: $custom-primary,
         warn: $custom-warn,
       ),
       typography: $custom-typography,
-      density: -2,
+      density: -3,
     ));
 
 // Create the dark theme object
@@ -146,7 +152,7 @@ $custom-dark-theme: mat.define-dark-theme((color: (primary: $custom-primary,
         warn: $custom-warn,
       ),
       typography: $custom-typography,
-      density: -2,
+      density: -3,
     ));
 
 // Include the theme mixins for all components - light theme is default
@@ -420,6 +426,15 @@ $custom-dark-theme: mat.define-dark-theme((color: (primary: $custom-primary,
   .mat-unthemed.mdc-icon-button .mat-icon {
     color: white !important;
   }
+}
+
+.titulo {
+  color: #f57c00 !important;
+}
+
+.titulo-center {
+  color: #f57c00 !important;
+  text-align: center;
 }
 
 
@@ -808,7 +823,7 @@ select,
 .list-container,
 .list-personas-container,
 .list-categorias-container,
-.list-productos-container,
+// .list-productos-container,
 .list-usuarios-container {
   padding: 16px;
   height: 100%;
@@ -1623,4 +1638,36 @@ input.mat-input-element {
 
 .error-icon {
   color: #fb1a1a;
+}
+
+
+
+.mat-mdc-tab-group {
+  .mat-mdc-tab-body-content {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/*
+  Estilo para los componentes anfitriones cargados dinámicamente en las pestañas.
+  Asegura que el componente ocupe toda la altura disponible dentro del cuerpo de la pestaña.
+*/
+.tab-host-component {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+// Tooltip styles
+.tooltip-large {
+  max-width: 300px !important;
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  padding: 8px 12px !important;
+  background-color: rgba(0, 0, 0, 0.9) !important;
+  color: white !important;
+  border-radius: 4px !important;
 }

@@ -1,8 +1,6 @@
 // Preload script that will be executed before rendering the application
 import { contextBridge, ipcRenderer } from 'electron';
-import { ProductoImage } from './src/app/database/entities/productos/producto-image.entity';
 import { EstadoVentaItem } from './src/app/database/entities/ventas/venta-item.entity';
-import { OrigenCosto } from './src/app/database/entities/productos/costo-por-producto.entity';
 
 // Define types for our API
 interface Category {
@@ -177,6 +175,71 @@ interface Subcategoria {
   updatedAt?: Date;
 }
 
+// Productos interfaces - Updated to match new structure
+interface Familia {
+  id?: number;
+  nombre: string;
+  activo: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface Subfamilia {
+  id?: number;
+  nombre: string;
+  familia: Familia;
+  activo: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface Adicional {
+  id?: number;
+  nombre: string;
+  precioBase: number;
+  activo: boolean;
+  categoria?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface RecetaAdicionalVinculacion {
+  id?: number;
+  precioAdicional: number;
+  cantidad: number;
+  unidad: string;
+  unidadOriginal?: string;
+  activo: boolean;
+  receta: Receta;
+  adicional: Adicional;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface RecetaIngredienteIntercambiable {
+  id?: number;
+  recetaIngrediente: RecetaIngrediente;
+  ingredienteOpcion: Producto;
+  costoExtra?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface Observacion {
+  id?: number;
+  descripcion: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface ProductoObservacion {
+  id?: number;
+  producto: Producto;
+  observacion: Observacion;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 interface RecetaVariacion {
   id?: number;
   nombre: string;
@@ -186,37 +249,51 @@ interface RecetaVariacion {
   updatedAt?: Date;
 }
 
+interface producto {
+  id?: number;
+  nombre: string;
+  tipo: 'RETAIL' | 'ELABORADO' | 'INGREDIENTE' | 'COMBO' | 'BASE';
+  unidadBase?: string;
+  subfamilia: Subfamilia;
+  activo: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// Keep Producto for compatibility with existing interfaces
 interface Producto {
   id?: number;
-  codigo: string;
-  descripcion: string;
-  subcategoria: Subcategoria;
-  precio: number;
-  costo?: number;
-  stock?: number;
-  stock_minimo?: number;
-  imageUrl?: string;
+  nombre: string;
+  tipo: 'RETAIL' | 'ELABORADO' | 'INGREDIENTE' | 'COMBO' | 'BASE';
+  unidadBase?: string;
+  subfamilia: Subfamilia;
   activo: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-  recetaVariacion?: RecetaVariacion;
-  
 }
 
-// Presentacion interface
+// Presentacion interface - Updated
 interface Presentacion {
   id?: number;
-  descripcion: string;
-  tipoMedida: 'UNIDAD' | 'PAQUETE' | 'GRAMO' | 'LITRO';
+  nombre: string;
   cantidad: number;
-  principal: boolean;
+  unidad: string;
+  producto: Producto;
   activo: boolean;
-  productoId: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-// Codigo interface
+// Codigo Barra interface - Updated
+interface CodigoBarra {
+  id?: number;
+  codigo: string;
+  presentacion: Presentacion;
+  activo: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 interface Codigo {
   id?: number;
   codigo: string;
@@ -242,10 +319,7 @@ interface Moneda {
 // TipoPrecio interface
 interface TipoPrecio {
   id?: number;
-  descripcion: string;
-  autorizacion: boolean;
-  autorizadoPorId?: number;
-  activo: boolean;
+  nombre: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -263,11 +337,84 @@ interface PrecioVenta {
   updatedAt?: Date;
 }
 
+// Additional Productos interfaces
+interface PrecioCosto {
+  id?: number;
+  fuente: 'COMPRA' | 'MANUAL' | 'AJUSTE_RECETA';
+  valor: number;
+  fecha: Date;
+  producto?: Producto;
+  receta?: Receta;
+  moneda: Moneda;
+  activo: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface RecetaIngrediente {
+  id?: number;
+  cantidad: number;
+  unidad: string;
+  esExtra: boolean;
+  esOpcional: boolean;
+  esCambiable: boolean;
+  costoExtra?: number;
+  receta: Receta;
+  ingrediente: Producto;
+  activo: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface StockMovimiento {
+  id?: number;
+  cantidad: number;
+  tipo: 'ENTRADA' | 'SALIDA' | 'AJUSTE' | 'TRANSFERENCIA';
+  referencia?: number;
+  tipoReferencia: 'VENTA' | 'COMPRA' | 'PRODUCCION' | 'AJUSTE' | 'TRANSFERENCIA';
+  observaciones?: string;
+  fecha: Date;
+  producto: Producto;
+  activo: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface ConversionMoneda {
+  id?: number;
+  fechaInicio: Date;
+  fechaFin?: Date;
+  factor: number;
+  monedaOrigen: Moneda;
+  monedaDestino: Moneda;
+  activo: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface ConfiguracionMonetaria {
+  id?: number;
+  monedaPrincipal: Moneda;
+  precisonDecimales: number;
+  simboloMoneda: string;
+  posicionSimbolo: 'ANTES' | 'DESPUES';
+  separadorMiles: string;
+  separadorDecimales: string;
+  redondeoVentas: 'SIN_REDONDEO' | 'REDONDEAR_5' | 'REDONDEAR_10';
+  activo: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 // Receta interface
 interface Receta {
   id?: number;
   nombre: string;
-  modo_preparo?: string;
+  descripcion?: string;
+  costoCalculado?: number;
+  rendimiento?: number;
+  unidadRendimiento?: string;
+  unidadRendimientoOriginal?: string;
   activo: boolean;
   createdAt?: Date;
   updatedAt?: Date;
@@ -683,19 +830,7 @@ interface ObservacionProductoVentaItem {
   updatedAt?: Date;
 }
 
-interface Adicional {
-  id?: number;
-  nombre: string;
-  ingredienteId?: number;
-  ingrediente?: Ingrediente;
-  recetaId?: number;
-  receta?: Receta;
-  precioVentaUnitario: number;
-  cantidadDefault?: number;
-  activo: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+
 
 interface ProductoAdicional {
   id?: number;
@@ -739,7 +874,7 @@ interface CostoPorProducto {
   id?: number;
   productoId: number;
   producto?: Producto;
-  origenCosto: OrigenCosto;
+  // origenCosto: OrigenCosto;
   monedaId: number;
   moneda?: Moneda;
   valor: number;
@@ -761,7 +896,7 @@ interface ObservacionProducto {
   id?: number;
   productoId: number;
   producto?: Producto;
-  observacionId: number;  
+  observacionId: number;
   observacion?: Observacion;
   obligatorio: boolean;
   cantidadDefault?: number;
@@ -956,353 +1091,41 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on(channel, (_event: any, data: any) => callback(data));
   },
 
-  // Categoria operations
-  getCategorias: async (): Promise<Categoria[]> => {
-    return await ipcRenderer.invoke('getCategorias');
-  },
-  getCategoria: async (categoriaId: number): Promise<Categoria> => {
-    return await ipcRenderer.invoke('getCategoria', categoriaId);
-  },
-  createCategoria: async (categoriaData: Omit<Categoria, 'id' | 'createdAt' | 'updatedAt'>): Promise<Categoria> => {
-    return await ipcRenderer.invoke('createCategoria', categoriaData);
-  },
-  updateCategoria: async (categoriaId: number, categoriaData: Partial<Categoria>): Promise<{ success: boolean, categoria: Categoria }> => {
-    return await ipcRenderer.invoke('updateCategoria', categoriaId, categoriaData);
-  },
-  deleteCategoria: async (categoriaId: number): Promise<{ success: boolean }> => {
-    return await ipcRenderer.invoke('deleteCategoria', categoriaId);
-  },
-
-  // Subcategoria operations
-  getSubcategorias: async (): Promise<Subcategoria[]> => {
-    return await ipcRenderer.invoke('getSubcategorias');
-  },
-  getSubcategoria: async (subcategoriaId: number): Promise<Subcategoria> => {
-    return await ipcRenderer.invoke('getSubcategoria', subcategoriaId);
-  },
-  getSubcategoriasByCategoria: async (categoriaId: number): Promise<Subcategoria[]> => {
-    return await ipcRenderer.invoke('getSubcategoriasByCategoria', categoriaId);
-  },
-  createSubcategoria: async (subcategoriaData: Omit<Subcategoria, 'id' | 'createdAt' | 'updatedAt'>): Promise<Subcategoria> => {
-    return await ipcRenderer.invoke('createSubcategoria', subcategoriaData);
-  },
-  updateSubcategoria: async (subcategoriaId: number, subcategoriaData: Partial<Subcategoria>): Promise<{ success: boolean, subcategoria: Subcategoria }> => {
-    return await ipcRenderer.invoke('updateSubcategoria', subcategoriaId, subcategoriaData);
-  },
-  deleteSubcategoria: async (subcategoriaId: number): Promise<{ success: boolean }> => {
-    return await ipcRenderer.invoke('deleteSubcategoria', subcategoriaId);
-  },
-
-  // Producto operations
-  getProductos: async (): Promise<Producto[]> => {
-    return await ipcRenderer.invoke('getProductos');
-  },
-  getProducto: async (productoId: number): Promise<Producto> => {
-    return await ipcRenderer.invoke('getProducto', productoId);
-  },
-  getProductosBySubcategoria: async (subcategoriaId: number): Promise<Producto[]> => {
-    return await ipcRenderer.invoke('getProductosBySubcategoria', subcategoriaId);
-  },
-  createProducto: async (productoData: Omit<Producto, 'id' | 'createdAt' | 'updatedAt'>): Promise<Producto> => {
-    return await ipcRenderer.invoke('createProducto', productoData);
-  },
-  updateProducto: async (productoId: number, productoData: Partial<Producto>): Promise<{ success: boolean, producto: Producto }> => {
-    return await ipcRenderer.invoke('updateProducto', productoId, productoData);
-  },
-  deleteProducto: async (productoId: number): Promise<{ success: boolean }> => {
-    return await ipcRenderer.invoke('deleteProducto', productoId);
-  },
-  saveProductoImage: async (base64Data: string, fileName: string): Promise<{ success: boolean, imageUrl: string }> => {
-    return await ipcRenderer.invoke('saveProductoImage', { base64Data, fileName });
-  },
-  deleteProductoImage: async (imageUrl: string): Promise<{ success: boolean }> => {
-    return await ipcRenderer.invoke('deleteProductoImage', imageUrl);
-  },
-  searchProductosByCode: async (code: string): Promise<{ product: Producto, presentacion: Presentacion } | null> => {
-    return await ipcRenderer.invoke('searchProductosByCode', code || '');
-  },
-  searchProductos: async (params: { searchTerm: string, page: number, pageSize: number, exactMatch?: boolean }): Promise<{ items: Producto[], total: number }> => {
-    return await ipcRenderer.invoke('searchProductos', params);
-  },
-
-  // Product Image methods
-  getProductImages: async (productoId: number): Promise<ProductoImage[]> => {
-    return await ipcRenderer.invoke('getProductImages', productoId);
-  },
-
-  createProductImage: async (imageData: Partial<ProductoImage>): Promise<ProductoImage> => {
-    return await ipcRenderer.invoke('createProductImage', imageData);
-  },
-
-  updateProductImage: async (imageId: number, imageData: Partial<ProductoImage>): Promise<ProductoImage> => {
-    return await ipcRenderer.invoke('updateProductImage', imageId, imageData);
-  },
-
-  deleteProductImage: async (imageId: number): Promise<boolean> => {
-    return await ipcRenderer.invoke('deleteProductImage', imageId);
-  },
-
-  // Presentacion methods
-  getPresentaciones: async (): Promise<Presentacion[]> => {
-    return await ipcRenderer.invoke('getPresentaciones');
-  },
-
-  getPresentacion: async (presentacionId: number): Promise<Presentacion> => {
-    return await ipcRenderer.invoke('getPresentacion', presentacionId);
-  },
-
-  getPresentacionesByProducto: async (productoId: number): Promise<Presentacion[]> => {
-    return await ipcRenderer.invoke('getPresentacionesByProducto', productoId);
-  },
-
-  createPresentacion: async (presentacionData: Partial<Presentacion>): Promise<Presentacion> => {
-    return await ipcRenderer.invoke('createPresentacion', presentacionData);
-  },
-
-  updatePresentacion: async (presentacionId: number, presentacionData: Partial<Presentacion>): Promise<Presentacion> => {
-    return await ipcRenderer.invoke('updatePresentacion', presentacionId, presentacionData);
-  },
-
-  deletePresentacion: async (presentacionId: number): Promise<boolean> => {
-    return await ipcRenderer.invoke('deletePresentacion', presentacionId);
-  },
-
-  // Codigo methods
-  getCodigos: async (): Promise<Codigo[]> => {
-    return await ipcRenderer.invoke('getCodigos');
-  },
-
-  getCodigo: async (codigoId: number): Promise<Codigo> => {
-    return await ipcRenderer.invoke('getCodigo', codigoId);
-  },
-
-  getCodigosByPresentacion: async (presentacionId: number): Promise<Codigo[]> => {
-    return await ipcRenderer.invoke('getCodigosByPresentacion', presentacionId);
-  },
-
-  createCodigo: async (codigoData: Partial<Codigo>): Promise<Codigo> => {
-    return await ipcRenderer.invoke('createCodigo', codigoData);
-  },
-
-  updateCodigo: async (codigoId: number, codigoData: Partial<Codigo>): Promise<Codigo> => {
-    return await ipcRenderer.invoke('updateCodigo', codigoId, codigoData);
-  },
-
-  deleteCodigo: async (codigoId: number): Promise<boolean> => {
-    return await ipcRenderer.invoke('deleteCodigo', codigoId);
-  },
-
   // Moneda methods
   getMonedas: async (): Promise<Moneda[]> => {
-    return await ipcRenderer.invoke('getMonedas');
+    return await ipcRenderer.invoke('get-monedas');
   },
-
   getMoneda: async (monedaId: number): Promise<Moneda> => {
-    return await ipcRenderer.invoke('getMoneda', monedaId);
+    return await ipcRenderer.invoke('get-moneda', monedaId);
   },
-
-  createMoneda: async (monedaData: Partial<Moneda>): Promise<Moneda> => {
-    return await ipcRenderer.invoke('createMoneda', monedaData);
-  },
-
-  updateMoneda: async (monedaId: number, monedaData: Partial<Moneda>): Promise<Moneda> => {
-    return await ipcRenderer.invoke('updateMoneda', monedaId, monedaData);
-  },
-
-  deleteMoneda: async (monedaId: number): Promise<boolean> => {
-    return await ipcRenderer.invoke('deleteMoneda', monedaId);
-  },
-
   getMonedaPrincipal: async (): Promise<Moneda> => {
-    return await ipcRenderer.invoke('getMonedaPrincipal');
+    return await ipcRenderer.invoke('get-moneda-principal');
   },
-
+  createMoneda: async (monedaData: any): Promise<Moneda> => {
+    return await ipcRenderer.invoke('create-moneda', monedaData);
+  },
+  updateMoneda: async (monedaId: number, monedaData: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-moneda', monedaId, monedaData);
+  },
+  deleteMoneda: async (monedaId: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-moneda', monedaId);
+  },
   // TipoPrecio methods
-  getTipoPrecios: async (): Promise<TipoPrecio[]> => {
-    return await ipcRenderer.invoke('getTipoPrecios');
+  getTiposPrecio: async (): Promise<TipoPrecio[]> => {
+    return await ipcRenderer.invoke('get-tipo-precios');
   },
-
   getTipoPrecio: async (tipoPrecioId: number): Promise<TipoPrecio> => {
-    return await ipcRenderer.invoke('getTipoPrecio', tipoPrecioId);
+    return await ipcRenderer.invoke('get-tipo-precio', tipoPrecioId);
   },
-
-  createTipoPrecio: async (tipoPrecioData: Partial<TipoPrecio>): Promise<TipoPrecio> => {
-    return await ipcRenderer.invoke('createTipoPrecio', tipoPrecioData);
+  createTipoPrecio: async (tipoPrecioData: any): Promise<TipoPrecio> => {
+    return await ipcRenderer.invoke('create-tipo-precio', tipoPrecioData);
   },
-
-  updateTipoPrecio: async (tipoPrecioId: number, tipoPrecioData: Partial<TipoPrecio>): Promise<TipoPrecio> => {
-    return await ipcRenderer.invoke('updateTipoPrecio', tipoPrecioId, tipoPrecioData);
+  updateTipoPrecio: async (tipoPrecioId: number, tipoPrecioData: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-tipo-precio', tipoPrecioId, tipoPrecioData);
   },
-
-  deleteTipoPrecio: async (tipoPrecioId: number): Promise<boolean> => {
-    return await ipcRenderer.invoke('deleteTipoPrecio', tipoPrecioId);
+  deleteTipoPrecio: async (tipoPrecioId: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-tipo-precio', tipoPrecioId);
   },
-
-  // PrecioVenta methods
-  getPreciosVenta: async (active: boolean): Promise<PrecioVenta[]> => {
-    return await ipcRenderer.invoke('getPreciosVenta', active);
-  },
-
-  getPrecioVenta: async (precioVentaId: number, active: boolean): Promise<PrecioVenta> => {
-    return await ipcRenderer.invoke('getPrecioVenta', precioVentaId, active);
-  },
-
-  getPreciosVentaByPresentacion: async (presentacionId: number, active: boolean): Promise<PrecioVenta[]> => {
-    return await ipcRenderer.invoke('getPreciosVentaByPresentacion', presentacionId, active);
-  },
-
-  getPreciosVentaByPresentacionSabor: async (presentacionSaborId: number, active: boolean): Promise<PrecioVenta[]> => {
-    return await ipcRenderer.invoke('getPreciosVentaByPresentacionSabor', presentacionSaborId, active);
-  },
-
-  createPrecioVenta: async (precioVentaData: Partial<PrecioVenta>): Promise<PrecioVenta> => {
-    return await ipcRenderer.invoke('createPrecioVenta', precioVentaData);
-  },
-
-  updatePrecioVenta: async (precioVentaId: number, precioVentaData: Partial<PrecioVenta>): Promise<PrecioVenta> => {
-    return await ipcRenderer.invoke('updatePrecioVenta', precioVentaId, precioVentaData);
-  },
-
-  deletePrecioVenta: async (precioVentaId: number): Promise<boolean> => {
-    return await ipcRenderer.invoke('deletePrecioVenta', precioVentaId);
-  },
-
-  // Sabor methods
-  getSabores: async (): Promise<any[]> => {
-    return await ipcRenderer.invoke('getSabores');
-  },
-
-  getSabor: async (saborId: number): Promise<any> => {
-    return await ipcRenderer.invoke('getSabor', saborId);
-  },
-
-  createSabor: async (saborData: any): Promise<any> => {
-    return await ipcRenderer.invoke('createSabor', saborData);
-  },
-
-  updateSabor: async (saborId: number, saborData: any): Promise<any> => {
-    return await ipcRenderer.invoke('updateSabor', saborId, saborData);
-  },
-
-  deleteSabor: async (saborId: number): Promise<boolean> => {
-    return await ipcRenderer.invoke('deleteSabor', saborId);
-  },
-
-  // PresentacionSabor methods
-  getPresentacionSaboresByPresentacion: async (presentacionId: number): Promise<any[]> => {
-    return await ipcRenderer.invoke('getPresentacionSaboresByPresentacion', presentacionId);
-  },
-
-  getPresentacionSabor: async (presentacionSaborId: number): Promise<any> => {
-    return await ipcRenderer.invoke('getPresentacionSabor', presentacionSaborId);
-  },
-
-  createPresentacionSabor: async (presentacionSaborData: any): Promise<any> => {
-    return await ipcRenderer.invoke('createPresentacionSabor', presentacionSaborData);
-  },
-
-  updatePresentacionSabor: async (presentacionSaborId: number, presentacionSaborData: any): Promise<any> => {
-    return await ipcRenderer.invoke('updatePresentacionSabor', presentacionSaborId, presentacionSaborData);
-  },
-
-  deletePresentacionSabor: async (presentacionSaborId: number): Promise<boolean> => {
-    return await ipcRenderer.invoke('deletePresentacionSabor', presentacionSaborId);
-  },
-
-  // Receta methods
-  getRecetas: async () => {
-    return await ipcRenderer.invoke('getRecetas');
-  },
-  getReceta: async (recetaId: number) => {
-    return await ipcRenderer.invoke('getReceta', recetaId);
-  },
-  createReceta: async (recetaData: any) => {
-    return await ipcRenderer.invoke('createReceta', recetaData);
-  },
-  updateReceta: async (recetaId: number, recetaData: any) => {
-    return await ipcRenderer.invoke('updateReceta', recetaId, recetaData);
-  },
-  deleteReceta: async (recetaId: number) => {
-    return await ipcRenderer.invoke('deleteReceta', recetaId);
-  },
-  searchRecetasByNombre: async (searchText: string) => {
-    return await ipcRenderer.invoke('searchRecetasByNombre', searchText);
-  },
-
-  // RecetaItem methods
-  getRecetaItems: async (recetaId: number) => {
-    return await ipcRenderer.invoke('getRecetaItems', recetaId);
-  },
-  getRecetaItem: async (recetaItemId: number) => {
-    return await ipcRenderer.invoke('getRecetaItem', recetaItemId);
-  },
-  createRecetaItem: async (recetaItemData: any) => {
-    return await ipcRenderer.invoke('createRecetaItem', recetaItemData);
-  },
-  updateRecetaItem: async (recetaItemId: number, recetaItemData: any) => {
-    return await ipcRenderer.invoke('updateRecetaItem', recetaItemId, recetaItemData);
-  },
-  deleteRecetaItem: async (recetaItemId: number) => {
-    return await ipcRenderer.invoke('deleteRecetaItem', recetaItemId);
-  },
-
-  // Ingrediente methods
-  getIngredientes: async () => {
-    return await ipcRenderer.invoke('getIngredientes');
-  },
-  getIngrediente: async (ingredienteId: number) => {
-    return await ipcRenderer.invoke('getIngrediente', ingredienteId);
-  },
-  createIngrediente: async (ingredienteData: any) => {
-    return await ipcRenderer.invoke('createIngrediente', ingredienteData);
-  },
-  updateIngrediente: async (ingredienteId: number, ingredienteData: any) => {
-    return await ipcRenderer.invoke('updateIngrediente', ingredienteId, ingredienteData);
-  },
-  deleteIngrediente: async (ingredienteId: number) => {
-    return await ipcRenderer.invoke('deleteIngrediente', ingredienteId);
-  },
-  searchIngredientesByDescripcion: async (searchText: string) => {
-    return await ipcRenderer.invoke('searchIngredientesByDescripcion', searchText);
-  },
-
-  // RecetaVariacion methods
-  getRecetaVariaciones: async (recetaId: number) => {
-    return await ipcRenderer.invoke('getRecetaVariaciones', recetaId);
-  },
-  getRecetaVariacion: async (variacionId: number) => {
-    return await ipcRenderer.invoke('getRecetaVariacion', variacionId);
-  },
-  createRecetaVariacion: async (variacionData: any) => {
-    return await ipcRenderer.invoke('createRecetaVariacion', variacionData);
-  },
-  updateRecetaVariacion: async (variacionId: number, variacionData: any) => {
-    return await ipcRenderer.invoke('updateRecetaVariacion', variacionId, variacionData);
-  },
-  deleteRecetaVariacion: async (variacionId: number) => {
-    return await ipcRenderer.invoke('deleteRecetaVariacion', variacionId);
-  },
-  getRecetaVariacionCosto: async (variacionId: number) => {
-    return await ipcRenderer.invoke('getRecetaVariacionCosto', variacionId);
-  },
-
-  // RecetaVariacionItem methods
-  getRecetaVariacionItems: async (variacionId: number) => {
-    return await ipcRenderer.invoke('getRecetaVariacionItems', variacionId);
-  },
-  getRecetaVariacionItem: async (variacionItemId: number) => {
-    return await ipcRenderer.invoke('getRecetaVariacionItem', variacionItemId);
-  },
-  createRecetaVariacionItem: async (variacionItemData: any) => {
-    return await ipcRenderer.invoke('createRecetaVariacionItem', variacionItemData);
-  },
-  updateRecetaVariacionItem: async (variacionItemId: number, variacionItemData: any) => {
-    return await ipcRenderer.invoke('updateRecetaVariacionItem', variacionItemId, variacionItemData);
-  },
-  deleteRecetaVariacionItem: async (variacionItemId: number) => {
-    return await ipcRenderer.invoke('deleteRecetaVariacionItem', variacionItemId);
-  },
-
   // MonedaBillete methods
   getMonedasBilletes: async () => {
     return await ipcRenderer.invoke('get-monedas-billetes');
@@ -1547,41 +1370,6 @@ contextBridge.exposeInMainWorld('api', {
     return await ipcRenderer.invoke('updateFormasPagoOrder', updates);
   },
 
-  // MovimientoStock methods
-  getMovimientosStock: async (): Promise<MovimientoStock[]> => {
-    return await ipcRenderer.invoke('getMovimientosStock');
-  },
-  getMovimientoStock: async (movimientoStockId: number): Promise<MovimientoStock> => {
-    return await ipcRenderer.invoke('getMovimientoStock', movimientoStockId);
-  },
-  getMovimientosStockByProducto: async (productoId: number): Promise<MovimientoStock[]> => {
-    return await ipcRenderer.invoke('getMovimientosStockByProducto', productoId);
-  },
-  getMovimientosStockByIngrediente: async (ingredienteId: number): Promise<MovimientoStock[]> => {
-    return await ipcRenderer.invoke('getMovimientosStockByIngrediente', ingredienteId);
-  },
-  getMovimientosStockByTipoReferencia: async (tipoReferencia: TipoReferencia): Promise<MovimientoStock[]> => {
-    return await ipcRenderer.invoke('getMovimientosStockByTipoReferencia', tipoReferencia);
-  },
-  getMovimientosStockByReferenciaAndTipo: async (referencia: number, tipoReferencia: TipoReferencia): Promise<MovimientoStock[]> => {
-    return await ipcRenderer.invoke('getMovimientosStockByReferenciaAndTipo', referencia, tipoReferencia);
-  },
-  getCurrentStockByProducto: async (productoId: number): Promise<MovimientoStock> => {
-    return await ipcRenderer.invoke('getCurrentStockByProducto', productoId);
-  },
-  getCurrentStockByIngrediente: async (ingredienteId: number): Promise<MovimientoStock> => {
-    return await ipcRenderer.invoke('getCurrentStockByIngrediente', ingredienteId);
-  },
-  createMovimientoStock: async (movimientoStockData: Partial<MovimientoStock>): Promise<MovimientoStock> => {
-    return await ipcRenderer.invoke('createMovimientoStock', movimientoStockData);
-  },
-  updateMovimientoStock: async (movimientoStockId: number, movimientoStockData: Partial<MovimientoStock>): Promise<MovimientoStock> => {
-    return await ipcRenderer.invoke('updateMovimientoStock', movimientoStockId, movimientoStockData);
-  },
-  deleteMovimientoStock: async (movimientoStockId: number): Promise<{ success: boolean, deactivated: boolean }> => {
-    return await ipcRenderer.invoke('deleteMovimientoStock', movimientoStockId);
-  },
-
   // PrecioDelivery methods
   getPreciosDelivery: async (): Promise<PrecioDelivery[]> => {
     return await ipcRenderer.invoke('getPreciosDelivery');
@@ -1719,7 +1507,7 @@ contextBridge.exposeInMainWorld('api', {
   },
   updatePdvItemProducto: async (itemProductoId: number, itemProductoData: Partial<PdvItemProducto>): Promise<any> => {
     return await ipcRenderer.invoke('updatePdvItemProducto', itemProductoId, itemProductoData);
-  },  
+  },
   deletePdvItemProducto: async (itemProductoId: number): Promise<any> => {
     return await ipcRenderer.invoke('deletePdvItemProducto', itemProductoId);
   },
@@ -1818,70 +1606,12 @@ contextBridge.exposeInMainWorld('api', {
     return await ipcRenderer.invoke('deleteComanda', id);
   },
 
-  // Adicional methods
-  getAdicionales: async (): Promise<Adicional[]> => {
-    return await ipcRenderer.invoke('getAdicionales');
-  },
-  getAdicionalesFiltered: async (filters: {
-    nombre?: string;
-    ingredienteId?: number; 
-    recetaId?: number;
-    activo?: boolean;
-    pageIndex?: number;
-    pageSize?: number;
-  }): Promise<{items: Adicional[], total: number}> => {
-    return await ipcRenderer.invoke('getAdicionalesFiltered', filters);
-  },
-  getAdicional: async (id: number): Promise<Adicional> => {
-    return await ipcRenderer.invoke('getAdicional', id);
-  },
-
-  // ProductoAdicional methods
-  getProductoAdicionales: async (productoId: number): Promise<ProductoAdicional[]> => {
-    return await ipcRenderer.invoke('getProductoAdicionales', productoId);
-  },
-
-  getProductoAdicional: async (id: number): Promise<ProductoAdicional> => {
-    return await ipcRenderer.invoke('getProductoAdicional', id);
-  },
-
-  createProductoAdicional: async (data: Partial<ProductoAdicional>): Promise<ProductoAdicional> => {
-    return await ipcRenderer.invoke('createProductoAdicional', data);
-  },
-
-  updateProductoAdicional: async (id: number, data: Partial<ProductoAdicional>): Promise<ProductoAdicional> => {
-    return await ipcRenderer.invoke('updateProductoAdicional', id, data);
-  },
-
-  getProductosAdicionalesByProducto: async (productoId: number): Promise<ProductoAdicional[]> => {
-    return await ipcRenderer.invoke('getProductosAdicionalesByProducto', productoId);
-  },
-
-  getProductosAdicionalesByPresentacion: async (presentacionId: number): Promise<ProductoAdicional[]> => {
-    return await ipcRenderer.invoke('getProductosAdicionalesByPresentacion', presentacionId);
-  },
-
-  deleteProductoAdicional: async (id: number): Promise<boolean> => {
-    return await ipcRenderer.invoke('deleteProductoAdicional', id);
-  },
-
   // New search methods
   searchIngredientes: async (query: string) => {
     return await ipcRenderer.invoke('searchIngredientes', query);
   },
   searchRecetas: async (query: string) => {
     return await ipcRenderer.invoke('searchRecetas', query);
-  },
-
-  createAdicional: async (data: Partial<Adicional>): Promise<Adicional> => {
-    return await ipcRenderer.invoke('createAdicional', data);
-  },
-  updateAdicional: async (id: number, data: Partial<Adicional>): Promise<Adicional> => {
-    return await ipcRenderer.invoke('updateAdicional', id, data);
-  },
-
-  deleteAdicional: async (id: number): Promise<boolean> => {
-    return await ipcRenderer.invoke('deleteAdicional', id);
   },
 
   // CostoPorProducto methods
@@ -1902,38 +1632,423 @@ contextBridge.exposeInMainWorld('api', {
   createObservacion: async (data: Partial<Observacion>): Promise<Observacion> => {
     return await ipcRenderer.invoke('createObservacion', data);
   },
-  updateObservacion: async (id: number, data: Partial<Observacion>): Promise<Observacion> => {
+  updateObservacion: async (id: number, data: Partial<Observacion>): Promise<any> => {
     return await ipcRenderer.invoke('updateObservacion', id, data);
   },
-  deleteObservacion: async (id: number): Promise<boolean> => {
+  deleteObservacion: async (id: number): Promise<any> => {
     return await ipcRenderer.invoke('deleteObservacion', id);
   },
-  searchObservaciones: async (searchTerm: string, page: number, pageSize: number): Promise<Observacion[]> => {
-    return await ipcRenderer.invoke('searchObservaciones', searchTerm, page, pageSize);
+  getObservacionesByProducto: async (productoId: number): Promise<ProductoObservacion[]> => {
+    return await ipcRenderer.invoke('get-observaciones-by-producto', productoId);
+  },
+  createProductoObservacion: async (data: Partial<ProductoObservacion>): Promise<ProductoObservacion> => {
+    return await ipcRenderer.invoke('create-producto-observacion', data);
+  },
+  deleteProductoObservacion: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-producto-observacion', id);
   },
 
-  // ObservacionProducto methods
-  getObservacionesProducto: async (productoId: number): Promise<ObservacionProducto[]> => {
-    return await ipcRenderer.invoke('getObservacionesProducto', productoId);
+  // Adicional methods (Nueva Arquitectura)
+  getAdicionales: async (): Promise<Adicional[]> => {
+    return await ipcRenderer.invoke('get-adicionales');
+  },
+  getAdicionalesWithFilters: async (filters: {
+    search?: string;
+    activo?: boolean | null;
+    categoria?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{items: Adicional[], total: number, page: number, pageSize: number}> => {
+    return await ipcRenderer.invoke('get-adicionales-with-filters', filters);
+  },
+  getAdicional: async (adicionalId: number): Promise<Adicional> => {
+    return await ipcRenderer.invoke('get-adicional', adicionalId);
+  },
+  createAdicional: async (data: Partial<Adicional>): Promise<Adicional> => {
+    return await ipcRenderer.invoke('create-adicional', data);
+  },
+  updateAdicional: async (id: number, data: Partial<Adicional>): Promise<any> => {
+    return await ipcRenderer.invoke('update-adicional', id, data);
+  },
+  deleteAdicional: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-adicional', id);
   },
 
-  getObservacionesProductosByProducto: async (productoId: number): Promise<ObservacionProducto[]> => {
-    return await ipcRenderer.invoke('getObservacionesProductosByProducto', productoId);
+  // RecetaAdicionalVinculacion methods (Nueva Arquitectura)
+  getRecetaAdicionalVinculaciones: async (recetaId: number): Promise<RecetaAdicionalVinculacion[]> => {
+    return await ipcRenderer.invoke('get-receta-adicional-vinculaciones', recetaId);
+  },
+  getRecetaAdicionalVinculacion: async (vinculacionId: number): Promise<RecetaAdicionalVinculacion> => {
+    return await ipcRenderer.invoke('get-receta-adicional-vinculacion', vinculacionId);
+  },
+  createRecetaAdicionalVinculacion: async (data: Partial<RecetaAdicionalVinculacion>): Promise<RecetaAdicionalVinculacion> => {
+    return await ipcRenderer.invoke('create-receta-adicional-vinculacion', data);
+  },
+  updateRecetaAdicionalVinculacion: async (id: number, data: Partial<RecetaAdicionalVinculacion>): Promise<any> => {
+    return await ipcRenderer.invoke('update-receta-adicional-vinculacion', id, data);
+  },
+  deleteRecetaAdicionalVinculacion: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-receta-adicional-vinculacion', id);
   },
 
-  getObservacionProducto: async (id: number): Promise<ObservacionProducto> => {
-    return await ipcRenderer.invoke('getObservacionProducto', id);
+  // RecetaIngredienteIntercambiable methods
+  getRecetaIngredientesIntercambiables: async (recetaIngredienteId: number): Promise<RecetaIngredienteIntercambiable[]> => {
+    return await ipcRenderer.invoke('get-receta-ingredientes-intercambiables', recetaIngredienteId);
   },
-  createObservacionProducto: async (data: Partial<ObservacionProducto>): Promise<any> => {
-    return await ipcRenderer.invoke('createObservacionProducto', data);
+  createRecetaIngredienteIntercambiable: async (data: Partial<RecetaIngredienteIntercambiable>): Promise<RecetaIngredienteIntercambiable> => {
+    return await ipcRenderer.invoke('create-receta-ingrediente-intercambiable', data);
+  },
+  updateRecetaIngredienteIntercambiable: async (id: number, data: Partial<RecetaIngredienteIntercambiable>): Promise<any> => {
+    return await ipcRenderer.invoke('update-receta-ingrediente-intercambiable', id, data);
+  },
+  deleteRecetaIngredienteIntercambiable: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-receta-ingrediente-intercambiable', id);
   },
 
-  updateObservacionProducto: async (id: number, data: Partial<ObservacionProducto>): Promise<ObservacionProducto> => {
-    return await ipcRenderer.invoke('updateObservacionProducto', id, data);
+  // === PRODUCTOS METHODS ===
+
+  // Familia methods
+  getFamilias: async (): Promise<Familia[]> => {
+    return await ipcRenderer.invoke('get-familias');
+  },
+  getFamilia: async (familiaId: number): Promise<Familia> => {
+    return await ipcRenderer.invoke('get-familia', familiaId);
+  },
+  createFamilia: async (familiaData: any): Promise<Familia> => {
+    return await ipcRenderer.invoke('create-familia', familiaData);
+  },
+  updateFamilia: async (familiaId: number, familiaData: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-familia', familiaId, familiaData);
+  },
+  deleteFamilia: async (familiaId: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-familia', familiaId);
   },
 
-  deleteObservacionProducto: async (id: number): Promise<boolean> => {
-    return await ipcRenderer.invoke('deleteObservacionProducto', id);
+  // Subfamilia methods
+  getSubfamilias: async (): Promise<Subfamilia[]> => {
+    return await ipcRenderer.invoke('get-subfamilias');
   },
-  
+  getSubfamiliasByFamilia: async (familiaId: number): Promise<Subfamilia[]> => {
+    return await ipcRenderer.invoke('get-subfamilias-by-familia', familiaId);
+  },
+  getSubfamilia: async (subfamiliaId: number): Promise<Subfamilia> => {
+    return await ipcRenderer.invoke('get-subfamilia', subfamiliaId);
+  },
+  createSubfamilia: async (subfamiliaData: any): Promise<Subfamilia> => {
+    return await ipcRenderer.invoke('create-subfamilia', subfamiliaData);
+  },
+  updateSubfamilia: async (subfamiliaId: number, subfamiliaData: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-subfamilia', subfamiliaId, subfamiliaData);
+  },
+  deleteSubfamilia: async (subfamiliaId: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-subfamilia', subfamiliaId);
+  },
+
+  // Producto methods
+  getProductos: async (): Promise<Producto[]> => {
+    return await ipcRenderer.invoke('get-productos');
+  },
+  getProductosWithFilters: async (filters: {
+    search?: string;
+    tipo?: string;
+    activo?: string;
+    esVendible?: string;
+    esComprable?: string;
+    controlaStock?: string;
+    esIngrediente?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{items: Producto[], total: number}> => {
+    return await ipcRenderer.invoke('get-productos-with-filters', filters);
+  },
+  getProducto: async (productoId: number): Promise<Producto> => {
+    return await ipcRenderer.invoke('get-producto', productoId);
+  },
+  createProducto: async (productoData: any): Promise<Producto> => {
+    return await ipcRenderer.invoke('create-producto', productoData);
+  },
+  updateProducto: async (productoId: number, productoData: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-producto', productoId, productoData);
+  },
+  deleteProducto: async (productoId: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-producto', productoId);
+  },
+
+  // Presentacion methods
+  getPresentaciones: async (): Promise<Presentacion[]> => {
+    return await ipcRenderer.invoke('get-presentaciones');
+  },
+  getPresentacionesByProducto: async (productoId: number, page = 0, pageSize = 10, filtroActivo = 'activos'): Promise<any> => {
+    return await ipcRenderer.invoke('get-presentaciones-by-producto', productoId, page, pageSize, filtroActivo);
+  },
+  getPresentacion: async (presentacionId: number): Promise<any> => {
+    return await ipcRenderer.invoke('get-presentacion', presentacionId);
+  },
+  createPresentacion: async (presentacionData: any): Promise<Presentacion> => {
+    return await ipcRenderer.invoke('create-presentacion', presentacionData);
+  },
+  updatePresentacion: async (presentacionId: number, presentacionData: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-presentacion', presentacionId, presentacionData);
+  },
+  deletePresentacion: async (presentacionId: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-presentacion', presentacionId);
+  },
+  setPresentacionPrincipal: async (presentacionId: number): Promise<any> => {
+    return await ipcRenderer.invoke('set-presentacion-principal', presentacionId);
+  },
+  togglePresentacionActivo: async (presentacionId: number): Promise<any> => {
+    return await ipcRenderer.invoke('toggle-presentacion-activo', presentacionId);
+  },
+
+  // CodigoBarra methods
+  createCodigoBarra: async (codigoBarraData: any): Promise<CodigoBarra> => {
+    return await ipcRenderer.invoke('create-codigo-barra', codigoBarraData);
+  },
+  updateCodigoBarra: async (codigoBarraId: number, codigoBarraData: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-codigo-barra', codigoBarraId, codigoBarraData);
+  },
+  deleteCodigoBarra: async (codigoBarraId: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-codigo-barra', codigoBarraId);
+  },
+  getCodigosBarraByPresentacion: async (presentacionId: number): Promise<CodigoBarra[]> => {
+    return await ipcRenderer.invoke('get-codigos-barra-by-presentacion', presentacionId);
+  },
+  searchProductosByCodigo: async (codigo: string): Promise<any> => {
+    return await ipcRenderer.invoke('search-productos-by-codigo', codigo);
+  },
+
+  // PrecioVenta methods
+  getPreciosVenta: async (): Promise<PrecioVenta[]> => {
+    return await ipcRenderer.invoke('get-precios-venta');
+  },
+  getPreciosVentaByPresentacion: async (presentacionId: number, activo: boolean): Promise<PrecioVenta[]> => {
+    return await ipcRenderer.invoke('get-precios-venta-by-presentacion', presentacionId, activo);
+  },
+  getPreciosVentaByReceta: async (recetaId: number, activo: boolean): Promise<PrecioVenta[]> => {
+    return await ipcRenderer.invoke('get-precios-venta-by-receta', recetaId, activo);
+  },
+  createPrecioVenta: async (precioVentaData: any): Promise<PrecioVenta> => {
+    return await ipcRenderer.invoke('create-precio-venta', precioVentaData);
+  },
+  updatePrecioVenta: async (precioVentaId: number, precioVentaData: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-precio-venta', precioVentaId, precioVentaData);
+  },
+  deletePrecioVenta: async (precioVentaId: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-precio-venta', precioVentaId);
+  },
+
+  // PrecioCosto methods
+  getPreciosCosto: async (): Promise<PrecioCosto[]> => {
+    return await ipcRenderer.invoke('get-precios-costo');
+  },
+  getPreciosCostoByProducto: async (productoId: number): Promise<PrecioCosto[]> => {
+    return await ipcRenderer.invoke('get-precios-costo-by-producto', productoId);
+  },
+  createPrecioCosto: async (precioCostoData: any): Promise<PrecioCosto> => {
+    return await ipcRenderer.invoke('create-precio-costo', precioCostoData);
+  },
+  updatePrecioCosto: async (precioCostoId: number, precioCostoData: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-precio-costo', precioCostoId, precioCostoData);
+  },
+  deletePrecioCosto: async (precioCostoId: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-precio-costo', precioCostoId);
+  },
+
+  // Receta methods
+  getRecetas: async (): Promise<Receta[]> => {
+    return await ipcRenderer.invoke('get-recetas');
+  },
+  getRecetasWithFilters: async (filters: {
+    search?: string;
+    activo?: boolean | null;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{items: Receta[], total: number, page: number, pageSize: number}> => {
+    return await ipcRenderer.invoke('get-recetas-with-filters', filters);
+  },
+  getReceta: async (recetaId: number): Promise<Receta> => {
+    return await ipcRenderer.invoke('get-receta', recetaId);
+  },
+  createReceta: async (recetaData: any): Promise<Receta> => {
+    return await ipcRenderer.invoke('create-receta', recetaData);
+  },
+  updateReceta: async (recetaId: number, recetaData: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-receta', recetaId, recetaData);
+  },
+  checkRecetaDependencies: async (recetaId: number): Promise<{
+    receta: { id: number; nombre: string };
+    productosVinculados: Array<{ id: number; nombre: string; tipo: string; activo: boolean }>;
+  }> => {
+    return await ipcRenderer.invoke('check-receta-dependencies', recetaId);
+  },
+  deleteReceta: async (recetaId: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-receta', recetaId);
+  },
+
+  // Receta additional methods
+  getRecetasByEstado: async (activo: boolean | null): Promise<Receta[]> => {
+    return await ipcRenderer.invoke('get-recetas-by-estado', activo);
+  },
+  searchRecetasByNombre: async (nombre: string): Promise<Receta[]> => {
+    return await ipcRenderer.invoke('search-recetas-by-nombre', nombre);
+  },
+  getRecetasWithIngredientes: async (): Promise<Receta[]> => {
+    return await ipcRenderer.invoke('get-recetas-with-ingredientes');
+  },
+  calcularCostoReceta: async (recetaId: number): Promise<number> => {
+    return await ipcRenderer.invoke('calcular-costo-receta', recetaId);
+  },
+  actualizarCostoReceta: async (recetaId: number): Promise<any> => {
+    return await ipcRenderer.invoke('actualizar-costo-receta', recetaId);
+  },
+
+  // RecetaIngrediente methods
+  getRecetaIngredientes: async (recetaId: number): Promise<RecetaIngrediente[]> => {
+    return await ipcRenderer.invoke('get-receta-ingredientes', recetaId);
+  },
+  createRecetaIngrediente: async (recetaIngredienteData: any): Promise<RecetaIngrediente> => {
+    return await ipcRenderer.invoke('create-receta-ingrediente', recetaIngredienteData);
+  },
+  updateRecetaIngrediente: async (recetaIngredienteId: number, recetaIngredienteData: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-receta-ingrediente', recetaIngredienteId, recetaIngredienteData);
+  },
+  deleteRecetaIngrediente: async (recetaIngredienteId: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-receta-ingrediente', recetaIngredienteId);
+  },
+  deleteRecetaIngredienteMultiplesVariaciones: async (data: {
+    recetaIngredienteId: number;
+    eliminarDeOtrasVariaciones: boolean;
+  }): Promise<any> => {
+    return await ipcRenderer.invoke('delete-receta-ingrediente-multiples-variaciones', data);
+  },
+
+  // RecetaIngrediente additional methods
+  getRecetaIngredientesActivos: async (recetaId: number): Promise<RecetaIngrediente[]> => {
+    return await ipcRenderer.invoke('get-receta-ingredientes-activos', recetaId);
+  },
+  calcularCostoIngrediente: async (recetaIngredienteId: number): Promise<number> => {
+    return await ipcRenderer.invoke('calcular-costo-ingrediente', recetaIngredienteId);
+  },
+  validarStockIngrediente: async (recetaIngredienteId: number): Promise<boolean> => {
+    return await ipcRenderer.invoke('validar-stock-ingrediente', recetaIngredienteId);
+  },
+  recalculateAllRecipeCosts: async (): Promise<any[]> => {
+    return await ipcRenderer.invoke('recalculate-all-recipe-costs');
+  },
+  recalculateRecipeCost: async (recetaId: number): Promise<any> => {
+    return await ipcRenderer.invoke('recalculate-recipe-cost', recetaId);
+  },
+  // StockMovimiento methods
+  getStockMovimientos: async (): Promise<StockMovimiento[]> => {
+    return await ipcRenderer.invoke('get-stock-movimientos');
+  },
+  getStockMovimientosByProducto: async (productoId: number): Promise<StockMovimiento[]> => {
+    return await ipcRenderer.invoke('get-stock-movimientos-by-producto', productoId);
+  },
+  createStockMovimiento: async (stockMovimientoData: any): Promise<StockMovimiento> => {
+    return await ipcRenderer.invoke('create-stock-movimiento', stockMovimientoData);
+  },
+  updateStockMovimiento: async (stockMovimientoId: number, stockMovimientoData: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-stock-movimiento', stockMovimientoId, stockMovimientoData);
+  },
+  deleteStockMovimiento: async (stockMovimientoId: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-stock-movimiento', stockMovimientoId);
+  },
+
+  // Additional helper methods
+  searchProductosByNombre: async (nombre: string): Promise<Producto[]> => {
+    return await ipcRenderer.invoke('search-productos-by-nombre', nombre);
+  },
+  getProductosByTipo: async (tipo: string): Promise<Producto[]> => {
+    return await ipcRenderer.invoke('get-productos-by-tipo', tipo);
+  },
+  getProductosWithStock: async (): Promise<Producto[]> => {
+    return await ipcRenderer.invoke('get-productos-with-stock');
+  },
+
+  // Conversion Moneda methods
+  getConversionesMoneda: async (): Promise<ConversionMoneda[]> => {
+    return await ipcRenderer.invoke('get-conversiones-moneda');
+  },
+  createConversionMoneda: async (conversionData: any): Promise<ConversionMoneda> => {
+    return await ipcRenderer.invoke('create-conversion-moneda', conversionData);
+  },
+  updateConversionMoneda: async (conversionId: number, conversionData: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-conversion-moneda', conversionId, conversionData);
+  },
+  deleteConversionMoneda: async (conversionId: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-conversion-moneda', conversionId);
+  },
+
+  // Configuracion Monetaria methods
+  getConfiguracionMonetaria: async (): Promise<ConfiguracionMonetaria> => {
+    return await ipcRenderer.invoke('get-configuracion-monetaria');
+  },
+  createConfiguracionMonetaria: async (configData: any): Promise<ConfiguracionMonetaria> => {
+    return await ipcRenderer.invoke('create-configuracion-monetaria', configData);
+  },
+  updateConfiguracionMonetaria: async (configId: number, configData: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-configuracion-monetaria', configId, configData);
+  },
+
+  // Sabor methods
+  getSabores: async (): Promise<string[]> => {
+    return await ipcRenderer.invoke('get-sabores');
+  },
+  createOrUpdateSabor: async (saborData: any): Promise<{ success: boolean, message: string }> => {
+    return await ipcRenderer.invoke('create-or-update-sabor', saborData);
+  },
+  getSaborDetails: async (categoria: string): Promise<any> => {
+    return await ipcRenderer.invoke('get-sabor-details', categoria);
+  },
+
+  // ✅ Nuevos métodos para Arquitectura con Variaciones
+  // Sabores por producto
+  getSaboresByProducto: async (productoId: number): Promise<any[]> => {
+    return await ipcRenderer.invoke('get-sabores-by-producto', productoId);
+  },
+  createSabor: async (saborData: { nombre: string; categoria: string; descripcion?: string; productoId: number; }): Promise<any> => {
+    return await ipcRenderer.invoke('create-sabor', saborData);
+  },
+  updateSabor: async (saborId: number, data: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-sabor', saborId, data);
+  },
+  deleteSabor: async (saborId: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-sabor', saborId);
+  },
+  getSaboresEstadisticas: async (productoId: number): Promise<any> => {
+    return await ipcRenderer.invoke('get-sabores-estadisticas', productoId);
+  },
+
+  // Variaciones (RecetaPresentacion)
+  getVariacionesByProducto: async (productoId: number): Promise<any[]> => {
+    return await ipcRenderer.invoke('get-variaciones-by-producto', productoId);
+  },
+  getVariacionesByReceta: async (recetaId: number): Promise<any[]> => {
+    return await ipcRenderer.invoke('get-variaciones-by-receta', recetaId);
+  },
+  createRecetaPresentacion: async (variacionData: any): Promise<any> => {
+    return await ipcRenderer.invoke('create-receta-presentacion', variacionData);
+  },
+  updateRecetaPresentacion: async (variacionId: number, data: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-receta-presentacion', variacionId, data);
+  },
+  deleteRecetaPresentacion: async (variacionId: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-receta-presentacion', variacionId);
+  },
+  bulkUpdateVariaciones: async (updates: Array<{ variacionId: number; precio_ajuste?: number; activo?: boolean; }>): Promise<any> => {
+    return await ipcRenderer.invoke('bulk-update-variaciones', updates);
+  },
+  recalcularCostoVariacion: async (variacionId: number): Promise<any> => {
+    return await ipcRenderer.invoke('recalcular-costo-variacion', variacionId);
+  },
+  generateVariacionesFaltantes: async (productoId: number): Promise<any> => {
+    return await ipcRenderer.invoke('generate-variaciones-faltantes', productoId);
+  },
+
+  // ✅ NUEVO: Método para el asistente de ingredientes
+  getRecetasIdsPorVariacionIds: async (variacionIds: number[]): Promise<{ [variacionId: number]: number }> => {
+    return await ipcRenderer.invoke('get-recetas-ids-por-variacion-ids', variacionIds);
+  },
+
 });

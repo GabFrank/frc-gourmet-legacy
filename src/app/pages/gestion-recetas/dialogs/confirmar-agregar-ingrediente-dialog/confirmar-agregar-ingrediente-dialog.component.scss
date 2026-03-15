@@ -1,0 +1,76 @@
+:host {
+  display: block;
+}
+
+.confirm-dialog-container {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 12px;
+  margin: -16px -16px 16px -16px;
+  padding: 16px;
+
+  .title-icon {
+    color: var(--primary-color);
+  }
+}
+
+.dialog-content {
+  color: var(--text-secondary);
+  line-height: 1.6;
+
+  p {
+    margin: 0 0 16px 0;
+  }
+
+  strong {
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+}
+
+.dialog-details {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--hover-bg);
+  border-radius: 4px;
+  padding: 12px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 16px;
+
+  .details-icon {
+    font-size: 1.125rem;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.dialog-actions {
+  margin-top: 24px;
+  padding: 16px 0 0 0;
+  border-top: 1px solid var(--border-color);
+  margin: 16px -16px -16px -16px;
+  padding: 16px;
+  background-color: var(--surface);
+
+  .action-button {
+    min-width: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+}
+
