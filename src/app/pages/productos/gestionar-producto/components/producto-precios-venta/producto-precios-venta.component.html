@@ -9,8 +9,8 @@
   <!-- Content when not loading -->
   <div *ngIf="!loading" class="content-container">
     
-    <!-- Mensaje cuando no hay receta vinculada -->
-    <div *ngIf="mostrarMensajeSinReceta" class="no-recipe-message">
+    <!-- Mensaje cuando no hay receta vinculada (no para COMBO) -->
+    <div *ngIf="mostrarMensajeSinReceta && !esCombo" class="no-recipe-message">
       <mat-card class="info-card">
         <mat-card-header>
           <mat-card-title>
@@ -44,20 +44,23 @@
       </mat-card>
     </div>
 
-    <!-- Contenido cuando hay receta vinculada -->
-    <div *ngIf="hayReceta" class="recipe-content">
-      
+    <!-- Contenido cuando hay receta vinculada O es combo -->
+    <div *ngIf="hayReceta || esCombo" class="recipe-content">
+
       <!-- Header con título y descripción -->
       <div class="header-section">
         <h3>Precios de Venta</h3>
-        <p class="description">
+        <p class="description" *ngIf="!esCombo">
           Gestiona los precios de venta del producto elaborado. Los precios se vinculan directamente a la receta
           y permiten calcular automáticamente los márgenes de ganancia.
         </p>
+        <p class="description" *ngIf="esCombo">
+          Gestiona los precios de venta del combo. Define los precios en las monedas y tipos de precio que necesites.
+        </p>
       </div>
 
-      <!-- Información de la receta en row con cards -->
-      <div class="recipe-info-row">
+      <!-- Información de la receta en row con cards (solo para productos con receta, no COMBO) -->
+      <div class="recipe-info-row" *ngIf="!esCombo">
         <mat-card class="recipe-info-card">
           <mat-card-header>
             <mat-card-title>

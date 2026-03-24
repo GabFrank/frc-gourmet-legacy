@@ -9,6 +9,8 @@ import { Router } from '@angular/router';
 import { TabsService } from '../../../services/tabs.service';
 import { ListFamiliasComponent } from '../familias/list-familias.component';
 import { ListProductosComponent } from '../list-productos/list-productos.component';
+import { ListRecetasComponent } from '../../gestion-recetas/list-recetas/list-recetas.component';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-productos-dashboard',
@@ -19,7 +21,8 @@ import { ListProductosComponent } from '../list-productos/list-productos.compone
     MatIconModule,
     MatButtonModule,
     MatDividerModule,
-    MatGridListModule
+    MatGridListModule,
+    MatTooltipModule
   ],
   templateUrl: './productos-dashboard.component.html',
   styleUrls: ['./productos-dashboard.component.scss']
@@ -32,84 +35,96 @@ export class ProductosDashboardComponent {
       description: 'Administrar familias de productos',
       icon: 'category',
       route: 'familias',
-      color: '#4caf50'
+      color: '#4caf50',
+      disabled: false
     },
     {
-      title: 'Subfamilias', 
+      title: 'Subfamilias',
       description: 'Administrar subfamilias de productos',
       icon: 'subdirectory_arrow_right',
       route: 'subfamilias',
-      color: '#2196f3'
+      color: '#2196f3',
+      disabled: true
     },
     {
-      title: 'productos',
+      title: 'Productos',
       description: 'Gestión completa de productos',
       icon: 'restaurant',
       route: 'productos',
-      color: '#f44336'
+      color: '#f44336',
+      disabled: false
     },
     {
       title: 'Presentaciones',
       description: 'Administrar presentaciones y códigos de barra',
       icon: 'inventory',
       route: 'presentaciones',
-      color: '#ff9800'
+      color: '#ff9800',
+      disabled: true
     },
     {
-      title: 'Preços de Venda',
+      title: 'Precios de Venta',
       description: 'Configurar precios de venta por presentación',
       icon: 'sell',
       route: 'precos-venda',
-      color: '#9c27b0'
+      color: '#9c27b0',
+      disabled: true
     },
     {
-      title: 'Preços de Costo',
+      title: 'Precios de Costo',
       description: 'Administrar precios de costo de productos',
       icon: 'attach_money',
       route: 'precos-costo',
-      color: '#e91e63'
+      color: '#e91e63',
+      disabled: true
     },
     {
       title: 'Recetas',
       description: 'Gestión de recetas e ingredientes',
       icon: 'menu_book',
       route: 'recetas',
-      color: '#795548'
+      color: '#795548',
+      disabled: false
     },
     {
       title: 'Stock',
       description: 'Movimientos y control de inventario',
       icon: 'inventory_2',
       route: 'stock',
-      color: '#607d8b'
+      color: '#607d8b',
+      disabled: true
     },
     {
       title: 'Combos',
       description: 'Administrar combos y paquetes de productos',
       icon: 'restaurant_menu',
       route: 'combos',
-      color: '#3f51b5'
+      color: '#3f51b5',
+      disabled: true
     },
     {
       title: 'Promociones',
       description: 'Configurar promociones y ofertas especiales',
       icon: 'local_offer',
       route: 'promociones',
-      color: '#009688'
+      color: '#009688',
+      disabled: true
     },
     {
       title: 'Producción',
       description: 'Registros de producción y costos',
       icon: 'precision_manufacturing',
       route: 'produccion',
-      color: '#cddc39'
+      color: '#cddc39',
+      disabled: true
     },
     {
       title: 'Sistema Pizza',
       description: 'Sabores, tamaños y ensamblado de pizzas',
       icon: 'local_pizza',
       route: 'pizza',
-      color: '#ffc107'
+      color: '#ffc107',
+      disabled: true
     }
   ];
 
@@ -119,10 +134,12 @@ export class ProductosDashboardComponent {
   ) {}
 
   // Method to navigate to different productos sections
-  navigateTo(route: string): void {
-    console.log(`Navigating to productos: ${route}`);
-    
-    switch (route) {
+  navigateTo(item: any): void {
+    if (item.disabled) return;
+
+    console.log(`Navigating to productos: ${item.route}`);
+
+    switch (item.route) {
       case 'familias':
         this.tabsService.openTab(
           'Familias',
@@ -132,107 +149,26 @@ export class ProductosDashboardComponent {
           true
         );
         break;
-      case 'subfamilias':
-        // this.tabsService.openTab(
-        //   'Subfamilias',
-        //   ListSubfamiliasComponent,
-        //   { source: 'dashboard' },
-        //   'subfamilias-tab',
-        //   true
-        // );
-        break;
       case 'productos':
         this.tabsService.openTab(
-          'productos',
+          'Productos',
           ListProductosComponent,
           { source: 'dashboard' },
           'productos-tab',
           true
         );
         break;
-      case 'presentaciones':
-        // this.tabsService.openTab(
-        //   'Presentaciones',
-        //   ListPresentacionesComponent,
-        //   { source: 'dashboard' },
-        //   'presentaciones-tab',
-        //   true
-        // );
-        break;
-      case 'precos-venda':
-        // this.tabsService.openTab(
-        //   'Preços de Venda',
-        //   ListPrecosVendaComponent,
-        //   { source: 'dashboard' },
-        //   'precos-venda-tab',
-        //   true
-        // );
-        break;
-      case 'precos-costo':
-        // this.tabsService.openTab(
-        //   'Preços de Costo',
-        //   ListPrecosCostoComponent,
-        //   { source: 'dashboard' },
-        //   'precos-costo-tab',
-        //   true
-        // );
-        break;
       case 'recetas':
-        // this.tabsService.openTab(
-        //   'Recetas',
-        //   ListRecetasComponent,
-        //   { source: 'dashboard' },
-        //   'recetas-tab',
-        //   true
-        // );
-        break;
-      case 'stock':
-        // this.tabsService.openTab(
-        //   'Stock',
-        //   ListStockMovimientosComponent,
-        //   { source: 'dashboard' },
-        //   'stock-tab',
-        //   true
-        // );
-        break;
-      case 'combos':
-        // this.tabsService.openTab(
-        //   'Combos',
-        //   ListCombosComponent,
-        //   { source: 'dashboard' },
-        //   'combos-tab',
-        //   true
-        // );
-        break;
-      case 'promociones':
-        // this.tabsService.openTab(
-        //   'Promociones',
-        //   ListPromocionesComponent,
-        //   { source: 'dashboard' },
-        //   'promociones-tab',
-        //   true
-        // );
-        break;
-      case 'produccion':
-        // this.tabsService.openTab(
-        //   'Producción',
-        //   ListProduccionComponent,
-        //   { source: 'dashboard' },
-        //   'produccion-tab',
-        //   true
-        // );
-        break;
-      case 'pizza':
-        // this.tabsService.openTab(
-        //   'Sistema Pizza',
-        //   PizzaDashboardComponent,
-        //   { source: 'dashboard' },
-        //   'pizza-tab',
-        //   true
-        // );
+        this.tabsService.openTab(
+          'Recetas',
+          ListRecetasComponent,
+          { source: 'dashboard' },
+          'recetas-tab',
+          true
+        );
         break;
       default:
-        console.warn(`Unknown route: ${route}`);
+        console.warn(`Unknown or disabled route: ${item.route}`);
         break;
     }
   }

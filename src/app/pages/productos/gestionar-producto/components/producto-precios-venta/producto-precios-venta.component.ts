@@ -21,6 +21,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import { GestionarProductoService } from '../../services/gestionar-producto.service';
 import { RepositoryService } from 'src/app/database/repository.service';
 import { Producto } from 'src/app/database/entities/productos/producto.entity';
+import { ProductoTipo } from 'src/app/database/entities/productos/producto-tipo.enum';
 import { Receta } from 'src/app/database/entities/productos/receta.entity';
 import { PrecioVenta } from 'src/app/database/entities/productos/precio-venta.entity';
 import { Moneda } from 'src/app/database/entities/financiero/moneda.entity';
@@ -53,6 +54,7 @@ export class ProductoPreciosVentaComponent implements OnInit, OnDestroy, AfterVi
   hayReceta = false;
   hayPrecios = false;
   mostrarMensajeSinReceta = false;
+  esCombo = false;
   
   // Dropdown data
   monedas: Moneda[] = [];
@@ -150,18 +152,31 @@ export class ProductoPreciosVentaComponent implements OnInit, OnDestroy, AfterVi
    */
   private loadProductoData(productoId: number): void {
     this.loading = true;
-    
+
     this.repositoryService.getProducto(productoId).subscribe({
       next: (producto: Producto) => {
         this.producto = producto;
-        
-        // Si el producto tiene una receta asociada, cargarla
-        if (producto.receta) {
+        this.esCombo = producto.tipo === ProductoTipo.COMBO;
+
+        // Ajustar columnas según tipo
+        if (this.esCombo) {
+          this.displayedColumns = ['id', 'moneda', 'tipoPrecio', 'valor', 'principal', 'activo', 'acciones'];
+        } else {
+          this.displayedColumns = ['id', 'moneda', 'tipoPrecio', 'valor', 'cmv', 'principal', 'activo', 'acciones'];
+        }
+
+        if (this.esCombo) {
+          // COMBO: precios directos vinculados al producto
+          this.hayReceta = false;
+          this.mostrarMensajeSinReceta = false;
+          this.loadPreciosVentaByProducto(productoId);
+          this.loadDropdownData();
+        } else if (producto.receta) {
           this.loadRecetaData(producto.receta.id!);
         } else {
           this.handleProductoSinReceta();
         }
-        
+
         this.loading = false;
       },
       error: (error: any) => {
@@ -213,37 +228,17 @@ export class ProductoPreciosVentaComponent implements OnInit, OnDestroy, AfterVi
    * Carga los precios de venta de la receta
    */
   private loadPreciosVenta(): void {
+    if (this.esCombo && this.producto?.id) {
+      this.loadPreciosVentaByProducto(this.producto.id);
+      return;
+    }
     if (!this.receta?.id) return;
-    
+
     this.isLoading = true;
-    
+
     this.repositoryService.getPreciosVentaByReceta(this.receta.id, null).subscribe({
       next: (precios: PrecioVenta[]) => {
-        // Aplicar filtro según el estado seleccionado
-        let filteredPrecios = precios;
-        if (this.filtroActivo === 'activos') {
-          filteredPrecios = precios.filter(p => p.activo);
-        } else if (this.filtroActivo === 'inactivos') {
-          filteredPrecios = precios.filter(p => !p.activo);
-        }
-        
-        // Calcular CMV para cada precio
-        filteredPrecios = filteredPrecios.map(precio => {
-          const costo = this.receta?.costoCalculado || 0;
-          const precioValor = precio.valor || 1;
-          (precio as any).cmv = costo > 0 && precioValor > 0 ? (costo / precioValor) * 100 : 0;
-          return precio;
-        });
-        
-        // Aplicar paginación
-        const startIndex = this.currentPage * this.pageSize;
-        const endIndex = startIndex + this.pageSize;
-        this.preciosVenta = filteredPrecios.slice(startIndex, endIndex);
-        this.totalPreciosVenta = filteredPrecios.length;
-        
-        this.hayPrecios = precios.length > 0;
-        this.calcularPreciosComputados();
-        this.isLoading = false;
+        this.procesarPrecios(precios);
       },
       error: (error: any) => {
         console.error('Error loading precios venta:', error);
@@ -251,6 +246,56 @@ export class ProductoPreciosVentaComponent implements OnInit, OnDestroy, AfterVi
         this.isLoading = false;
       }
     });
+  }
+
+  /**
+   * Carga los precios de venta directos del producto (COMBO)
+   */
+  private loadPreciosVentaByProducto(productoId: number): void {
+    this.isLoading = true;
+
+    this.repositoryService.getPreciosVentaByProducto(productoId, null).subscribe({
+      next: (precios: PrecioVenta[]) => {
+        this.procesarPrecios(precios);
+      },
+      error: (error: any) => {
+        console.error('Error loading precios venta by producto:', error);
+        this.snackBar.open('Error al cargar precios de venta', 'Cerrar', { duration: 3000 });
+        this.isLoading = false;
+      }
+    });
+  }
+
+  /**
+   * Procesa y pagina los precios cargados
+   */
+  private procesarPrecios(precios: PrecioVenta[]): void {
+    let filteredPrecios = precios;
+    if (this.filtroActivo === 'activos') {
+      filteredPrecios = precios.filter(p => p.activo);
+    } else if (this.filtroActivo === 'inactivos') {
+      filteredPrecios = precios.filter(p => !p.activo);
+    }
+
+    // Calcular CMV solo si hay receta (no aplica para COMBO)
+    if (!this.esCombo) {
+      filteredPrecios = filteredPrecios.map(precio => {
+        const costo = this.receta?.costoCalculado || 0;
+        const precioValor = precio.valor || 1;
+        (precio as any).cmv = costo > 0 && precioValor > 0 ? (costo / precioValor) * 100 : 0;
+        return precio;
+      });
+    }
+
+    // Aplicar paginación
+    const startIndex = this.currentPage * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.preciosVenta = filteredPrecios.slice(startIndex, endIndex);
+    this.totalPreciosVenta = filteredPrecios.length;
+
+    this.hayPrecios = precios.length > 0;
+    this.calcularPreciosComputados();
+    this.isLoading = false;
   }
 
   /**
@@ -321,11 +366,7 @@ export class ProductoPreciosVentaComponent implements OnInit, OnDestroy, AfterVi
   onPageChange(event: PageEvent): void {
     this.currentPage = event.pageIndex;
     this.pageSize = event.pageSize;
-    
-    // Recargar precios con paginación
-    if (this.receta?.id) {
-      this.loadPreciosVenta();
-    }
+    this.loadPreciosVenta();
   }
 
   /**
@@ -336,28 +377,30 @@ export class ProductoPreciosVentaComponent implements OnInit, OnDestroy, AfterVi
     if (this.paginator) {
       this.paginator.firstPage();
     }
-    
-    // Recargar precios con filtro
-    if (this.receta?.id) {
-      this.loadPreciosVenta();
-    }
+    this.loadPreciosVenta();
   }
 
   /**
    * Crea un nuevo precio de venta
    */
   crearPrecioVenta(): void {
-    if (this.precioVentaForm.valid && this.receta?.id) {
+    const canCreate = this.esCombo ? this.producto?.id : this.receta?.id;
+    if (this.precioVentaForm.valid && canCreate) {
       const formValue = this.precioVentaForm.value;
-      
-      const precioVentaData = {
+
+      const precioVentaData: any = {
         valor: formValue.valor,
         monedaId: formValue.monedaId,
         tipoPrecioId: formValue.tipoPrecioId,
-        recetaId: this.receta.id,
         principal: formValue.principal,
         activo: formValue.activo
       };
+
+      if (this.esCombo) {
+        precioVentaData.productoId = this.producto!.id;
+      } else {
+        precioVentaData.recetaId = this.receta!.id;
+      }
 
       this.isLoading = true;
 

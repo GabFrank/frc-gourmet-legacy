@@ -1,0 +1,276 @@
+.combo-container {
+  padding: 0px 10px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .header-section {
+    margin-bottom: 10px;
+
+    h3 {
+      margin: 0 0 8px 0;
+      font-weight: 500;
+    }
+
+    .description {
+      margin: 0;
+      color: #818181;
+      font-size: 14px;
+    }
+  }
+
+  .form-card {
+    margin-bottom: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    .titulo {
+      display: flex;
+      align-items: center;
+
+      mat-icon {
+        color: var(--accent-color);
+      }
+    }
+
+    .toggle-row {
+      padding: 8px 0;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+
+      .producto-field {
+        flex: 2;
+        min-width: 250px;
+      }
+
+      .cantidad-field {
+        flex: 1;
+        min-width: 120px;
+      }
+
+      .opcional-check {
+        padding-top: 8px;
+      }
+
+      .presentacion-field {
+        flex: 1;
+        min-width: 250px;
+      }
+    }
+
+    .actions-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+  }
+
+  .table-card {
+    flex: 1;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    .titulo {
+      display: flex;
+      align-items: center;
+
+      mat-icon {
+        color: var(--accent-color);
+      }
+    }
+
+    .table-container {
+      position: relative;
+      min-height: 150px;
+
+      .loading-shade {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: rgba(255, 255, 255, 0.8);
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .data-table {
+        width: 100%;
+
+        th {
+          text-align: left;
+        }
+
+        td {
+          padding: 8px 16px;
+        }
+
+        .opcional-si {
+          color: #4caf50;
+        }
+
+        .opcional-no {
+          color: #9e9e9e;
+        }
+
+        .sin-precio {
+          color: #9e9e9e;
+          font-style: italic;
+        }
+      }
+
+      .no-data {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        color: var(--mat-secondary-text-color, #666);
+        text-align: center;
+
+        mat-icon {
+          font-size: 48px;
+          width: 48px;
+          height: 48px;
+          margin-bottom: 16px;
+          opacity: 0.5;
+        }
+
+        p {
+          margin: 8px 0;
+          font-size: 16px;
+        }
+
+        .hint {
+          font-size: 14px;
+          opacity: 0.7;
+        }
+      }
+    }
+
+    .summary-cards {
+      display: flex;
+      gap: 16px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(0, 0, 0, 0.12);
+
+      .summary-card {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        border-radius: 8px;
+
+        mat-icon {
+          font-size: 32px;
+          width: 32px;
+          height: 32px;
+          opacity: 0.8;
+        }
+
+        .summary-info {
+          display: flex;
+          flex-direction: column;
+
+          .summary-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            opacity: 0.7;
+            letter-spacing: 0.5px;
+          }
+
+          .summary-value {
+            font-size: 20px;
+            font-weight: 500;
+          }
+        }
+
+        &.costo-card {
+          mat-icon {
+            color: #f44336;
+          }
+        }
+
+        &.venta-card {
+          mat-icon {
+            color: #4caf50;
+          }
+        }
+
+        &.margen-card {
+          mat-icon {
+            color: #2196f3;
+          }
+        }
+
+        &.cmv-card {
+          mat-icon {
+            color: #ff9800;
+          }
+
+          .cmv-verde { color: #4caf50; }
+          .cmv-amarillo { color: #ffeb3b; }
+          .cmv-naranja { color: #ff9800; }
+          .cmv-rojo { color: #f44336; }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .combo-container {
+    padding: 16px;
+
+    .form-card {
+      .form-row {
+        flex-direction: column;
+        align-items: stretch;
+
+        .producto-field,
+        .cantidad-field {
+          min-width: auto;
+        }
+      }
+    }
+
+    .table-card {
+      .summary-cards {
+        flex-direction: column;
+      }
+    }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .combo-container {
+    .table-card {
+      .table-container {
+        .loading-shade {
+          background: rgba(0, 0, 0, 0.8);
+        }
+
+        .data-table {
+          th {
+            background-color: var(--background-secondary);
+            color: white;
+          }
+        }
+      }
+
+      .summary-cards {
+        border-top-color: rgba(255, 255, 255, 0.12);
+      }
+    }
+  }
+}

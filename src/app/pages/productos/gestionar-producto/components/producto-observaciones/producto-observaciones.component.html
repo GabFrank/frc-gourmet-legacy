@@ -1,0 +1,120 @@
+<div class="observaciones-container">
+  <div class="header-section">
+    <h3>Observaciones del Producto</h3>
+    <p class="description">
+      Gestiona las observaciones asociadas a este producto. Las observaciones se muestran al momento de la venta.
+    </p>
+  </div>
+
+  <!-- Vincular observación existente -->
+  <mat-card class="form-card">
+    <mat-card-header>
+      <mat-card-title class="titulo">
+        <mat-icon>link</mat-icon>
+        Vincular Observación
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="vincular-row">
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Buscar Observación</mat-label>
+          <input matInput
+                 [formControl]="observacionSearchControl"
+                 [matAutocomplete]="autoObservacion"
+                 placeholder="Escriba para buscar...">
+          <mat-icon matSuffix>search</mat-icon>
+          <mat-autocomplete #autoObservacion="matAutocomplete"
+                            [displayWith]="displayObservacion"
+                            (optionSelected)="onObservacionSelected($event.option.value)">
+            <mat-option *ngFor="let obs of filteredObservaciones | async" [value]="obs">
+              {{ obs.descripcion }}
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+        <button mat-raised-button color="primary"
+                [disabled]="!observacionSeleccionada || isLoading"
+                (click)="vincularObservacion()">
+          <mat-icon>add_link</mat-icon>
+          Vincular
+        </button>
+        <button mat-stroked-button
+                (click)="toggleFormularioNueva()">
+          <mat-icon>{{ mostrarFormularioNueva ? 'close' : 'add' }}</mat-icon>
+          {{ mostrarFormularioNueva ? 'Cancelar' : 'Crear Nueva' }}
+        </button>
+      </div>
+
+      <!-- Formulario inline para crear nueva observación -->
+      <div class="nueva-observacion-form" *ngIf="mostrarFormularioNueva">
+        <form [formGroup]="nuevaObservacionForm" (ngSubmit)="crearYVincularObservacion()">
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Descripción de la nueva observación</mat-label>
+              <input matInput formControlName="descripcion" placeholder="Ej: SIN SAL, EXTRA QUESO...">
+              <mat-error *ngIf="nuevaObservacionForm.get('descripcion')?.hasError('required')">
+                La descripción es requerida
+              </mat-error>
+            </mat-form-field>
+            <button mat-raised-button color="accent" type="submit"
+                    [disabled]="nuevaObservacionForm.invalid || isLoading">
+              <mat-icon>save</mat-icon>
+              Crear y Vincular
+            </button>
+          </div>
+        </form>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Tabla de observaciones vinculadas -->
+  <mat-card class="table-card">
+    <mat-card-header>
+      <mat-card-title class="titulo">
+        <mat-icon>list</mat-icon>
+        Observaciones Vinculadas
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="table-container">
+        <div class="loading-shade" *ngIf="isLoading">
+          <mat-spinner diameter="50"></mat-spinner>
+        </div>
+
+        <table mat-table [dataSource]="productoObservaciones" class="data-table">
+          <!-- Descripción -->
+          <ng-container matColumnDef="descripcion">
+            <th mat-header-cell *matHeaderCellDef>Descripción</th>
+            <td mat-cell *matCellDef="let po">
+              {{ po.observacion?.descripcion }}
+            </td>
+          </ng-container>
+
+          <!-- Acciones -->
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef style="width: 60px;">Acciones</th>
+            <td mat-cell *matCellDef="let po" style="width: 60px;">
+              <button mat-icon-button [matMenuTriggerFor]="menuAcciones">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #menuAcciones="matMenu">
+                <button mat-menu-item (click)="desvincularObservacion(po)">
+                  <mat-icon color="warn">link_off</mat-icon>
+                  <span>Desvincular</span>
+                </button>
+              </mat-menu>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <!-- Mensaje cuando no hay datos -->
+        <div class="no-data" *ngIf="!isLoading && productoObservaciones.length === 0">
+          <mat-icon>speaker_notes_off</mat-icon>
+          <p>No hay observaciones vinculadas a este producto.</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

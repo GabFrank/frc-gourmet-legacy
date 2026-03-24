@@ -26,6 +26,7 @@ export class GestionarProductoComponent implements OnInit, OnDestroy {
     sabores: boolean;        // ✅ UNIFICADA (Sabores y Variaciones)
     stock: boolean;
     combo: boolean;
+    observaciones: boolean;
   }>;
   productoId: number | null = null;
   productoId$!: Observable<number | null>;

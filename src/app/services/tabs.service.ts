@@ -46,9 +46,9 @@ export class TabsService {
     // this.addTab('Producto', CreateEditProductoComponent, { productoId: 2 });
     // open list recetas
     // open list productos
-    // this.addTab('Lista de productos', ListProductosComponent);
+    this.addTab('Lista de productos', ListProductosComponent);
     // open gestionar producto
-    this.addTab('Gestionar Producto 13', GestionarProductoComponent, { productoId: 13 });
+    // this.addTab('Gestionar Producto 13', GestionarProductoComponent, { productoId: 13 });
     // // open list recetas
     // this.addTab('Lista de recetas', ListRecetasComponent);
     // open gestiona receta

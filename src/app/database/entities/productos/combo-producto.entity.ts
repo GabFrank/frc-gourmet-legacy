@@ -2,6 +2,7 @@ import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseModel } from '../base.entity';
 import { Combo } from './combo.entity';
 import { Producto } from './producto.entity';
+import { Presentacion } from './presentacion.entity';
 
 @Entity('combo_producto')
 export class ComboProducto extends BaseModel {
@@ -22,4 +23,8 @@ export class ComboProducto extends BaseModel {
   @ManyToOne(() => Producto)
   @JoinColumn({ name: 'producto_id' })
   producto!: Producto;
+
+  @ManyToOne(() => Presentacion, { nullable: true })
+  @JoinColumn({ name: 'presentacion_id' })
+  presentacion?: Presentacion;
 } 

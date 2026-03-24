@@ -309,7 +309,13 @@ export class ProductoPresentacionesPreciosComponent implements OnInit, OnDestroy
       width: '900px',
       maxWidth: '95vw',
       height: '80vh',
-      data: { presentacion: presentacion },
+      data: {
+        entityId: presentacion.id,
+        entityName: presentacion.nombre,
+        entityType: 'presentacion' as const,
+        relationField: 'presentacionId' as const,
+        recetaId: 0,
+      },
       disableClose: true
     });
 

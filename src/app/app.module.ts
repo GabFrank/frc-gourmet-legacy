@@ -19,6 +19,7 @@ import { MatGridListModule } from '@angular/material/grid-list';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS, MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
@@ -58,6 +59,8 @@ import { ProductoResumenComponent } from './pages/productos/gestionar-producto/c
 import { ProductoPreciosVentaComponent } from './pages/productos/gestionar-producto/components/producto-precios-venta/producto-precios-venta.component';
 // Nuevos componentes de variaciones/sabores
 import { ProductoSaboresComponent } from './pages/productos/gestionar-producto/components/producto-sabores/producto-sabores.component';
+import { ProductoComboComponent } from './pages/productos/gestionar-producto/components/producto-combo/producto-combo.component';
+import { ProductoObservacionesComponent } from './pages/productos/gestionar-producto/components/producto-observaciones/producto-observaciones.component';
 
 import { SaborDialogComponent } from './pages/productos/gestionar-producto/dialogs/sabor-dialog/sabor-dialog.component';
 import { VariacionDialogComponent } from './pages/productos/gestionar-producto/dialogs/variacion-dialog/variacion-dialog.component';
@@ -85,6 +88,7 @@ import { GestionRecetasModule } from './pages/gestion-recetas/gestion-recetas.mo
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatAutocompleteModule,
     MatDialogModule,
     MatTableModule,
     MatPaginatorModule,
@@ -122,6 +126,8 @@ import { GestionRecetasModule } from './pages/gestion-recetas/gestion-recetas.mo
     ProductoPreciosVentaComponent,
     // Declaraciones nuevas
     ProductoSaboresComponent,
+    ProductoComboComponent,
+    ProductoObservacionesComponent,
     SaborDialogComponent,
     VariacionDialogComponent,
     PrecioVentaDialogComponent

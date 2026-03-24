@@ -959,12 +959,98 @@ export function registerProductosHandlers(dataSource: DataSource, getCurrentUser
   });
 
   // --- Observacion Handlers ---
-  ipcMain.handle('get-observaciones', async () => {
+  ipcMain.handle('getObservaciones', async () => {
     try {
       const observacionRepository = dataSource.getRepository(Observacion);
       return await observacionRepository.find({ where: { activo: true }, order: { descripcion: 'ASC' } });
     } catch (error) {
       console.error('Error getting observaciones:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('searchObservaciones', async (_event: any, search: string) => {
+    try {
+      const observacionRepository = dataSource.getRepository(Observacion);
+      const where: any = { activo: true };
+      if (search) {
+        where.descripcion = Like(`%${search.toUpperCase()}%`);
+      }
+      return await observacionRepository.find({ where, order: { descripcion: 'ASC' }, take: 50 });
+    } catch (error) {
+      console.error('Error searching observaciones:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('getObservacion', async (_event: any, id: number) => {
+    try {
+      const observacionRepository = dataSource.getRepository(Observacion);
+      const observacion = await observacionRepository.findOneBy({ id });
+      if (!observacion) {
+        throw new Error(`Observacion with id ${id} not found`);
+      }
+      return observacion;
+    } catch (error) {
+      console.error('Error getting observacion:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('createObservacion', async (_event: any, data: any) => {
+    try {
+      const observacionRepository = dataSource.getRepository(Observacion);
+      const currentUser = getCurrentUser();
+
+      const observacion = observacionRepository.create({
+        descripcion: data.descripcion?.toUpperCase(),
+        activo: data.activo !== undefined ? data.activo : true
+      });
+
+      await setEntityUserTracking(dataSource, observacion, currentUser?.id, false);
+      return await observacionRepository.save(observacion);
+    } catch (error) {
+      console.error('Error creating observacion:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('updateObservacion', async (_event: any, id: number, data: any) => {
+    try {
+      const observacionRepository = dataSource.getRepository(Observacion);
+      const currentUser = getCurrentUser();
+
+      const observacion = await observacionRepository.findOneBy({ id });
+      if (!observacion) {
+        throw new Error(`Observacion with id ${id} not found`);
+      }
+
+      if (data.descripcion !== undefined) observacion.descripcion = data.descripcion.toUpperCase();
+      if (data.activo !== undefined) observacion.activo = data.activo;
+
+      await setEntityUserTracking(dataSource, observacion, currentUser?.id, true);
+      return await observacionRepository.save(observacion);
+    } catch (error) {
+      console.error('Error updating observacion:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('deleteObservacion', async (_event: any, id: number) => {
+    try {
+      const observacionRepository = dataSource.getRepository(Observacion);
+      const currentUser = getCurrentUser();
+
+      const observacion = await observacionRepository.findOneBy({ id });
+      if (!observacion) {
+        throw new Error(`Observacion with id ${id} not found`);
+      }
+
+      observacion.activo = false;
+      await setEntityUserTracking(dataSource, observacion, currentUser?.id, true);
+      return await observacionRepository.save(observacion);
+    } catch (error) {
+      console.error('Error deleting observacion:', error);
       throw error;
     }
   });
@@ -979,6 +1065,276 @@ export function registerProductosHandlers(dataSource: DataSource, getCurrentUser
       });
     } catch (error) {
       console.error('Error getting observaciones by producto:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('create-producto-observacion', async (_event: any, data: any) => {
+    try {
+      const productoObservacionRepository = dataSource.getRepository(ProductoObservacion);
+      const currentUser = getCurrentUser();
+
+      const productoObservacion = productoObservacionRepository.create({
+        producto: data.producto,
+        observacion: data.observacion,
+        activo: data.activo !== undefined ? data.activo : true
+      });
+
+      await setEntityUserTracking(dataSource, productoObservacion, currentUser?.id, false);
+      return await productoObservacionRepository.save(productoObservacion);
+    } catch (error) {
+      console.error('Error creating producto observacion:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('delete-producto-observacion', async (_event: any, id: number) => {
+    try {
+      const productoObservacionRepository = dataSource.getRepository(ProductoObservacion);
+      const currentUser = getCurrentUser();
+
+      const productoObservacion = await productoObservacionRepository.findOneBy({ id });
+      if (!productoObservacion) {
+        throw new Error(`ProductoObservacion with id ${id} not found`);
+      }
+
+      productoObservacion.activo = false;
+      await setEntityUserTracking(dataSource, productoObservacion, currentUser?.id, true);
+      return await productoObservacionRepository.save(productoObservacion);
+    } catch (error) {
+      console.error('Error deleting producto observacion:', error);
+      throw error;
+    }
+  });
+
+  // --- Combo Handlers ---
+  ipcMain.handle('getComboByProducto', async (_event: any, productoId: number) => {
+    try {
+      const comboRepository = dataSource.getRepository(Combo);
+      const combo = await comboRepository.findOne({
+        where: { producto: { id: productoId }, activo: true },
+        relations: ['productos', 'productos.producto', 'productos.producto.preciosCosto', 'productos.producto.preciosCosto.moneda', 'productos.presentacion', 'productos.presentacion.preciosVenta', 'productos.presentacion.preciosVenta.moneda', 'productos.presentacion.preciosVenta.tipoPrecio']
+      });
+
+      // Load price info for each producto in the combo
+      if (combo && combo.productos) {
+        const precioVentaRepo = dataSource.getRepository(PrecioVenta);
+        const precioCostoRepo = dataSource.getRepository(PrecioCosto);
+        const presentacionRepo = dataSource.getRepository(Presentacion);
+        const productoRepo = dataSource.getRepository(Producto);
+
+        for (const cp of combo.productos) {
+          if (!cp.producto) continue;
+          const prodId = cp.producto.id;
+
+          // Load full producto with receta relation to get receta_id
+          const fullProducto = await productoRepo.findOne({
+            where: { id: prodId },
+            relations: ['receta']
+          });
+          const receta = fullProducto?.receta;
+
+          // --- Precios de Venta ---
+          let preciosVenta: PrecioVenta[] = [];
+
+          // 0. If a specific presentacion is selected, use its prices
+          if (cp.presentacion?.preciosVenta && cp.presentacion.preciosVenta.length > 0) {
+            preciosVenta = cp.presentacion.preciosVenta.filter(pv => pv.activo);
+          }
+
+          // 1. Direct product prices (COMBO type)
+          if (preciosVenta.length === 0) {
+            preciosVenta = await precioVentaRepo.find({
+              where: { producto: { id: prodId }, activo: true },
+              relations: ['moneda', 'tipoPrecio'],
+              order: { principal: 'DESC', id: 'ASC' }
+            });
+          }
+
+          // 2. Receta prices (ELABORADO types) — via producto.receta_id
+          if (preciosVenta.length === 0 && receta) {
+            preciosVenta = await precioVentaRepo.find({
+              where: { receta: { id: receta.id }, activo: true },
+              relations: ['moneda', 'tipoPrecio'],
+              order: { principal: 'DESC', id: 'ASC' }
+            });
+          }
+
+          // 3. Presentacion prices (RETAIL types) — fallback to all presentaciones
+          if (preciosVenta.length === 0) {
+            const presentaciones = await presentacionRepo.find({
+              where: { producto: { id: prodId }, activo: true },
+              relations: ['preciosVenta', 'preciosVenta.moneda', 'preciosVenta.tipoPrecio']
+            });
+            for (const pres of presentaciones) {
+              if (pres.preciosVenta) {
+                preciosVenta.push(...pres.preciosVenta.filter(pv => pv.activo));
+              }
+            }
+          }
+          (cp.producto as any).preciosVenta = preciosVenta;
+
+          // --- Costo ---
+          // 1. For elaborados: use receta.costoCalculado
+          if (receta && receta.costoCalculado) {
+            (cp.producto as any).costoCalculado = Number(receta.costoCalculado);
+          }
+
+          // 2. Direct product costs
+          const preciosCosto = cp.producto.preciosCosto?.filter((pc: any) => pc.activo !== false) || [];
+          if (preciosCosto.length === 0 && receta) {
+            // 3. Receta costs
+            const recetaCostos = await precioCostoRepo.find({
+              where: { receta: { id: receta.id }, activo: true },
+              relations: ['moneda']
+            });
+            cp.producto.preciosCosto = recetaCostos;
+          }
+        }
+      }
+
+      return combo;
+    } catch (error) {
+      console.error('Error getting combo by producto:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('createCombo', async (_event: any, data: any) => {
+    try {
+      const comboRepository = dataSource.getRepository(Combo);
+      const currentUser = getCurrentUser();
+
+      const combo = comboRepository.create({
+        nombre: data.nombre?.toUpperCase() || '',
+        activo: true,
+        producto: { id: data.productoId } as any
+      });
+
+      await setEntityUserTracking(dataSource, combo, currentUser?.id, false);
+      return await comboRepository.save(combo);
+    } catch (error) {
+      console.error('Error creating combo:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('updateCombo', async (_event: any, id: number, data: any) => {
+    try {
+      const comboRepository = dataSource.getRepository(Combo);
+      const currentUser = getCurrentUser();
+
+      const combo = await comboRepository.findOneBy({ id });
+      if (!combo) {
+        throw new Error(`Combo with id ${id} not found`);
+      }
+
+      if (data.nombre !== undefined) combo.nombre = data.nombre.toUpperCase();
+      if (data.activo !== undefined) combo.activo = data.activo;
+
+      await setEntityUserTracking(dataSource, combo, currentUser?.id, true);
+      return await comboRepository.save(combo);
+    } catch (error) {
+      console.error('Error updating combo:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('deleteCombo', async (_event: any, id: number) => {
+    try {
+      const comboRepository = dataSource.getRepository(Combo);
+      const currentUser = getCurrentUser();
+
+      const combo = await comboRepository.findOneBy({ id });
+      if (!combo) {
+        throw new Error(`Combo with id ${id} not found`);
+      }
+
+      combo.activo = false;
+      await setEntityUserTracking(dataSource, combo, currentUser?.id, true);
+      return await comboRepository.save(combo);
+    } catch (error) {
+      console.error('Error deleting combo:', error);
+      throw error;
+    }
+  });
+
+  // --- ComboProducto Handlers ---
+  ipcMain.handle('getComboProductos', async (_event: any, comboId: number) => {
+    try {
+      const comboProductoRepository = dataSource.getRepository(ComboProducto);
+      return await comboProductoRepository.find({
+        where: { combo: { id: comboId }, activo: true },
+        relations: ['producto']
+      });
+    } catch (error) {
+      console.error('Error getting combo productos:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('createComboProducto', async (_event: any, data: any) => {
+    try {
+      const comboProductoRepository = dataSource.getRepository(ComboProducto);
+      const currentUser = getCurrentUser();
+
+      const comboProducto = comboProductoRepository.create({
+        combo: { id: data.comboId } as any,
+        producto: { id: data.productoId } as any,
+        presentacion: data.presentacionId ? { id: data.presentacionId } as any : undefined,
+        cantidad: data.cantidad,
+        esOpcional: data.esOpcional || false,
+        activo: true
+      });
+
+      await setEntityUserTracking(dataSource, comboProducto, currentUser?.id, false);
+      return await comboProductoRepository.save(comboProducto);
+    } catch (error) {
+      console.error('Error creating combo producto:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('updateComboProducto', async (_event: any, id: number, data: any) => {
+    try {
+      const comboProductoRepository = dataSource.getRepository(ComboProducto);
+      const currentUser = getCurrentUser();
+
+      const comboProducto = await comboProductoRepository.findOneBy({ id });
+      if (!comboProducto) {
+        throw new Error(`ComboProducto with id ${id} not found`);
+      }
+
+      if (data.cantidad !== undefined) comboProducto.cantidad = data.cantidad;
+      if (data.esOpcional !== undefined) comboProducto.esOpcional = data.esOpcional;
+      if (data.activo !== undefined) comboProducto.activo = data.activo;
+      if (data.presentacionId !== undefined) {
+        (comboProducto as any).presentacion = data.presentacionId ? { id: data.presentacionId } : null;
+      }
+
+      await setEntityUserTracking(dataSource, comboProducto, currentUser?.id, true);
+      return await comboProductoRepository.save(comboProducto);
+    } catch (error) {
+      console.error('Error updating combo producto:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('deleteComboProducto', async (_event: any, id: number) => {
+    try {
+      const comboProductoRepository = dataSource.getRepository(ComboProducto);
+      const currentUser = getCurrentUser();
+
+      const comboProducto = await comboProductoRepository.findOneBy({ id });
+      if (!comboProducto) {
+        throw new Error(`ComboProducto with id ${id} not found`);
+      }
+
+      comboProducto.activo = false;
+      await setEntityUserTracking(dataSource, comboProducto, currentUser?.id, true);
+      return await comboProductoRepository.save(comboProducto);
+    } catch (error) {
+      console.error('Error deleting combo producto:', error);
       throw error;
     }
   });
@@ -1069,11 +1425,30 @@ export function registerProductosHandlers(dataSource: DataSource, getCurrentUser
     }
   });
 
+  ipcMain.handle('get-precios-venta-by-producto', async (_event: any, productoId: number, activo: boolean) => {
+    try {
+      const repo = dataSource.getRepository(PrecioVenta);
+      const where: any = { producto: { id: productoId } };
+      if (activo !== null) {
+        where.activo = activo;
+      }
+      return await repo.find({
+        where: where,
+        relations: ['moneda', 'tipoPrecio'],
+        order: { principal: 'DESC', id: 'ASC' }
+      });
+    } catch (error) {
+      console.error('Error getting precios venta by producto:', error);
+      throw error;
+    }
+  });
+
   ipcMain.handle('create-precio-venta', async (_event: any, precioVentaData: any) => {
     try {
       const repo = dataSource.getRepository(PrecioVenta);
       const presentacionRepo = dataSource.getRepository(Presentacion);
       const recetaRepo = dataSource.getRepository(Receta);
+      const productoRepo = dataSource.getRepository(Producto);
       const monedaRepo = dataSource.getRepository(Moneda);
       const tipoPrecioRepo = dataSource.getRepository(TipoPrecio);
       const currentUser = getCurrentUser();
@@ -1081,19 +1456,25 @@ export function registerProductosHandlers(dataSource: DataSource, getCurrentUser
       // Get related entities
       let presentacion = null;
       let receta = null;
+      let producto = null;
 
       if (precioVentaData.presentacionId) {
         presentacion = await presentacionRepo.findOneBy({ id: precioVentaData.presentacionId });
-      if (!presentacion) {
-        throw new Error('Presentacion not found');
+        if (!presentacion) {
+          throw new Error('Presentacion not found');
         }
       } else if (precioVentaData.recetaId) {
         receta = await recetaRepo.findOneBy({ id: precioVentaData.recetaId });
         if (!receta) {
           throw new Error('Receta not found');
         }
+      } else if (precioVentaData.productoId) {
+        producto = await productoRepo.findOneBy({ id: precioVentaData.productoId });
+        if (!producto) {
+          throw new Error('Producto not found');
+        }
       } else {
-        throw new Error('Either presentacionId or recetaId must be provided');
+        throw new Error('Either presentacionId, recetaId, or productoId must be provided');
       }
 
       const moneda = await monedaRepo.findOneBy({ id: precioVentaData.monedaId });
@@ -1124,6 +1505,14 @@ export function registerProductosHandlers(dataSource: DataSource, getCurrentUser
             existing.principal = false;
             await repo.save(existing);
           }
+        } else if (producto) {
+          const existingPrincipals = await repo.find({
+            where: { producto: { id: producto.id }, principal: true }
+          });
+          for (const existing of existingPrincipals) {
+            existing.principal = false;
+            await repo.save(existing);
+          }
         }
       }
 
@@ -1134,7 +1523,8 @@ export function registerProductosHandlers(dataSource: DataSource, getCurrentUser
         moneda: moneda,
         tipoPrecio: tipoPrecio,
         ...(presentacion && { presentacion }),
-        ...(receta && { receta })
+        ...(receta && { receta }),
+        ...(producto && { producto })
       });
 
       await setEntityUserTracking(dataSource, precioVenta, currentUser?.id, false);

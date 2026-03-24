@@ -307,6 +307,7 @@ interface ElectronAPI {
 
   // Observacion methods
   getObservaciones: () => Promise<Observacion[]>;
+  searchObservaciones: (search: string) => Promise<Observacion[]>;
   getObservacion: (id: number) => Promise<Observacion>;
   createObservacion: (data: Partial<Observacion>) => Promise<Observacion>;
   updateObservacion: (id: number, data: Partial<Observacion>) => Promise<any>;
@@ -314,6 +315,16 @@ interface ElectronAPI {
   getObservacionesByProducto: (productoId: number) => Promise<ProductoObservacion[]>;
   createProductoObservacion: (data: Partial<ProductoObservacion>) => Promise<ProductoObservacion>;
   deleteProductoObservacion: (id: number) => Promise<any>;
+
+  // Combo methods
+  getComboByProducto: (productoId: number) => Promise<any>;
+  createCombo: (data: any) => Promise<any>;
+  updateCombo: (id: number, data: any) => Promise<any>;
+  deleteCombo: (id: number) => Promise<any>;
+  getComboProductos: (comboId: number) => Promise<any[]>;
+  createComboProducto: (data: any) => Promise<any>;
+  updateComboProducto: (id: number, data: any) => Promise<any>;
+  deleteComboProducto: (id: number) => Promise<any>;
 
   // Adicional methods (Nueva Arquitectura)
   getAdicionales: () => Promise<Adicional[]>;
@@ -399,6 +410,7 @@ interface ElectronAPI {
   getPreciosVenta: () => Promise<PrecioVenta[]>;
   getPreciosVentaByPresentacion: (presentacionId: number, activo: boolean | null) => Promise<PrecioVenta[]>;
   getPreciosVentaByReceta: (recetaId: number, activo: boolean | null) => Promise<PrecioVenta[]>;
+  getPreciosVentaByProducto: (productoId: number, activo: boolean | null) => Promise<PrecioVenta[]>;
   createPrecioVenta: (precioVentaData: any) => Promise<PrecioVenta>;
   updatePrecioVenta: (precioVentaId: number, precioVentaData: any) => Promise<any>;
   deletePrecioVenta: (precioVentaId: number) => Promise<any>;
@@ -1462,6 +1474,10 @@ export class RepositoryService {
     return from(this.api.getObservaciones());
   }
 
+  searchObservaciones(search: string): Observable<Observacion[]> {
+    return from(this.api.searchObservaciones(search));
+  }
+
   getObservacion(id: number): Observable<Observacion> {
     return from(this.api.getObservacion(id));
   }
@@ -1488,6 +1504,39 @@ export class RepositoryService {
 
   deleteProductoObservacion(id: number): Observable<any> {
     return from(this.api.deleteProductoObservacion(id));
+  }
+
+  // Combo methods
+  getComboByProducto(productoId: number): Observable<any> {
+    return from(this.api.getComboByProducto(productoId));
+  }
+
+  createCombo(data: any): Observable<any> {
+    return from(this.api.createCombo(data));
+  }
+
+  updateCombo(id: number, data: any): Observable<any> {
+    return from(this.api.updateCombo(id, data));
+  }
+
+  deleteCombo(id: number): Observable<any> {
+    return from(this.api.deleteCombo(id));
+  }
+
+  getComboProductos(comboId: number): Observable<any[]> {
+    return from(this.api.getComboProductos(comboId));
+  }
+
+  createComboProducto(data: any): Observable<any> {
+    return from(this.api.createComboProducto(data));
+  }
+
+  updateComboProducto(id: number, data: any): Observable<any> {
+    return from(this.api.updateComboProducto(id, data));
+  }
+
+  deleteComboProducto(id: number): Observable<any> {
+    return from(this.api.deleteComboProducto(id));
   }
 
   // Adicional methods (Nueva Arquitectura)
@@ -1724,6 +1773,10 @@ export class RepositoryService {
 
   getPreciosVentaByReceta(recetaId: number, activo: boolean | null): Observable<PrecioVenta[]> {
     return from(this.api.getPreciosVentaByReceta(recetaId, activo));
+  }
+
+  getPreciosVentaByProducto(productoId: number, activo: boolean | null): Observable<PrecioVenta[]> {
+    return from(this.api.getPreciosVentaByProducto(productoId, activo));
   }
 
   createPrecioVenta(precioVentaData: Partial<PrecioVenta>): Observable<PrecioVenta> {

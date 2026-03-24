@@ -55,6 +55,7 @@ export class GestionarProductoService {
     sabores: boolean;        // ✅ UNIFICADA (Sabores y Variaciones)
     stock: boolean;
     combo: boolean;
+    observaciones: boolean;
   }>({
     presentaciones: true,
     preciosVenta: true,
@@ -62,7 +63,8 @@ export class GestionarProductoService {
     receta: true,
     sabores: false,          // ✅ UNIFICADA (Sabores y Variaciones)
     stock: true,
-    combo: true
+    combo: true,
+    observaciones: true
   });
   visibleTabs$ = this._visibleTabs.asObservable();
 
@@ -135,7 +137,8 @@ export class GestionarProductoService {
       receta: true,
       sabores: false,          // ✅ UNIFICADA (Sabores y Variaciones)
       stock: true,
-      combo: true
+      combo: true,
+      observaciones: true
     });
     this.initForm();
   }
@@ -274,12 +277,23 @@ export class GestionarProductoService {
     // - ELABORADO_CON_VARIACION: No menciona costos explícitamente
     // - COMBO: No menciona costos explícitamente
 
+    if (tipo === ProductoTipo.COMBO) {
+      return false; // COMBO: el costo se calcula desde los productos componentes
+    }
+
+    if (tipo === ProductoTipo.ELABORADO_CON_VARIACION) {
+      return false; // El costo proviene de la receta
+    }
+
+    if (tipo === ProductoTipo.ELABORADO_SIN_VARIACION) {
+      return false; // El costo se calcula desde la receta
+    }
+
     if (tipo === ProductoTipo.RETAIL || tipo === ProductoTipo.RETAIL_INGREDIENTE) {
       return esComprable === true; // Solo productos comprables tienen costos
     }
 
-    // Para productos elaborados, pueden tener costos calculados por receta o manuales
-    return true; // Permitir costos para todos los tipos
+    return false;
   }
 
   /**
@@ -307,8 +321,23 @@ export class GestionarProductoService {
     // - ELABORADO_CON_VARIACION: "Stock: No hay stock para el producto padre. El stock se descuenta de los ingredientes"
     // - COMBO: "Stock: Cuando se vende un Combo, el sistema debe descontar el stock de cada uno de los productos componentes"
 
-    // Todos los tipos de producto tienen gestión de stock, aunque sea a diferentes niveles
-    return true; // Siempre visible para todos los tipos
+    // COMBO no maneja stock propio — se descuenta de los productos componentes
+    if (tipo === ProductoTipo.COMBO) {
+      return false;
+    }
+
+    // ELABORADO_CON_VARIACION: no hay stock para el producto padre, se descuenta de los ingredientes
+    if (tipo === ProductoTipo.ELABORADO_CON_VARIACION) {
+      return false;
+    }
+
+    // ELABORADO_SIN_VARIACION: el stock se gestiona a través del módulo de Producción
+    if (tipo === ProductoTipo.ELABORADO_SIN_VARIACION) {
+      return false;
+    }
+
+    // RETAIL y RETAIL_INGREDIENTE tienen gestión de stock
+    return true;
   }
 
   /**
@@ -346,6 +375,7 @@ export class GestionarProductoService {
     sabores: boolean;        // ✅ UNIFICADA (Sabores y Variaciones)
     stock: boolean;
     combo: boolean;
+    observaciones: boolean;
   } {
     const visibleTabs = {
       presentaciones: this.isPresentacionesTabVisible(),
@@ -354,10 +384,19 @@ export class GestionarProductoService {
       receta: this.isRecetaTabVisible(),
       sabores: this.isSaboresTabVisible(),           // ✅ UNIFICADA (Sabores y Variaciones)
       stock: this.isStockTabVisible(),
-      combo: this.isComboTabVisible()
+      combo: this.isComboTabVisible(),
+      observaciones: this.isObservacionesTabVisible()
     };
 
     return visibleTabs;
+  }
+
+  /**
+   * Determina si la tab de Observaciones debe ser visible
+   */
+  isObservacionesTabVisible(): boolean {
+    // Las observaciones son relevantes para todos los tipos de producto
+    return true;
   }
 
   /**
@@ -587,7 +626,7 @@ export class GestionarProductoService {
       [ProductoTipo.ELABORADO_SIN_VARIACION]: {
         esVendible: true,
         esComprable: false,
-        controlaStock: true,
+        controlaStock: false,
         esIngrediente: true  // Cambiado de false a true
       },
       [ProductoTipo.ELABORADO_CON_VARIACION]: {
@@ -629,7 +668,7 @@ export class GestionarProductoService {
       [ProductoTipo.ELABORADO_SIN_VARIACION]: {
         esVendibleHabilitado: true,
         esComprableHabilitado: false,
-        controlaStockHabilitado: true,
+        controlaStockHabilitado: false,
         esIngredienteHabilitado: true  // Cambiado de false a true
       },
       [ProductoTipo.ELABORADO_CON_VARIACION]: {

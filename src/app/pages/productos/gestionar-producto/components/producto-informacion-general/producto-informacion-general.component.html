@@ -79,18 +79,20 @@
             class="toggle-item">
             Es Vendible
           </mat-slide-toggle>
-          <mat-slide-toggle 
-            formControlName="esComprable" 
-            color="primary" 
+          <mat-slide-toggle
+            *ngIf="esComprableHabilitado"
+            formControlName="esComprable"
+            color="primary"
             class="toggle-item">
             Es Comprable
           </mat-slide-toggle>
         </div>
         
         <div class="toggles-container">
-          <mat-slide-toggle 
-            formControlName="controlaStock" 
-            color="primary" 
+          <mat-slide-toggle
+            *ngIf="controlaStockHabilitado"
+            formControlName="controlaStock"
+            color="primary"
             class="toggle-item">
             Controla Stock
           </mat-slide-toggle>

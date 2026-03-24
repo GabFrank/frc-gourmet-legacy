@@ -277,8 +277,11 @@ export class ProductoInformacionGeneralComponent implements OnInit, OnDestroy {
    * Actualiza la habilitación de campos según el tipo de producto
    */
   private actualizarHabilitacionCampos(tipo: ProductoTipo): void {
-    // La habilitación ahora se maneja directamente en el service
-    // No es necesario hacer nada aquí
+    // Para elaborados, no mostrar esComprable ni controlaStock
+    const tiposSinComprable = [ProductoTipo.ELABORADO_SIN_VARIACION, ProductoTipo.ELABORADO_CON_VARIACION, ProductoTipo.COMBO];
+    const tiposSinStock = [ProductoTipo.ELABORADO_SIN_VARIACION, ProductoTipo.ELABORADO_CON_VARIACION, ProductoTipo.COMBO];
+    this.esComprableHabilitado = !tiposSinComprable.includes(tipo);
+    this.controlaStockHabilitado = !tiposSinStock.includes(tipo);
   }
 
   /**

@@ -55,7 +55,15 @@
             </ng-template>
           </mat-tab>
 
-          <!-- Pestaña de Precios de Venta - Solo para ELABORADO_SIN_VARIACION y COMBO (DESPUÉS de Receta) -->
+          <!-- Pestaña de Combo - Solo para tipo COMBO (ANTES de Precios de Venta) -->
+          <mat-tab *ngIf="data.isEditMode && data.visibleTabs?.combo"
+                   label="Combo">
+            <ng-template matTabContent class="h-100">
+              <app-producto-combo class="h-100"></app-producto-combo>
+            </ng-template>
+          </mat-tab>
+
+          <!-- Pestaña de Precios de Venta - Solo para ELABORADO_SIN_VARIACION y COMBO (DESPUÉS de Combo) -->
           <mat-tab *ngIf="data.isEditMode && data.visibleTabs?.preciosVenta"
                    label="Precios de Venta">
             <ng-template matTabContent class="h-100">
@@ -79,11 +87,11 @@
             </ng-template>
           </mat-tab>
 
-          <!-- Pestaña de Combo - Solo para tipo COMBO -->
-          <mat-tab *ngIf="data.isEditMode && data.visibleTabs?.combo"
-                   label="Combo">
+          <!-- Pestaña de Observaciones - Para todos los tipos en modo edición -->
+          <mat-tab *ngIf="data.isEditMode && data.visibleTabs?.observaciones"
+                   label="Observaciones">
             <ng-template matTabContent class="h-100">
-              <app-producto-combo class="h-100"></app-producto-combo>
+              <app-producto-observaciones class="h-100"></app-producto-observaciones>
             </ng-template>
           </mat-tab>
 

@@ -5,6 +5,7 @@ import { Moneda } from '../financiero/moneda.entity';
 import { TipoPrecio } from '../financiero/tipo-precio.entity';
 import type { Receta } from './receta.entity';
 import type { RecetaPresentacion } from './receta-presentacion.entity';
+import type { Producto } from './producto.entity';
 
 @Entity('precio_venta')
 export class PrecioVenta extends BaseModel {
@@ -26,7 +27,12 @@ export class PrecioVenta extends BaseModel {
   @JoinColumn({ name: 'receta_id' })
   receta?: Receta;
 
-  // ✅ NUEVA RELACIÓN: Precios específicos para variaciones de receta
+  // Precios directos para productos (COMBO, etc.)
+  @ManyToOne('Producto', { nullable: true })
+  @JoinColumn({ name: 'producto_id' })
+  producto?: Producto;
+
+  // Precios específicos para variaciones de receta
   @ManyToOne('RecetaPresentacion', { nullable: true })
   @JoinColumn({ name: 'receta_presentacion_id' })
   recetaPresentacion?: RecetaPresentacion;

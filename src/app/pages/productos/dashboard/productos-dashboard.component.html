@@ -4,10 +4,12 @@
   <div class="dashboard-grid">
     <mat-card *ngFor="let item of dashboardItems"
               class="dashboard-card"
-              (click)="navigateTo(item.route)"
+              [class.disabled-card]="item.disabled"
+              (click)="navigateTo(item)"
+              [matTooltip]="item.disabled ? 'En desarrollo' : ''"
               [ngStyle]="{'border-top': '4px solid ' + item.color}">
       <mat-card-header>
-        <div mat-card-avatar class="card-icon" [ngStyle]="{'background-color': item.color}">
+        <div mat-card-avatar class="card-icon" [ngStyle]="{'background-color': item.disabled ? '#9e9e9e' : item.color}">
           <mat-icon>{{item.icon}}</mat-icon>
         </div>
         <mat-card-title>{{item.title}}</mat-card-title>
@@ -16,7 +18,9 @@
         <p>{{item.description}}</p>
       </mat-card-content>
       <mat-card-actions align="end">
-        <button mat-button color="primary">ABRIR</button>
+        <button mat-button [color]="item.disabled ? '' : 'primary'" [disabled]="item.disabled">
+          {{ item.disabled ? 'EN DESARROLLO' : 'ABRIR' }}
+        </button>
       </mat-card-actions>
     </mat-card>
   </div>

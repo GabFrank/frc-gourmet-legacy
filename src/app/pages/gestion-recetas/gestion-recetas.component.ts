@@ -733,9 +733,24 @@ export class GestionRecetasComponent implements OnInit {
         this.repositoryService.createReceta(newReceta).subscribe({
           next: (recetaCreada: Receta) => {
             this.receta = recetaCreada;
+            this.isEditMode = true;
+            this.mode = 'edit';
+            this.recetaId = recetaCreada.id;
+
+            // Vincular receta al producto si viene desde un producto
+            if (this.tabData?.productoId && recetaCreada.id) {
+              this.repositoryService.updateProducto(this.tabData.productoId, { recetaId: recetaCreada.id } as any).subscribe({
+                next: () => {
+                  console.log(`Receta ${recetaCreada.id} vinculada al producto ${this.tabData.productoId}`);
+                },
+                error: (err: any) => {
+                  console.error('Error vinculando receta al producto:', err);
+                }
+              });
+            }
+
             this.loading = false;
             this.snackBar.open('Receta creada correctamente', 'Cerrar', { duration: 2000 });
-            // Ya no se cierra la pestaña automáticamente
           },
           error: (error: any) => {
             console.error('Error creating receta:', error);

@@ -1626,6 +1626,9 @@ contextBridge.exposeInMainWorld('api', {
   getObservaciones: async (): Promise<Observacion[]> => {
     return await ipcRenderer.invoke('getObservaciones');
   },
+  searchObservaciones: async (search: string): Promise<Observacion[]> => {
+    return await ipcRenderer.invoke('searchObservaciones', search);
+  },
   getObservacion: async (id: number): Promise<Observacion> => {
     return await ipcRenderer.invoke('getObservacion', id);
   },
@@ -1646,6 +1649,32 @@ contextBridge.exposeInMainWorld('api', {
   },
   deleteProductoObservacion: async (id: number): Promise<any> => {
     return await ipcRenderer.invoke('delete-producto-observacion', id);
+  },
+
+  // Combo methods
+  getComboByProducto: async (productoId: number): Promise<any> => {
+    return await ipcRenderer.invoke('getComboByProducto', productoId);
+  },
+  createCombo: async (data: any): Promise<any> => {
+    return await ipcRenderer.invoke('createCombo', data);
+  },
+  updateCombo: async (id: number, data: any): Promise<any> => {
+    return await ipcRenderer.invoke('updateCombo', id, data);
+  },
+  deleteCombo: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('deleteCombo', id);
+  },
+  getComboProductos: async (comboId: number): Promise<any[]> => {
+    return await ipcRenderer.invoke('getComboProductos', comboId);
+  },
+  createComboProducto: async (data: any): Promise<any> => {
+    return await ipcRenderer.invoke('createComboProducto', data);
+  },
+  updateComboProducto: async (id: number, data: any): Promise<any> => {
+    return await ipcRenderer.invoke('updateComboProducto', id, data);
+  },
+  deleteComboProducto: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('deleteComboProducto', id);
   },
 
   // Adicional methods (Nueva Arquitectura)
@@ -1826,6 +1855,9 @@ contextBridge.exposeInMainWorld('api', {
   },
   getPreciosVentaByReceta: async (recetaId: number, activo: boolean): Promise<PrecioVenta[]> => {
     return await ipcRenderer.invoke('get-precios-venta-by-receta', recetaId, activo);
+  },
+  getPreciosVentaByProducto: async (productoId: number, activo: boolean): Promise<PrecioVenta[]> => {
+    return await ipcRenderer.invoke('get-precios-venta-by-producto', productoId, activo);
   },
   createPrecioVenta: async (precioVentaData: any): Promise<PrecioVenta> => {
     return await ipcRenderer.invoke('create-precio-venta', precioVentaData);
