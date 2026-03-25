@@ -544,7 +544,6 @@ export class PdvComponent implements OnInit {
       newVentaItem.precioVentaUnitario = precioVentaToUse.valor;
       newVentaItem.precioCostoUnitario = this.findPrecioCosto(producto);
       newVentaItem.venta = venta;
-      newVentaItem.tipoMedida = presentacion.tipoMedida;
       newVentaItem.precioVentaPresentacion = precioVentaToUse;
       newVentaItem.producto = producto;
 

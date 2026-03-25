@@ -51,6 +51,7 @@ import { ListRecetasComponent } from './pages/gestion-recetas/list-recetas/list-
 import { ListAdicionalesComponent } from './pages/gestion-recetas/list-adicionales/list-adicionales.component';
 import { ListProductosComponent } from './pages/productos/list-productos/list-productos.component';
 import { ListSaboresComponent } from './pages/gestion-sabores/list-sabores/list-sabores.component';
+import { VentasDashboardComponent } from './pages/ventas/dashboard/ventas-dashboard.component';
 
 @Component({
   selector: 'app-root',
@@ -491,13 +492,14 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   openVentasDashTab() {
-    // this.tabsService.openTab(
-    //   'Dashboard de Ventas',
-    //   VentasDashboardComponent,
-    //   { source: 'navigation' },
-    //   'ventas-dashboard-tab',
-    //   true
-    // );
+    this.tabsService.openTab(
+      'Dashboard de Ventas',
+      VentasDashboardComponent,
+      { source: 'navigation' },
+      'ventas-dashboard-tab',
+      true
+    );
+    this.closeMenu();
   }
 
   openProductoDashboardTab() {

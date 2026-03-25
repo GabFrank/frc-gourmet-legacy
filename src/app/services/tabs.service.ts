@@ -1,13 +1,7 @@
 import { Injectable, Type, EventEmitter } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
-import { ListFamiliasComponent } from '../pages/productos/familias/list-familias.component';
-import { GestionarProductoComponent } from '../pages/productos/gestionar-producto/gestionar-producto.component';
-import { ListRecetasComponent } from '../pages/gestion-recetas/list-recetas/list-recetas.component';
-import { ListAdicionalesComponent } from '../pages/gestion-recetas/list-adicionales/list-adicionales.component';
-import { GestionRecetasComponent } from '../pages/gestion-recetas/gestion-recetas.component';
-import { ListProductosComponent } from '../pages/productos/list-productos/list-productos.component';
-import { ListSaboresComponent } from '../pages/gestion-sabores/list-sabores/list-sabores.component';
+import { VentasDashboardComponent } from '../pages/ventas/dashboard/ventas-dashboard.component';
 
 export interface Tab {
   id: string;
@@ -36,27 +30,8 @@ export class TabsService {
   constructor() {
     //load list ingredientes tab using addTab method
     // this.addTab('Lista de productos', ListProductosComponent);
-    //open list compras
-    // this.addTab('Lista de compras', ListComprasComponent)
-    //open create edit compra with compra id 8
-    // this.openTabWithData('Editar Compra', CreateEditCompraComponent, { compraId: 8 });
-    //open productos create edit producto
-    // this.addTab('Productos Dashboard', ProductoDashboardComponent, null, 'productos-dashboard');
-    // open producto v2 with id 1
-    // this.addTab('Producto', CreateEditProductoComponent, { productoId: 2 });
-    // open list recetas
-    // open list productos
-    this.addTab('Lista de productos', ListProductosComponent);
-    // open gestionar producto
-    // this.addTab('Gestionar Producto 13', GestionarProductoComponent, { productoId: 13 });
-    // // open list recetas
-    // this.addTab('Lista de recetas', ListRecetasComponent);
-    // open gestiona receta
-    // this.addTab('Gestionar Receta 2', GestionRecetasComponent, { recetaId: 2 });
-    // open list adicionales
-    // this.addTab('Lista de adicionales', ListAdicionalesComponent);
-    // open list sabores
-    // this.addTab('Lista de sabores', ListSaboresComponent);
+    // load ventas dashboard
+    this.addTab('Dashboard de ventas', VentasDashboardComponent);
   }
 
   /**

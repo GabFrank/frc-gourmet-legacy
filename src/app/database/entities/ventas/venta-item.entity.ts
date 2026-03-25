@@ -2,6 +2,9 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseModel } from '../base.entity';
 import type { Venta } from './venta.entity';
 import { Usuario } from '../personas/usuario.entity';
+import type { Producto } from '../productos/producto.entity';
+import type { Presentacion } from '../productos/presentacion.entity';
+import type { PrecioVenta } from '../productos/precio-venta.entity';
 
 export enum EstadoVentaItem {
   ACTIVO = 'ACTIVO',
@@ -44,17 +47,17 @@ export class VentaItem extends BaseModel {
   })
   precioVentaUnitario!: number;
 
-  // @ManyToOne(() => PrecioVenta)
-  // @JoinColumn({ name: 'precio_venta_presentacion_id' })
-  // precioVentaPresentacion!: PrecioVenta;
+  @ManyToOne('PrecioVenta', { nullable: true })
+  @JoinColumn({ name: 'precio_venta_presentacion_id' })
+  precioVentaPresentacion!: PrecioVenta;
 
-  // @ManyToOne(() => Producto)
-  // @JoinColumn({ name: 'producto_id' })
-  // producto!: Producto;
+  @ManyToOne('Producto')
+  @JoinColumn({ name: 'producto_id' })
+  producto!: Producto;
 
-  // @ManyToOne(() => Presentacion)
-  // @JoinColumn({ name: 'presentacion_id' })
-  // presentacion!: Presentacion;
+  @ManyToOne('Presentacion')
+  @JoinColumn({ name: 'presentacion_id' })
+  presentacion!: Presentacion;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   cantidad!: number;
