@@ -99,4 +99,7 @@ export class VentaItem extends BaseModel {
   @ManyToOne(() => VentaItem, { nullable: true })
   @JoinColumn({ name: 'nueva_version_venta_item_id' })
   nuevaVersionVentaItem!: VentaItem;
+
+  @Column({ name: 'historial_cambios', type: 'text', nullable: true })
+  historialCambios?: string;
 } 

@@ -116,6 +116,7 @@ interface ElectronAPI {
   getUsuariosPaginated: (page: number, pageSize: number, filters?: { nickname?: string; nombrePersona?: string; activo?: string | boolean }) => Promise<{items: Usuario[], total: number}>;
   // Auth operations
   login: (loginData: {nickname: string, password: string, deviceInfo: DeviceInfo}) => Promise<LoginResult>;
+  validateCredentials: (data: { nickname: string, password: string }) => Promise<any>;
   logout: (sessionId: number) => Promise<boolean>;
   updateSessionActivity: (sessionId: number) => Promise<boolean>;
   getLoginSessions: (usuarioId: number) => Promise<LoginSession[]>;
@@ -244,7 +245,9 @@ interface ElectronAPI {
   deleteDelivery: (deliveryId: number) => Promise<any>;
   // Venta operations
   getVentas: () => Promise<Venta[]>;
+  getVentasByDateRange: (desde: string, hasta: string, filtros?: any) => Promise<Venta[]>;
   getVentasByEstado: (estado: VentaEstado) => Promise<Venta[]>;
+  getVentasByCaja: (cajaId: number) => Promise<Venta[]>;
   getVenta: (ventaId: number) => Promise<Venta>;
   createVenta: (ventaData: Partial<Venta>) => Promise<Venta>;
   updateVenta: (ventaId: number, ventaData: Partial<Venta>) => Promise<any>;
@@ -255,6 +258,17 @@ interface ElectronAPI {
   createVentaItem: (ventaItemData: Partial<VentaItem>) => Promise<VentaItem>;
   updateVentaItem: (ventaItemId: number, ventaItemData: Partial<VentaItem>) => Promise<any>;
   deleteVentaItem: (ventaItemId: number) => Promise<any>;
+  // VentaItemObservacion
+  getObservacionesByVentaItem: (ventaItemId: number) => Promise<any[]>;
+  createVentaItemObservacion: (data: any) => Promise<any>;
+  deleteVentaItemObservacion: (id: number) => Promise<boolean>;
+  // Comanda
+  getComandasPendientes: () => Promise<any[]>;
+  getComandaByVenta: (ventaId: number) => Promise<any>;
+  createComandaWithItems: (data: any) => Promise<any>;
+  updateComandaItemEstado: (id: number, estado: string) => Promise<any>;
+  createComanda: (data: any) => Promise<any>;
+  updateComanda: (id: number, data: any) => Promise<any>;
   // PDV Grupo Categoria
   getPdvGrupoCategorias: () => Promise<PdvGrupoCategoria[]>;
   getPdvGrupoCategoria: (id: number) => Promise<PdvGrupoCategoria>;
@@ -294,6 +308,7 @@ interface ElectronAPI {
   getPdvMesasBySector: (sectorId: number) => Promise<PdvMesa[]>;
   getPdvMesa: (id: number) => Promise<PdvMesa>;
   createPdvMesa: (data: Partial<PdvMesa>) => Promise<PdvMesa>;
+  createBatchPdvMesas: (batchData: Partial<PdvMesa>[]) => Promise<PdvMesa[]>;
   updatePdvMesa: (id: number, data: Partial<PdvMesa>) => Promise<PdvMesa>;
   deletePdvMesa: (id: number) => Promise<boolean>;
 
@@ -748,6 +763,10 @@ export class RepositoryService {
         return result;
       })
     );
+  }
+
+  validateCredentials(data: { nickname: string, password: string }): Observable<any> {
+    return from(this.api.validateCredentials(data));
   }
 
   logout(sessionId: number): Observable<boolean> {
@@ -1261,8 +1280,16 @@ export class RepositoryService {
     return from(this.api.getVentas());
   }
 
+  getVentasByDateRange(desde: string, hasta: string, filtros?: any): Observable<Venta[]> {
+    return from(this.api.getVentasByDateRange(desde, hasta, filtros));
+  }
+
   getVentasByEstado(estado: VentaEstado): Observable<Venta[]> {
     return from(this.api.getVentasByEstado(estado));
+  }
+
+  getVentasByCaja(cajaId: number): Observable<Venta[]> {
+    return from(this.api.getVentasByCaja(cajaId));
   }
 
   getVenta(ventaId: number): Observable<Venta> {
@@ -1300,6 +1327,44 @@ export class RepositoryService {
 
   deleteVentaItem(ventaItemId: number): Observable<boolean> {
     return from(this.api.deleteVentaItem(ventaItemId));
+  }
+
+  // VentaItemObservacion
+  getObservacionesByVentaItem(ventaItemId: number): Observable<any[]> {
+    return from(this.api.getObservacionesByVentaItem(ventaItemId));
+  }
+
+  createVentaItemObservacion(data: any): Observable<any> {
+    return from(this.api.createVentaItemObservacion(data));
+  }
+
+  deleteVentaItemObservacion(id: number): Observable<boolean> {
+    return from(this.api.deleteVentaItemObservacion(id));
+  }
+
+  // Comanda
+  getComandasPendientes(): Observable<any[]> {
+    return from(this.api.getComandasPendientes());
+  }
+
+  getComandaByVenta(ventaId: number): Observable<any> {
+    return from(this.api.getComandaByVenta(ventaId));
+  }
+
+  createComandaWithItems(data: any): Observable<any> {
+    return from(this.api.createComandaWithItems(data));
+  }
+
+  updateComandaItemEstado(id: number, estado: string): Observable<any> {
+    return from(this.api.updateComandaItemEstado(id, estado));
+  }
+
+  createComanda(data: any): Observable<any> {
+    return from(this.api.createComanda(data));
+  }
+
+  updateComanda(id: number, data: any): Observable<any> {
+    return from(this.api.updateComanda(id, data));
   }
 
   // PDV Grupo Categoria
@@ -1434,6 +1499,10 @@ export class RepositoryService {
 
   createPdvMesa(data: Partial<PdvMesa>): Observable<PdvMesa> {
     return from(this.api.createPdvMesa(data));
+  }
+
+  createBatchPdvMesas(batchData: Partial<PdvMesa>[]): Observable<PdvMesa[]> {
+    return from(this.api.createBatchPdvMesas(batchData));
   }
 
   updatePdvMesa(id: number, data: Partial<PdvMesa>): Observable<PdvMesa> {

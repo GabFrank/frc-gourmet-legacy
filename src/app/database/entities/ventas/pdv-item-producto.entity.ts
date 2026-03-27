@@ -21,9 +21,9 @@ export class PdvItemProducto extends BaseModel {
   @JoinColumn({ name: 'categoriaItemId' })
   categoriaItem?: any;
 
-  // @ManyToOne(() => Producto, { nullable: false })
-  // @JoinColumn({ name: 'productoId' })
-  // producto!: Producto;
+  @ManyToOne('Producto', { nullable: false })
+  @JoinColumn({ name: 'productoId' })
+  producto?: any;
 }
 
 // Import after the class declaration to avoid circular dependencies

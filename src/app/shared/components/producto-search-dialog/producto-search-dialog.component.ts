@@ -114,57 +114,32 @@ export class ProductoSearchDialogComponent implements OnInit {
   
   // Perform the search
   async performSearch(): Promise<void> {
-    // Get search term and ensure it's a string
-    // const rawSearchTerm = this.searchForm.get('searchTerm')?.value;
-    // const searchTerm = (typeof rawSearchTerm === 'string') ? rawSearchTerm.trim() : '';
-    
-    // if (!searchTerm) {
-    //   this.searchResults = [];
-    //   this.totalItems = 0;
-    //   this.hasSearched = true;
-    //   return;
-    // }
-    
-    // this.isLoading = true;
-    // this.hasSearched = true;
+    const rawSearchTerm = this.searchForm.get('searchTerm')?.value;
+    const searchTerm = (typeof rawSearchTerm === 'string') ? rawSearchTerm.trim() : '';
 
-    // try {
-    //   // First try to find by exact code match
-    //   const exactCodeResult = await firstValueFrom(
-    //     this.repositoryService.searchProductosByCode(searchTerm)
-    //   );
+    if (!searchTerm) {
+      this.searchResults = [];
+      this.totalItems = 0;
+      this.hasSearched = true;
+      return;
+    }
 
-    //   if (exactCodeResult) {
-    //     // extract the principalPrecio from the presentacion
-    //     const principalPrecio = (exactCodeResult.presentacion as any)?.principalPrecio;
-    //     this.dialogRef.close({
-    //       producto: exactCodeResult.product,
-    //       presentacion: exactCodeResult.presentacion,
-    //       cantidad: this.cantidadFormControl.value,
-    //       precioVenta: principalPrecio
-    //     });
-    //     return;
-    //   }
+    this.isLoading = true;
+    this.hasSearched = true;
 
-    //   // Otherwise, do a regular search
-    //   const searchResults = await firstValueFrom(
-    //     this.repositoryService.searchProductos({
-    //       searchTerm: searchTerm,
-    //       page: this.pageIndex + 1, // Convert to 1-based for backend
-    //       pageSize: this.pageSize,
-    //       exactMatch: false
-    //     })
-    //   );
-    //   console.log(searchResults);
-    //   this.searchResults = searchResults.items;
-    //   this.totalItems = searchResults.total;
-    // } catch (error) {
-    //   console.error('Error searching products:', error);
-    //   this.searchResults = [];
-    //   this.totalItems = 0;
-    // } finally {
-    //   this.isLoading = false;
-    // }
+    try {
+      const results = await firstValueFrom(
+        this.repositoryService.searchProductosByNombre(searchTerm)
+      );
+      this.searchResults = results || [];
+      this.totalItems = this.searchResults.length;
+    } catch (error) {
+      console.error('Error searching products:', error);
+      this.searchResults = [];
+      this.totalItems = 0;
+    } finally {
+      this.isLoading = false;
+    }
   }
   
   get searchTerm(): string {

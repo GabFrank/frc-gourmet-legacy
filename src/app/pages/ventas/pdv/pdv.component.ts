@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -29,6 +29,8 @@ import { PdvMesa, PdvMesaEstado } from '../../../database/entities/ventas/pdv-me
 import { ProductoSearchDialogComponent } from '../../../shared/components/producto-search-dialog/producto-search-dialog.component';
 import { Presentacion } from '../../../database/entities/productos/presentacion.entity';
 import { Venta, VentaEstado } from 'src/app/database/entities/ventas/venta.entity';
+import { PagoEstado } from 'src/app/database/entities/compras/estado.enum';
+import { TipoDetalle } from 'src/app/database/entities/compras/pago-detalle.entity';
 import { AuthService } from 'src/app/services/auth.service';
 import { Caja } from 'src/app/database/entities/financiero/caja.entity';
 import { CreateCajaDialogComponent } from '../../financiero/cajas/create-caja-dialog/create-caja-dialog.component';
@@ -36,8 +38,20 @@ import { TabsService } from 'src/app/services/tabs.service';
 import { MesaSelectionDialogComponent } from '../../../shared/components/mesa-selection-dialog/mesa-selection-dialog.component';
 import { ConfirmationDialogComponent } from 'src/app/shared/components/confirmation-dialog/confirmation-dialog.component';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTableDataSource } from '@angular/material/table';
 import { PdvGrupoCategoria } from 'src/app/database/entities/ventas/pdv-grupo-categoria.entity';
+import { CobrarVentaDialogComponent, CobrarVentaDialogData } from 'src/app/shared/components/cobrar-venta-dialog/cobrar-venta-dialog.component';
+import { CancelarVentaDialogComponent } from 'src/app/shared/components/cancelar-venta-dialog/cancelar-venta-dialog.component';
+import { EditVentaItemDialogComponent } from 'src/app/shared/components/edit-venta-item-dialog/edit-venta-item-dialog.component';
+import { CierreCajaDialogComponent } from 'src/app/shared/components/cierre-caja-dialog/cierre-caja-dialog.component';
+import { TransferirMesaDialogComponent } from 'src/app/shared/components/transferir-mesa-dialog/transferir-mesa-dialog.component';
+import { BuscarClienteDialogComponent } from 'src/app/shared/components/buscar-cliente-dialog/buscar-cliente-dialog.component';
+import { DescuentoDialogComponent } from 'src/app/shared/components/descuento-dialog/descuento-dialog.component';
+import { DividirCuentaDialogComponent } from 'src/app/shared/components/dividir-cuenta-dialog/dividir-cuenta-dialog.component';
+import { PdvCategoria } from 'src/app/database/entities/ventas/pdv-categoria.entity';
+import { PdvCategoriaItem } from 'src/app/database/entities/ventas/pdv-categoria-item.entity';
+import { Sector } from 'src/app/database/entities/ventas/sector.entity';
 
 interface MonedaWithTotal {
   moneda: Moneda;
@@ -72,7 +86,8 @@ interface CurrencyDisplay {
     MatProgressSpinnerModule,
     MatTooltipModule,
     MatDialogModule,
-    MatMenuModule
+    MatMenuModule,
+    MatCheckboxModule
   ],
   animations: [
     trigger('detailExpand', [
@@ -82,12 +97,18 @@ interface CurrencyDisplay {
     ]),
   ],
 })
-export class PdvComponent implements OnInit {
+export class PdvComponent implements OnInit, OnDestroy {
+  private mesasRefreshInterval: any = null;
+  private refreshingMesas = false;
+
+  // Modo mover items
+  moverItemsMode = false;
+  selectedItemIds: Set<number> = new Set();
   // Table data
   ventaItemsDataSource = new MatTableDataSource<VentaItem>([]);
   displayedColumns: string[] = ['productoNombre', 'cantidad', 'precio', 'total', 'actions'];
   expandedElement: VentaItem | null = null;
-  columnsToDisplayWithExpand = [...this.displayedColumns];
+  columnsToDisplayWithExpand: string[] = [...this.displayedColumns];
 
   // Search form
   searchForm: FormGroup;
@@ -111,7 +132,11 @@ export class PdvComponent implements OnInit {
   loadingMesas = false;
   selectedMesa: PdvMesa | null = null;
 
+  // Venta rápida (sin mesa)
+  ventaRapidaActual: Venta | null = null;
+
   // Sector filter for tables
+  sectores: Sector[] = [];
   selectedSectorId: number | null = null;
 
   // Pre-generated table numbers for template
@@ -130,6 +155,13 @@ export class PdvComponent implements OnInit {
 
   //  grupo de categorias
   pdvGrupoCategorias: PdvGrupoCategoria[] = [];
+
+  // Navegación de categorías
+  navigationLevel: 'grupos' | 'categorias' | 'items' = 'grupos';
+  selectedGrupo: PdvGrupoCategoria | null = null;
+  selectedCategoria: PdvCategoria | null = null;
+  categoriaItems: PdvCategoriaItem[] = [];
+  categoriasDelGrupo: PdvCategoria[] = [];
 
   // tiempo abierto
   tiempoAbierto = '0h 0m';
@@ -251,6 +283,12 @@ export class PdvComponent implements OnInit {
       // Load tables (mesas)
       await this.loadMesas();
 
+      // Load sectores
+      this.sectores = await firstValueFrom(this.repositoryService.getSectoresActivos());
+
+      // Load PdV grupo categorias
+      this.pdvGrupoCategorias = await firstValueFrom(this.repositoryService.getPdvGrupoCategorias());
+
       // Initialize demo data
       this.initDemoData();
 
@@ -259,6 +297,54 @@ export class PdvComponent implements OnInit {
 
     } catch (error) {
       console.error('Error loading initial data:', error);
+    }
+
+    // Auto-refresh mesas cada 1 segundo
+    this.mesasRefreshInterval = setInterval(() => {
+      this.refreshMesasSilent();
+    }, 1000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.mesasRefreshInterval) {
+      clearInterval(this.mesasRefreshInterval);
+    }
+  }
+
+  /**
+   * Refresh mesas sin afectar la selección actual
+   */
+  private async refreshMesasSilent(): Promise<void> {
+    if (this.refreshingMesas) return;
+    this.refreshingMesas = true;
+    try {
+      const mesasFrescas = await firstValueFrom(this.repositoryService.getPdvMesas());
+      const mesasActivas = mesasFrescas.filter(m => m.activo).sort((a, b) => a.numero - b.numero);
+
+      // Actualizar estado de cada mesa sin perder la selección
+      for (const mesaFresca of mesasActivas) {
+        const mesaLocal = this.mesas.find(m => m.id === mesaFresca.id);
+        if (mesaLocal) {
+          mesaLocal.estado = mesaFresca.estado;
+          // Actualizar venta solo si no es la mesa seleccionada (para no pisar datos en edición)
+          if (!this.selectedMesa || this.selectedMesa.id !== mesaLocal.id) {
+            mesaLocal.venta = mesaFresca.venta;
+          }
+        }
+      }
+
+      // Agregar mesas nuevas que no existían
+      for (const mesaFresca of mesasActivas) {
+        if (!this.mesas.find(m => m.id === mesaFresca.id)) {
+          this.mesas.push(mesaFresca);
+        }
+      }
+
+      this.mesas = [...this.mesas];
+    } catch (error) {
+      // Silencioso — no interrumpir al usuario
+    } finally {
+      this.refreshingMesas = false;
     }
   }
 
@@ -319,6 +405,56 @@ export class PdvComponent implements OnInit {
   async resetMesasFilter(): Promise<void> {
     this.selectedSectorId = null;
     await this.loadMesas();
+  }
+
+  // --- Navegación de categorías ---
+
+  async selectGrupo(grupo: PdvGrupoCategoria): Promise<void> {
+    this.selectedGrupo = grupo;
+    this.categoriasDelGrupo = await firstValueFrom(this.repositoryService.getPdvCategoriasByGrupo(grupo.id));
+    this.navigationLevel = 'categorias';
+  }
+
+  async selectCategoria(categoria: PdvCategoria): Promise<void> {
+    this.selectedCategoria = categoria;
+    this.categoriaItems = await firstValueFrom(this.repositoryService.getPdvCategoriaItemsByCategoria(categoria.id));
+    this.navigationLevel = 'items';
+  }
+
+  async addProductFromItem(itemProducto: any): Promise<void> {
+    const producto = itemProducto.producto;
+    if (!producto || !producto.presentaciones || producto.presentaciones.length === 0) {
+      console.error('Producto sin presentaciones');
+      return;
+    }
+    const presentacion = producto.presentaciones[0];
+    const precioVenta = presentacion.preciosVenta?.find((p: PrecioVenta) => p.principal) || presentacion.preciosVenta?.[0];
+    if (!precioVenta) {
+      console.error('No se encontró precio de venta');
+      return;
+    }
+    const cantidad = this.searchForm.get('cantidad')?.value || 1;
+    await this.addProduct(producto, presentacion, cantidad, precioVenta);
+  }
+
+  navigateBack(): void {
+    if (this.navigationLevel === 'items') {
+      this.navigationLevel = 'categorias';
+      this.selectedCategoria = null;
+      this.categoriaItems = [];
+    } else if (this.navigationLevel === 'categorias') {
+      this.navigationLevel = 'grupos';
+      this.selectedGrupo = null;
+      this.categoriasDelGrupo = [];
+    }
+  }
+
+  navigateToGrupos(): void {
+    this.navigationLevel = 'grupos';
+    this.selectedGrupo = null;
+    this.selectedCategoria = null;
+    this.categoriasDelGrupo = [];
+    this.categoriaItems = [];
   }
 
   // Get all mesas (for template)
@@ -480,10 +616,76 @@ export class PdvComponent implements OnInit {
 
   // Edit item from cart
   editItem(item: VentaItem): void {
-    // open dialog to edit item
-    // this.dialog.open(VentaItemEditDialogComponent, {
-    //   data: item
-    // });
+    const dialogRef = this.dialog.open(EditVentaItemDialogComponent, {
+      width: '400px',
+      data: { ventaItem: item },
+    });
+
+    dialogRef.afterClosed().subscribe(async (result) => {
+      if (result) {
+        try {
+          // Construir entrada de historial con valores anteriores
+          const historialEntry = {
+            fecha: new Date().toISOString(),
+            usuario: this.authService.currentUser?.persona?.nombre || 'N/A',
+            cantidadAnterior: item.cantidad,
+            descuentoAnterior: item.descuentoUnitario,
+            cantidadNueva: result.cantidad,
+            descuentoNuevo: result.descuentoUnitario,
+          };
+
+          // Parsear historial existente o crear array nuevo
+          let historial: any[] = [];
+          try {
+            historial = item.historialCambios ? JSON.parse(item.historialCambios) : [];
+          } catch { historial = []; }
+          historial.push(historialEntry);
+
+          // Actualizar item in-place
+          await firstValueFrom(this.repositoryService.updateVentaItem(item.id, {
+            cantidad: result.cantidad,
+            descuentoUnitario: result.descuentoUnitario,
+            modificado: true,
+            modificadoPor: this.authService.currentUser,
+            horaModificacion: new Date(),
+            historialCambios: JSON.stringify(historial),
+          }));
+
+          // Actualizar objeto local
+          item.cantidad = result.cantidad;
+          item.descuentoUnitario = result.descuentoUnitario;
+          item.modificado = true;
+          item.historialCambios = JSON.stringify(historial);
+
+          // Guardar observaciones
+          if (result.observacionIds?.length > 0 || result.observacionLibre) {
+            for (const obsId of (result.observacionIds || [])) {
+              await firstValueFrom(this.repositoryService.createVentaItemObservacion({
+                ventaItem: { id: item.id },
+                observacion: { id: obsId },
+                observacionLibre: result.observacionLibre,
+              }));
+            }
+            if (result.observacionIds?.length === 0 && result.observacionLibre) {
+              await firstValueFrom(this.repositoryService.createVentaItemObservacion({
+                ventaItem: { id: item.id },
+                observacionLibre: result.observacionLibre,
+              }));
+            }
+          }
+
+          // Recargar observaciones del item
+          const obs = await firstValueFrom(this.repositoryService.getObservacionesByVentaItem(item.id));
+          (item as any).observacionesVinculadas = obs;
+
+          // Refrescar tabla
+          this.ventaItemsDataSource.data = [...this.ventaItemsDataSource.data];
+          this.calculateTotals();
+        } catch (error) {
+          console.error('Error al editar item:', error);
+        }
+      }
+    });
   }
 
   // Cancel item from cart
@@ -503,10 +705,15 @@ export class PdvComponent implements OnInit {
   async addProduct(producto: Producto, presentacion: Presentacion, cantidad: number, precioVenta?: PrecioVenta): Promise<void> {
     console.log('Adding new producto');
 
+    // Forzar cantidad entera si unidadBase es UNIDAD
+    if (producto.unidadBase === 'UNIDAD') {
+      cantidad = Math.max(1, Math.round(cantidad));
+    }
+
     try {
-      // Check if mesa is selected
-      if (!this.selectedMesa) {
-        // No mesa selected, show dialog to select one
+      // Check if mesa is selected or venta rápida active
+      if (!this.selectedMesa && !this.ventaRapidaActual) {
+        // No mesa selected and no venta rápida, show dialog to select one
         await this.showMesaSelectionDialog();
 
         // If still no mesa selected after dialog, return without adding product
@@ -519,7 +726,7 @@ export class PdvComponent implements OnInit {
       // Get the venta first
       const venta = await this.getVenta();
 
-      const existingItem = this.ventaItemsDataSource.data.find(item => item.presentacion.id === presentacion.id);
+      const existingItem = this.ventaItemsDataSource.data.find(item => item.presentacion?.id != null && item.presentacion.id === presentacion?.id);
       let ventaItem: VentaItem;
 
       // if (existingItem) {
@@ -542,7 +749,7 @@ export class PdvComponent implements OnInit {
       newVentaItem.presentacion = presentacion;
       newVentaItem.cantidad = cantidad;
       newVentaItem.precioVentaUnitario = precioVentaToUse.valor;
-      newVentaItem.precioCostoUnitario = this.findPrecioCosto(producto);
+      newVentaItem.precioCostoUnitario = await this.findPrecioCosto(producto);
       newVentaItem.venta = venta;
       newVentaItem.precioVentaPresentacion = precioVentaToUse;
       newVentaItem.producto = producto;
@@ -550,6 +757,10 @@ export class PdvComponent implements OnInit {
       // Save the new item
       try {
         const savedItem = await firstValueFrom(this.repositoryService.createVentaItem(newVentaItem));
+        // Preservar relaciones que el backend no retorna
+        savedItem.producto = producto;
+        savedItem.presentacion = presentacion;
+        savedItem.precioVentaPresentacion = precioVentaToUse;
         const auxList = this.ventaItemsDataSource.data;
         auxList.push(savedItem);
         // log adding new item, and the list
@@ -565,7 +776,29 @@ export class PdvComponent implements OnInit {
       this.calculateTotals();
     } catch (error) {
       console.error('Error al agregar producto:', error);
-      // Handle error appropriately
+    }
+  }
+
+  /**
+   * Genera o actualiza la comanda para la venta actual con items nuevos.
+   */
+  async generarComanda(venta: Venta, ventaItems: VentaItem[]): Promise<void> {
+    try {
+      const itemsData = ventaItems.map(vi => ({
+        ventaItem: { id: vi.id },
+        observacion: null,
+      }));
+
+      await firstValueFrom(this.repositoryService.createComandaWithItems({
+        comanda: {
+          venta: { id: venta.id },
+          pdv_mesa: this.selectedMesa ? { id: this.selectedMesa.id } : null,
+          estado: 'PENDIENTE',
+        },
+        items: itemsData,
+      }));
+    } catch (error) {
+      console.error('Error al generar comanda:', error);
     }
   }
 
@@ -596,10 +829,14 @@ export class PdvComponent implements OnInit {
 
   // return a promise, if mesa is not null, get venta from mesa, if null create a new venta
   getVenta(): Promise<Venta> {
+    // Venta rápida (sin mesa)
+    if (this.ventaRapidaActual) {
+      return Promise.resolve(this.ventaRapidaActual);
+    }
     if (this.selectedMesa == null) {
       return Promise.reject('Mesa no seleccionada');
     } else {
-      if (this.selectedMesa.venta == null) {
+      if (this.selectedMesa.venta == null || this.selectedMesa.venta.estado !== VentaEstado.ABIERTA) {
         const venta = new Venta();
         venta.estado = VentaEstado.ABIERTA;
         venta.caja = this.caja!;
@@ -607,6 +844,8 @@ export class PdvComponent implements OnInit {
         // save venta and return promise
         return firstValueFrom(this.repositoryService.createVenta(venta).pipe(
           map(createdVenta => {
+            // Ensure estado is set (IPC serialization may lose it)
+            createdVenta.estado = VentaEstado.ABIERTA;
             if (this.selectedMesa) {
               this.selectedMesa.venta = createdVenta;
               // Update mesa estado to OCUPADO
@@ -636,14 +875,634 @@ export class PdvComponent implements OnInit {
     );
   }
 
-  findPrecioCosto(producto: Producto): number {
-    // 
-    return 0;
+  async findPrecioCosto(producto: Producto): Promise<number> {
+    try {
+      const tipo = producto.tipo;
+
+      if (tipo === 'RETAIL' || tipo === 'RETAIL_INGREDIENTE') {
+        // Costo directo del producto
+        const precios = await firstValueFrom(this.repositoryService.getPreciosCostoByProducto(producto.id));
+        const precioActivo = precios.find(p => p.activo);
+        return precioActivo ? Number(precioActivo.valor) : 0;
+      }
+
+      if (tipo === 'ELABORADO_SIN_VARIACION') {
+        // Costo desde receta.costoCalculado
+        const recetaId = (producto as any).receta?.id;
+        if (recetaId) {
+          const receta = await firstValueFrom(this.repositoryService.getReceta(recetaId));
+          if (receta?.costoCalculado) return Number(receta.costoCalculado);
+        }
+        // Fallback a PrecioCosto del producto
+        const precios = await firstValueFrom(this.repositoryService.getPreciosCostoByProducto(producto.id));
+        const precioActivo = precios.find(p => p.activo);
+        return precioActivo ? Number(precioActivo.valor) : 0;
+      }
+
+      if (tipo === 'ELABORADO_CON_VARIACION') {
+        // Costo desde la primera receta del producto
+        const recetas = (producto as any).recetas;
+        if (recetas?.length > 0 && recetas[0].costoCalculado) {
+          return Number(recetas[0].costoCalculado);
+        }
+        return 0;
+      }
+
+      if (tipo === 'COMBO') {
+        // Para combos, sumar costo de componentes (futuro)
+        // Por ahora intentar PrecioCosto directo
+        const precios = await firstValueFrom(this.repositoryService.getPreciosCostoByProducto(producto.id));
+        const precioActivo = precios.find(p => p.activo);
+        return precioActivo ? Number(precioActivo.valor) : 0;
+      }
+
+      return 0;
+    } catch (error) {
+      console.error('Error finding precio costo:', error);
+      return 0;
+    }
   }
 
   findPrecioPrincipal(presentacion: Presentacion): number {
     // return presentacion.preciosVenta.find(p => p.principal)?.valor || 0;
     return 0;
+  }
+
+  // --- Acciones del PdV ---
+
+  get hasActiveVenta(): boolean {
+    return this.selectedMesa?.venta != null || this.ventaRapidaActual != null;
+  }
+
+  get hasActiveItems(): boolean {
+    return this.ventaItemsDataSource.data.some(i => i.estado === EstadoVentaItem.ACTIVO);
+  }
+
+  cobrarVenta(): void {
+    if (!this.hasActiveVenta || !this.hasActiveItems) return;
+
+    const venta = this.ventaRapidaActual || this.selectedMesa?.venta;
+    if (!venta) return;
+
+    const dialogData: CobrarVentaDialogData = {
+      venta,
+      items: this.ventaItemsDataSource.data,
+      monedas: this.filteredMonedas.length > 0 ? this.filteredMonedas : this.monedas,
+      exchangeRates: this.exchangeRates,
+      principalMoneda: this.principalMoneda!,
+      caja: this.caja!,
+    };
+
+    const dialogRef = this.dialog.open(CobrarVentaDialogComponent, {
+      width: '80vw',
+      height: '80vh',
+      maxWidth: '95vw',
+      disableClose: true,
+      data: dialogData,
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result?.success) {
+        // Liberar mesa
+        if (this.selectedMesa) {
+          this.updateMesaEstado(this.selectedMesa, PdvMesaEstado.DISPONIBLE);
+          this.selectedMesa.venta = null as any;
+          this.selectedMesa = null;
+        }
+        // Limpiar venta rápida
+        if (this.ventaRapidaActual) {
+          this.ventaRapidaActual = null;
+        }
+        // Limpiar UI
+        this.ventaItemsDataSource.data = [];
+        this.calculateTotals();
+      }
+    });
+  }
+
+  cancelarVenta(): void {
+    if (!this.hasActiveVenta) return;
+
+    const venta = this.ventaRapidaActual || this.selectedMesa?.venta;
+    if (!venta) return;
+
+    const dialogRef = this.dialog.open(CancelarVentaDialogComponent, {
+      width: '400px',
+      data: { venta },
+    });
+
+    dialogRef.afterClosed().subscribe(async (result) => {
+      if (result?.confirmed) {
+        try {
+          // Cancelar todos los items activos
+          const activeItems = this.ventaItemsDataSource.data.filter(i => i.estado === EstadoVentaItem.ACTIVO);
+          for (const item of activeItems) {
+            await firstValueFrom(this.repositoryService.updateVentaItem(item.id, {
+              estado: EstadoVentaItem.CANCELADO,
+              canceladoPor: this.authService.currentUser,
+              horaCancelado: new Date(),
+            }));
+          }
+
+          // Actualizar venta
+          await firstValueFrom(this.repositoryService.updateVenta(venta.id, {
+            estado: VentaEstado.CANCELADA,
+          }));
+
+          // Liberar mesa
+          if (this.selectedMesa) {
+            this.updateMesaEstado(this.selectedMesa, PdvMesaEstado.DISPONIBLE);
+            this.selectedMesa.venta = null as any;
+            this.selectedMesa = null;
+          }
+
+          // Limpiar venta rápida
+          if (this.ventaRapidaActual) {
+            this.ventaRapidaActual = null;
+          }
+
+          // Limpiar UI
+          this.ventaItemsDataSource.data = [];
+          this.calculateTotals();
+        } catch (error) {
+          console.error('Error al cancelar venta:', error);
+        }
+      }
+    });
+  }
+
+  async ventaRapida(): Promise<void> {
+    if (this.ventaRapidaActual) return;
+
+    try {
+      const venta = new Venta();
+      venta.estado = VentaEstado.ABIERTA;
+      venta.caja = this.caja!;
+      // mesa = null (venta sin mesa)
+
+      const createdVenta = await firstValueFrom(this.repositoryService.createVenta(venta));
+      this.ventaRapidaActual = createdVenta;
+
+      // Deseleccionar mesa si había una
+      this.selectedMesa = null;
+      this.ventaItemsDataSource.data = [];
+      this.calculateTotals();
+    } catch (error) {
+      console.error('Error al crear venta rápida:', error);
+    }
+  }
+
+  async cobroRapido(): Promise<void> {
+    if (!this.hasActiveVenta || !this.hasActiveItems) return;
+
+    const venta = this.ventaRapidaActual || this.selectedMesa?.venta;
+    if (!venta) return;
+
+    const items = this.ventaItemsDataSource.data.filter(i => i.estado === EstadoVentaItem.ACTIVO);
+    const total = items.reduce((sum, i) => sum + (i.precioVentaUnitario - (i.descuentoUnitario || 0)) * i.cantidad, 0);
+    if (total <= 0) return;
+
+    try {
+      const formasPago = await firstValueFrom(this.repositoryService.getFormasPago());
+      const fpPrincipal = formasPago.find(fp => fp.principal && fp.activo) || formasPago.find(fp => fp.activo);
+      if (!fpPrincipal || !this.principalMoneda) return;
+
+      const pago = await firstValueFrom(this.repositoryService.createPago({
+        estado: PagoEstado.PAGADO,
+        caja: this.caja!,
+        activo: true,
+      }));
+
+      await firstValueFrom(this.repositoryService.createPagoDetalle({
+        valor: total,
+        descripcion: 'COBRO RAPIDO',
+        tipo: TipoDetalle.PAGO,
+        pago,
+        moneda: this.principalMoneda,
+        formaPago: fpPrincipal,
+        activo: true,
+      }));
+
+      await firstValueFrom(this.repositoryService.updateVenta(venta.id, {
+        estado: VentaEstado.CONCLUIDA,
+        formaPago: fpPrincipal,
+        pago,
+      }));
+
+      if (this.selectedMesa) {
+        await firstValueFrom(this.repositoryService.updatePdvMesa(this.selectedMesa.id!, { estado: PdvMesaEstado.DISPONIBLE } as any));
+        this.selectedMesa.venta = null as any;
+        this.selectedMesa = null;
+      }
+      if (this.ventaRapidaActual) {
+        this.ventaRapidaActual = null;
+      }
+
+      this.ventaItemsDataSource.data = [];
+      this.calculateTotals();
+      await this.loadMesas();
+    } catch (error) {
+      console.error('Error al realizar cobro rápido:', error);
+    }
+  }
+
+  cerrarCaja(): void {
+    const dialogRef = this.dialog.open(CierreCajaDialogComponent, {
+      width: '80vw',
+      height: '80vh',
+      disableClose: true,
+      data: { caja: this.caja, monedas: this.filteredMonedas.length > 0 ? this.filteredMonedas : this.monedas },
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result?.success) {
+        this.caja = null;
+        this.tabsService.removeTabById('pdv');
+      }
+    });
+  }
+
+  openDelivery(): void {
+    // TODO: Abrir diálogo de gestión de delivery
+    this.dialog.open(ConfirmationDialogComponent, {
+      width: '400px',
+      data: { title: 'DELIVERY', message: 'Gestión de delivery será implementada próximamente.', confirmText: 'CERRAR', showCancel: false },
+    });
+  }
+
+  openUtilitarios(): void {
+    // TODO: Abrir diálogo con opciones: gastos, retiros, últimas ventas, etc.
+    this.dialog.open(ConfirmationDialogComponent, {
+      width: '400px',
+      data: { title: 'UTILITARIOS', message: 'Módulo de utilitarios será implementado próximamente.\n\n• Gastos\n• Retiros\n• Últimas ventas\n• Cierre parcial', confirmText: 'CERRAR', showCancel: false },
+    });
+  }
+
+  aplicarDescuentoVenta(): void {
+    if (!this.hasActiveVenta) return;
+
+    const venta = this.ventaRapidaActual || this.selectedMesa?.venta;
+    if (!venta) return;
+
+    // Calcular subtotal de items activos
+    const subtotal = this.ventaItemsDataSource.data
+      .filter(i => i.estado === EstadoVentaItem.ACTIVO)
+      .reduce((sum, i) => sum + (i.precioVentaUnitario * i.cantidad), 0);
+
+    const dialogRef = this.dialog.open(DescuentoDialogComponent, {
+      width: '450px',
+      data: {
+        subtotal,
+        descuentoPorcentaje: venta.descuentoPorcentaje,
+        descuentoMonto: venta.descuentoMonto,
+        descuentoMotivo: venta.descuentoMotivo,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe(async (result) => {
+      if (result !== null && result !== undefined) {
+        try {
+          await firstValueFrom(this.repositoryService.updateVenta(venta.id, {
+            descuentoPorcentaje: result.descuentoPorcentaje,
+            descuentoMonto: result.descuentoMonto,
+            descuentoMotivo: result.descuentoMotivo,
+          }));
+          venta.descuentoPorcentaje = result.descuentoPorcentaje;
+          venta.descuentoMonto = result.descuentoMonto;
+          venta.descuentoMotivo = result.descuentoMotivo;
+          this.calculateTotals();
+        } catch (error) {
+          console.error('Error al aplicar descuento:', error);
+        }
+      }
+    });
+  }
+
+  transferirMesa(): void {
+    if (!this.selectedMesa || !this.selectedMesa.venta) return;
+
+    const dialogRef = this.dialog.open(TransferirMesaDialogComponent, {
+      width: '500px',
+      data: { mesaActual: this.selectedMesa },
+    });
+
+    dialogRef.afterClosed().subscribe(async (mesaDestino: PdvMesa | null) => {
+      if (mesaDestino && this.selectedMesa?.venta) {
+        try {
+          const ventaOrigenId = this.selectedMesa.venta.id;
+
+          if (mesaDestino.venta?.id) {
+            // Mesa destino tiene venta abierta: mover items + pago a la venta destino
+            const items = this.ventaItemsDataSource.data.filter(i => i.estado === EstadoVentaItem.ACTIVO);
+            for (const item of items) {
+              await firstValueFrom(this.repositoryService.updateVentaItem(item.id, {
+                venta: { id: mesaDestino.venta.id } as any,
+              }));
+            }
+            // Transferir pago y nombre de cliente si la venta destino no tiene
+            const ventaOrigen = await firstValueFrom(this.repositoryService.getVenta(ventaOrigenId));
+            const updateData: any = {};
+            if (ventaOrigen?.pago?.id) {
+              updateData.pago = ventaOrigen.pago;
+            }
+            if (ventaOrigen?.nombreCliente && !mesaDestino.venta.nombreCliente) {
+              updateData.nombreCliente = ventaOrigen.nombreCliente;
+            }
+            if (Object.keys(updateData).length > 0) {
+              await firstValueFrom(this.repositoryService.updateVenta(mesaDestino.venta.id, updateData));
+            }
+            // Cancelar la venta origen
+            await firstValueFrom(this.repositoryService.updateVenta(ventaOrigenId, {
+              estado: VentaEstado.CANCELADA,
+            }));
+          } else {
+            // Mesa destino libre: mover la venta completa (pago va con la venta)
+            await firstValueFrom(this.repositoryService.updateVenta(ventaOrigenId, {
+              mesa: { id: mesaDestino.id } as any,
+            }));
+          }
+
+          // Liberar mesa origen
+          await firstValueFrom(this.repositoryService.updatePdvMesa(this.selectedMesa.id!, { estado: PdvMesaEstado.DISPONIBLE } as any));
+
+          // Ocupar mesa destino
+          await firstValueFrom(this.repositoryService.updatePdvMesa(mesaDestino.id!, { estado: PdvMesaEstado.OCUPADO } as any));
+
+          // Limpiar UI
+          this.selectedMesa = null;
+          this.ventaItemsDataSource.data = [];
+          this.calculateTotals();
+
+          // Recargar mesas
+          await this.loadMesas();
+        } catch (error) {
+          console.error('Error al transferir mesa:', error);
+        }
+      }
+    });
+  }
+
+  imprimirPreCuenta(): void {
+    if (!this.hasActiveVenta) return;
+    const venta = this.ventaRapidaActual || this.selectedMesa?.venta;
+    if (!venta) return;
+
+    const items = this.ventaItemsDataSource.data.filter(i => i.estado === EstadoVentaItem.ACTIVO);
+    const total = items.reduce((sum, i) => sum + (i.precioVentaUnitario - (i.descuentoUnitario || 0)) * i.cantidad, 0);
+    const mesaNum = this.selectedMesa?.numero || 'V. RÁPIDA';
+
+    // Por ahora mostrar en diálogo (futuro: enviar a impresora)
+    const lineas = items.map(i =>
+      `${i.producto?.nombre || 'PRODUCTO'} x${i.cantidad} - ${((i.precioVentaUnitario - (i.descuentoUnitario || 0)) * i.cantidad).toLocaleString('es-PY')}`
+    );
+
+    const contenido = [
+      `========== PRE-CUENTA ==========`,
+      `Mesa: ${mesaNum}`,
+      `Fecha: ${new Date().toLocaleString('es-PY')}`,
+      `--------------------------------`,
+      ...lineas,
+      `--------------------------------`,
+      `TOTAL: ${this.principalMoneda?.simbolo} ${total.toLocaleString('es-PY')}`,
+      `================================`,
+      `*** ESTE NO ES UN COMPROBANTE ***`,
+    ].join('\n');
+
+    // Abrir diálogo simple con la pre-cuenta
+    this.dialog.open(ConfirmationDialogComponent, {
+      width: '400px',
+      data: {
+        title: 'PRE-CUENTA',
+        message: contenido,
+        confirmText: 'CERRAR',
+        showCancel: false,
+      },
+    });
+  }
+
+  moverItems(): void {
+    if (!this.hasActiveVenta || !this.hasActiveItems) return;
+
+    if (!this.moverItemsMode) {
+      // Entrar en modo selección
+      this.moverItemsMode = true;
+      this.selectedItemIds.clear();
+      this.columnsToDisplayWithExpand = ['select', ...this.displayedColumns];
+      return;
+    }
+
+    // Ya estamos en modo — confirmar mover
+    if (this.selectedItemIds.size === 0) return;
+
+    const activeItems = this.ventaItemsDataSource.data.filter(i => i.estado === EstadoVentaItem.ACTIVO);
+    const allSelected = activeItems.every(i => this.selectedItemIds.has(i.id));
+
+    if (allSelected) {
+      // Todos seleccionados — preguntar si transferir mesa completa
+      const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+        width: '400px',
+        data: {
+          title: 'TRANSFERIR MESA COMPLETA',
+          message: 'Todos los items están seleccionados. ¿Desea transferir la mesa completa (incluyendo cobros y datos del cliente)?',
+          confirmText: 'TRANSFERIR MESA',
+          cancelText: 'SOLO ITEMS',
+        },
+      });
+
+      dialogRef.afterClosed().subscribe((transferirCompleta: boolean) => {
+        if (transferirCompleta === true) {
+          this.cancelarMoverItems();
+          this.transferirMesa();
+        } else if (transferirCompleta === false) {
+          this.ejecutarMoverItems();
+        }
+        // Si es undefined (cerró el diálogo), no hacer nada
+      });
+    } else {
+      this.ejecutarMoverItems();
+    }
+  }
+
+  toggleItemSelection(itemId: number): void {
+    if (this.selectedItemIds.has(itemId)) {
+      this.selectedItemIds.delete(itemId);
+    } else {
+      this.selectedItemIds.add(itemId);
+    }
+  }
+
+  toggleSelectAll(): void {
+    const activeItems = this.ventaItemsDataSource.data.filter(i => i.estado === EstadoVentaItem.ACTIVO);
+    const allSelected = activeItems.every(i => this.selectedItemIds.has(i.id));
+    if (allSelected) {
+      this.selectedItemIds.clear();
+    } else {
+      activeItems.forEach(i => this.selectedItemIds.add(i.id));
+    }
+  }
+
+  isAllSelected(): boolean {
+    const activeItems = this.ventaItemsDataSource.data.filter(i => i.estado === EstadoVentaItem.ACTIVO);
+    return activeItems.length > 0 && activeItems.every(i => this.selectedItemIds.has(i.id));
+  }
+
+  cancelarMoverItems(): void {
+    this.moverItemsMode = false;
+    this.selectedItemIds.clear();
+    this.columnsToDisplayWithExpand = [...this.displayedColumns];
+  }
+
+  private ejecutarMoverItems(): void {
+    if (!this.selectedMesa) return;
+
+    const dialogRef = this.dialog.open(TransferirMesaDialogComponent, {
+      width: '500px',
+      data: { mesaActual: this.selectedMesa },
+    });
+
+    dialogRef.afterClosed().subscribe(async (mesaDestino: PdvMesa | null) => {
+      if (!mesaDestino || !this.selectedMesa?.venta) {
+        return;
+      }
+
+      try {
+        // Obtener o crear venta en mesa destino
+        let ventaDestinoId: number;
+        if (mesaDestino.venta?.id) {
+          ventaDestinoId = mesaDestino.venta.id;
+        } else {
+          const nuevaVenta = await firstValueFrom(this.repositoryService.createVenta({
+            estado: VentaEstado.ABIERTA,
+            caja: this.caja!,
+            mesa: { id: mesaDestino.id } as any,
+          } as any));
+          nuevaVenta.estado = VentaEstado.ABIERTA;
+          ventaDestinoId = nuevaVenta.id;
+          await firstValueFrom(this.repositoryService.updatePdvMesa(mesaDestino.id!, { estado: PdvMesaEstado.OCUPADO } as any));
+        }
+
+        // Mover items seleccionados
+        const itemsToMove = this.ventaItemsDataSource.data.filter(i => this.selectedItemIds.has(i.id));
+        for (const item of itemsToMove) {
+          await firstValueFrom(this.repositoryService.updateVentaItem(item.id, {
+            venta: { id: ventaDestinoId } as any,
+          }));
+        }
+
+        // Verificar si quedan items activos en la mesa origen
+        const itemsRestantes = this.ventaItemsDataSource.data.filter(
+          i => i.estado === EstadoVentaItem.ACTIVO && !this.selectedItemIds.has(i.id)
+        );
+
+        if (itemsRestantes.length === 0) {
+          // No quedan items — desocupar mesa origen
+          await firstValueFrom(this.repositoryService.updateVenta(this.selectedMesa.venta.id, {
+            estado: VentaEstado.CANCELADA,
+          }));
+          await firstValueFrom(this.repositoryService.updatePdvMesa(this.selectedMesa.id!, { estado: PdvMesaEstado.DISPONIBLE } as any));
+          this.selectedMesa = null;
+          this.ventaItemsDataSource.data = [];
+        } else {
+          // Quedan items — recargar la mesa
+          this.ventaItemsDataSource.data = itemsRestantes;
+        }
+
+        this.cancelarMoverItems();
+        this.calculateTotals();
+        await this.loadMesas();
+      } catch (error) {
+        console.error('Error al mover items:', error);
+      }
+    });
+  }
+
+  dividirCuenta(): void {
+    if (!this.hasActiveVenta || !this.hasActiveItems) return;
+
+    const venta = this.ventaRapidaActual || this.selectedMesa?.venta;
+    if (!venta) return;
+
+    const activeItems = this.ventaItemsDataSource.data.filter(i => i.estado === EstadoVentaItem.ACTIVO);
+    const total = activeItems.reduce((sum, i) => sum + (i.precioVentaUnitario - (i.descuentoUnitario || 0)) * i.cantidad, 0);
+
+    const dialogRef = this.dialog.open(DividirCuentaDialogComponent, {
+      width: '500px',
+      data: { items: activeItems, total },
+    });
+
+    dialogRef.afterClosed().subscribe(async (result) => {
+      if (result) {
+        // La división crea ventas hijas — cada una se cobra por separado
+        // Por ahora loguear el resultado, implementación completa con backend en siguiente iteración
+        console.log('División de cuenta:', result);
+      }
+    });
+  }
+
+  asociarCliente(): void {
+    if (!this.hasActiveVenta) return;
+
+    const venta = this.ventaRapidaActual || this.selectedMesa?.venta;
+    if (!venta) return;
+
+    const dialogRef = this.dialog.open(BuscarClienteDialogComponent, {
+      width: '600px',
+    });
+
+    dialogRef.afterClosed().subscribe(async (cliente) => {
+      if (cliente && venta) {
+        try {
+          await firstValueFrom(this.repositoryService.updateVenta(venta.id, {
+            cliente: cliente,
+            nombreCliente: `${cliente.persona?.nombre || ''} ${cliente.razon_social || ''}`.trim().toUpperCase(),
+          }));
+          venta.cliente = cliente;
+          venta.nombreCliente = `${cliente.persona?.nombre || ''} ${cliente.razon_social || ''}`.trim().toUpperCase();
+        } catch (error) {
+          console.error('Error al asociar cliente:', error);
+        }
+      }
+    });
+  }
+
+  // --- Atajos de teclado ---
+  @HostListener('document:keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent): void {
+    // No disparar si hay un diálogo abierto
+    if (this.dialog.openDialogs.length > 0) return;
+
+    switch (event.key) {
+      case 'F1':
+        event.preventDefault();
+        this.cobrarVenta();
+        break;
+      case 'F2':
+        event.preventDefault();
+        this.cobroRapido();
+        break;
+      case 'F3':
+        event.preventDefault();
+        this.openProductSearchDialog();
+        break;
+      case 'F4':
+        event.preventDefault();
+        this.cancelarVenta();
+        break;
+      case 'F5':
+        event.preventDefault();
+        this.imprimirPreCuenta();
+        break;
+      case 'Escape':
+        event.preventDefault();
+        if (this.ventaRapidaActual) {
+          // No deseleccionar — mantener venta rápida
+        } else {
+          this.selectedMesa = null;
+          this.ventaItemsDataSource.data = [];
+          this.calculateTotals();
+        }
+        break;
+    }
   }
 
   // Search products using dialog
@@ -718,6 +1577,11 @@ export class PdvComponent implements OnInit {
       try {
         // Load venta items for this venta
         const items = await firstValueFrom(this.repositoryService.getVentaItems(mesa.venta.id));
+        // Cargar observaciones de cada item
+        for (const item of items) {
+          const obs = await firstValueFrom(this.repositoryService.getObservacionesByVentaItem(item.id));
+          (item as any).observacionesVinculadas = obs;
+        }
         this.ventaItemsDataSource.data = items;
         console.log(this.ventaItemsDataSource.data);
         // Calculate totals based on loaded items

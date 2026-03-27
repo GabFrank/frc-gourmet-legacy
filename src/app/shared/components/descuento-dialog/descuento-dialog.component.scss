@@ -1,0 +1,43 @@
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.subtotal-display {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.subtotal-value {
+  font-weight: bold;
+}
+
+.tipo-section {
+  margin: 16px 0;
+  display: flex;
+  gap: 16px;
+}
+
+.resumen-section {
+  margin-top: 12px;
+}
+
+.resumen-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin: 4px 0;
+}
+
+.total-row {
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 8px;
+}
+
+.descuento-value {
+  color: #f44336;
+}

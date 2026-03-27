@@ -1,0 +1,121 @@
+<h2 mat-dialog-title>EDITAR ITEM</h2>
+
+<mat-dialog-content>
+  <div class="item-info">
+    <span class="item-name">{{ data.ventaItem.producto?.nombre || 'Producto' }}</span>
+    <span class="item-precio">Precio unitario: {{ data.ventaItem.precioVentaUnitario | number:'1.0-2' }}</span>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <form [formGroup]="form">
+    <div class="edit-form">
+      <mat-form-field appearance="outline">
+        <mat-label>CANTIDAD</mat-label>
+        <input matInput type="number" formControlName="cantidad" min="0.01" step="1" />
+      </mat-form-field>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Descuento -->
+    <div class="descuento-section">
+      <h3>DESCUENTO</h3>
+      <mat-radio-group [(ngModel)]="modoDescuento" [ngModelOptions]="{standalone: true}" (change)="onModoDescuentoChange()">
+        <mat-radio-button value="monto">MONTO FIJO</mat-radio-button>
+        <mat-radio-button value="porcentaje">PORCENTAJE</mat-radio-button>
+      </mat-radio-group>
+
+      <div class="descuento-inputs">
+        <mat-form-field appearance="outline" *ngIf="modoDescuento === 'monto'">
+          <mat-label>DESCUENTO UNITARIO</mat-label>
+          <input matInput type="number" formControlName="descuentoUnitario" min="0" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" *ngIf="modoDescuento === 'porcentaje'">
+          <mat-label>DESCUENTO %</mat-label>
+          <input matInput type="number" formControlName="descuentoPorcentaje" min="0" max="100" />
+          <span matSuffix>%</span>
+        </mat-form-field>
+      </div>
+
+      <!-- Chips de porcentaje rápido -->
+      <div class="porcentaje-chips" *ngIf="modoDescuento === 'porcentaje'">
+        <button mat-stroked-button type="button" *ngFor="let p of porcentajesRapidos"
+          [class.selected]="form.get('descuentoPorcentaje')?.value === p"
+          (click)="aplicarPorcentajeRapido(p)">
+          {{ p }}%
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <mat-divider></mat-divider>
+
+  <!-- Total y redondeo -->
+  <div class="total-section">
+    <span>SUBTOTAL:</span>
+    <span class="subtotal-value">{{ totalCalculado | number:'1.0-0' }}</span>
+  </div>
+
+  <div class="redondeo-section" *ngIf="totalCalculado > 0 && totalCalculado !== redondeoArriba && totalCalculado !== redondeoAbajo">
+    <h3>REDONDEAR A:</h3>
+    <div class="redondeo-chips">
+      <button mat-stroked-button type="button"
+        [class.selected]="redondeoSeleccionado === 'abajo'"
+        (click)="aplicarRedondeo('abajo')">
+        <mat-icon>arrow_downward</mat-icon>
+        {{ redondeoAbajo | number:'1.0-0' }}
+      </button>
+      <button mat-stroked-button type="button"
+        [class.selected]="redondeoSeleccionado === 'exacto'"
+        (click)="aplicarRedondeo('exacto')">
+        EXACTO
+      </button>
+      <button mat-stroked-button type="button"
+        [class.selected]="redondeoSeleccionado === 'arriba'"
+        (click)="aplicarRedondeo('arriba')">
+        <mat-icon>arrow_upward</mat-icon>
+        {{ redondeoArriba | number:'1.0-0' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="total-section total-final">
+    <span>TOTAL:</span>
+    <span class="total-value">{{ totalFinal | number:'1.0-0' }}</span>
+  </div>
+
+  <!-- Observaciones -->
+  <div class="observaciones-section" *ngIf="observaciones.length > 0">
+    <mat-divider></mat-divider>
+    <h3>OBSERVACIONES</h3>
+    <mat-chip-listbox multiple>
+      <mat-chip-option
+        *ngFor="let obs of observaciones"
+        [selected]="isObservacionSelected(obs)"
+        (click)="toggleObservacion(obs)"
+      >
+        {{ obs.descripcion }}
+      </mat-chip-option>
+    </mat-chip-listbox>
+
+    <mat-form-field appearance="outline" style="width: 100%; margin-top: 12px">
+      <mat-label>OBSERVACIÓN LIBRE</mat-label>
+      <input matInput [(ngModel)]="observacionLibre" placeholder="Ej: sin sal, bien cocido..." />
+    </mat-form-field>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancelar()">CANCELAR</button>
+  <button
+    mat-raised-button
+    color="primary"
+    [disabled]="!form.valid"
+    (click)="guardar()"
+  >
+    <mat-icon>save</mat-icon>
+    GUARDAR
+  </button>
+</mat-dialog-actions>

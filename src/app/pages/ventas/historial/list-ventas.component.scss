@@ -1,0 +1,25 @@
+.page-container {
+  padding: 16px;
+}
+
+.page-header {
+  margin-bottom: 16px;
+}
+
+.rangos-chips {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.filtros-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+table {
+  width: 100%;
+}

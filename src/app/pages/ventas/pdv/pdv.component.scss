@@ -7,7 +7,7 @@
 }
 
 .left-panel {
-  width: 60%;
+  width: 50%;
   padding: 15px;
   display: flex;
   flex-direction: column;
@@ -69,7 +69,7 @@
 }
 
 .right-panel {
-  width: 40%;
+  width: 50%;
   padding: 15px;
   display: flex;
   flex-direction: column;
@@ -255,6 +255,56 @@
   font-weight: 500;
 }
 
+.precio-con-descuento {
+  display: inline-flex;
+  align-items: center;
+  color: #ff9800;
+}
+
+.descuento-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  margin-right: 2px;
+  color: #ff9800;
+}
+
+.descuento-valor {
+  color: #f44336;
+}
+
+.obs-indicator {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+.obs-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  color: #64b5f6;
+}
+
+.obs-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.obs-chip {
+  background-color: rgba(100, 181, 246, 0.2);
+  color: #64b5f6;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+}
+
+.item-cancelado {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
 /* Example expanded row animation */
 tr.example-detail-row {
   height: 0;
@@ -308,17 +358,23 @@ tr.example-element-row:not(.example-expanded-row):active {
     background-color: #b71c1c;
     color: white;
     height: 40px !important;
-    
+
     &:first-child {
       margin-left: 0;
     }
-    
+
     &:last-child {
       margin-right: 0;
     }
-    
+
     .mat-icon {
       margin-right: 5px;
+    }
+
+    &:disabled, &[disabled] {
+      background-color: #444 !important;
+      color: #777 !important;
+      opacity: 0.6;
     }
   }
 }
@@ -387,6 +443,15 @@ tr.example-element-row:not(.example-expanded-row):active {
   flex-direction: column;
   gap: 10px;
   background-color: #2a2a2a;
+}
+
+.categories-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  font-size: 13px;
+  flex-wrap: wrap;
 }
 
 
@@ -482,13 +547,19 @@ tr.example-element-row:not(.example-expanded-row):active {
     &:first-child {
       margin-left: 0;
     }
-    
+
     &:last-child {
       margin-right: 0;
     }
-    
+
     .mat-icon {
       margin-left: 5px;
+    }
+
+    &:disabled, &[disabled] {
+      background-color: #444 !important;
+      color: #777 !important;
+      opacity: 0.6;
     }
   }
 }

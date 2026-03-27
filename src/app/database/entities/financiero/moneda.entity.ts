@@ -27,6 +27,9 @@ export class Moneda extends BaseModel {
   @Column({ default: false })
   principal!: boolean;
 
+  @Column({ type: 'int', default: 0, comment: 'Cantidad de decimales para formateo (0 para PYG, 2 para USD/BRL)' })
+  decimales!: number;
+
   // @OneToMany('PrecioVenta', 'moneda')
   // preciosVenta!: PrecioVenta[];
 }

@@ -1,0 +1,32 @@
+<h2 mat-dialog-title>
+  <mat-icon color="warn">warning</mat-icon>
+  CANCELAR VENTA
+</h2>
+
+<mat-dialog-content>
+  <p>¿Está seguro que desea cancelar esta venta? Esta acción no se puede deshacer.</p>
+  <p>Todos los items activos serán cancelados y la mesa será liberada.</p>
+
+  <mat-form-field appearance="outline" style="width: 100%">
+    <mat-label>MOTIVO DE CANCELACIÓN (obligatorio)</mat-label>
+    <textarea
+      matInput
+      [(ngModel)]="motivo"
+      rows="3"
+      placeholder="Ingrese el motivo de la cancelación..."
+    ></textarea>
+  </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancelar()">VOLVER</button>
+  <button
+    mat-raised-button
+    color="warn"
+    [disabled]="!motivo.trim()"
+    (click)="confirmar()"
+  >
+    <mat-icon>cancel</mat-icon>
+    CANCELAR VENTA
+  </button>
+</mat-dialog-actions>

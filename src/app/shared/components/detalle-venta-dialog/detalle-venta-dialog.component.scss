@@ -1,0 +1,34 @@
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+h3 {
+  font-size: 14px;
+  margin: 12px 0 8px;
+  opacity: 0.7;
+}
+
+table {
+  width: 100%;
+}
+
+.total-section {
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 12px;
+}
+
+.total-value {
+  color: #4caf50;
+}

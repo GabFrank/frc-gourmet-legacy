@@ -5,6 +5,7 @@ import { FormasPago } from '../compras/forma-pago.entity';
 import { Caja } from '../financiero/caja.entity';
 import { Pago } from '../compras/pago.entity';
 import { Delivery } from './delivery.entity';
+import { Usuario } from '../personas/usuario.entity';
 import type { PdvMesa } from './pdv-mesa.entity';
 
 /**
@@ -58,4 +59,22 @@ export class Venta extends BaseModel {
   @OneToMany('VentaItem', 'venta')
   items!: any[];
 
+  // Descuento global
+  @Column({ name: 'descuento_porcentaje', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  descuentoPorcentaje?: number;
+
+  @Column({ name: 'descuento_monto', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  descuentoMonto?: number;
+
+  @Column({ name: 'descuento_motivo', type: 'varchar', nullable: true })
+  descuentoMotivo?: string;
+
+  @ManyToOne(() => Usuario, { nullable: true })
+  @JoinColumn({ name: 'descuento_autorizado_por_id' })
+  descuentoAutorizadoPor?: Usuario;
+
+  // División de cuenta
+  @ManyToOne('Venta', { nullable: true })
+  @JoinColumn({ name: 'venta_padre_id' })
+  ventaPadre?: any;
 } 

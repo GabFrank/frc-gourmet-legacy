@@ -958,6 +958,9 @@ contextBridge.exposeInMainWorld('api', {
   login: async (loginData: { nickname: string, password: string, deviceInfo: DeviceInfo }): Promise<LoginResult> => {
     return await ipcRenderer.invoke('login', loginData);
   },
+  validateCredentials: async (data: { nickname: string, password: string }): Promise<any> => {
+    return await ipcRenderer.invoke('validate-credentials', data);
+  },
   logout: async (sessionId: number): Promise<boolean> => {
     return await ipcRenderer.invoke('logout', sessionId);
   },
@@ -1411,6 +1414,12 @@ contextBridge.exposeInMainWorld('api', {
   getVentas: async (): Promise<Venta[]> => {
     return await ipcRenderer.invoke('getVentas');
   },
+  getVentasByDateRange: async (desde: string, hasta: string, filtros?: any): Promise<Venta[]> => {
+    return await ipcRenderer.invoke('getVentasByDateRange', desde, hasta, filtros);
+  },
+  getVentasByCaja: async (cajaId: number): Promise<Venta[]> => {
+    return await ipcRenderer.invoke('getVentasByCaja', cajaId);
+  },
   getVentasByEstado: async (estado: VentaEstado): Promise<Venta[]> => {
     return await ipcRenderer.invoke('getVentasByEstado', estado);
   },
@@ -1444,6 +1453,17 @@ contextBridge.exposeInMainWorld('api', {
     return await ipcRenderer.invoke('deleteVentaItem', ventaItemId);
   },
 
+  // VentaItemObservacion methods
+  getObservacionesByVentaItem: async (ventaItemId: number): Promise<any[]> => {
+    return await ipcRenderer.invoke('getObservacionesByVentaItem', ventaItemId);
+  },
+  createVentaItemObservacion: async (data: any): Promise<any> => {
+    return await ipcRenderer.invoke('createVentaItemObservacion', data);
+  },
+  deleteVentaItemObservacion: async (id: number): Promise<boolean> => {
+    return await ipcRenderer.invoke('deleteVentaItemObservacion', id);
+  },
+
   // PdvGrupoCategoria methods
   getPdvGrupoCategorias: async (): Promise<PdvGrupoCategoria[]> => {
     return await ipcRenderer.invoke('getPdvGrupoCategorias');
@@ -1465,6 +1485,9 @@ contextBridge.exposeInMainWorld('api', {
   getPdvCategorias: async (): Promise<PdvCategoria[]> => {
     return await ipcRenderer.invoke('getPdvCategorias');
   },
+  getPdvCategoriasByGrupo: async (grupoId: number): Promise<PdvCategoria[]> => {
+    return await ipcRenderer.invoke('getPdvCategoriasByGrupo', grupoId);
+  },
   getPdvCategoria: async (categoriaId: number): Promise<PdvCategoria> => {
     return await ipcRenderer.invoke('getPdvCategoria', categoriaId);
   },
@@ -1481,6 +1504,9 @@ contextBridge.exposeInMainWorld('api', {
   // PdvCategoriaItem methods
   getPdvCategoriaItems: async (categoriaId: number): Promise<PdvCategoriaItem[]> => {
     return await ipcRenderer.invoke('getPdvCategoriaItems', categoriaId);
+  },
+  getPdvCategoriaItemsByCategoria: async (categoriaId: number): Promise<PdvCategoriaItem[]> => {
+    return await ipcRenderer.invoke('getPdvCategoriaItemsByCategoria', categoriaId);
   },
   getPdvCategoriaItem: async (categoriaItemId: number): Promise<PdvCategoriaItem> => {
     return await ipcRenderer.invoke('getPdvCategoriaItem', categoriaItemId);
@@ -1556,6 +1582,9 @@ contextBridge.exposeInMainWorld('api', {
   createPdvMesa: async (data: Partial<PdvMesa>): Promise<PdvMesa> => {
     return await ipcRenderer.invoke('createPdvMesa', data);
   },
+  createBatchPdvMesas: async (batchData: Partial<PdvMesa>[]): Promise<PdvMesa[]> => {
+    return await ipcRenderer.invoke('createBatchPdvMesas', batchData);
+  },
   updatePdvMesa: async (id: number, data: Partial<PdvMesa>): Promise<PdvMesa> => {
     return await ipcRenderer.invoke('updatePdvMesa', id, data);
   },
@@ -1604,6 +1633,18 @@ contextBridge.exposeInMainWorld('api', {
   },
   deleteComanda: async (id: number): Promise<boolean> => {
     return await ipcRenderer.invoke('deleteComanda', id);
+  },
+  getComandasPendientes: async (): Promise<Comanda[]> => {
+    return await ipcRenderer.invoke('getComandasPendientes');
+  },
+  getComandaByVenta: async (ventaId: number): Promise<Comanda | null> => {
+    return await ipcRenderer.invoke('getComandaByVenta', ventaId);
+  },
+  createComandaWithItems: async (data: any): Promise<Comanda> => {
+    return await ipcRenderer.invoke('createComandaWithItems', data);
+  },
+  updateComandaItemEstado: async (id: number, estado: string): Promise<any> => {
+    return await ipcRenderer.invoke('updateComandaItemEstado', id, estado);
   },
 
   // New search methods

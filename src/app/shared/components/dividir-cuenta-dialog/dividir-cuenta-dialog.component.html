@@ -1,0 +1,69 @@
+<h2 mat-dialog-title>
+  <mat-icon>call_split</mat-icon>
+  DIVIDIR CUENTA
+</h2>
+
+<mat-dialog-content>
+  <div class="total-display">
+    <span>Total de la venta:</span>
+    <span class="total-value">{{ data.total | number:'1.0-2' }}</span>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <div class="modo-section">
+    <mat-radio-group [(ngModel)]="modo" (change)="recalcular()">
+      <mat-radio-button value="iguales">PARTES IGUALES</mat-radio-button>
+      <mat-radio-button value="items">POR ITEMS</mat-radio-button>
+    </mat-radio-group>
+  </div>
+
+  <mat-form-field appearance="outline" style="width: 100%">
+    <mat-label>CANTIDAD DE PARTES</mat-label>
+    <input matInput type="number" [(ngModel)]="cantidadPartes" min="2" max="10" (ngModelChange)="recalcular()" />
+  </mat-form-field>
+
+  <!-- Modo iguales -->
+  <div *ngIf="modo === 'iguales'" class="resultado-section">
+    <div class="resultado-row" *ngFor="let i of [].constructor(cantidadPartes); let idx = index">
+      <span>CUENTA {{ idx + 1 }}:</span>
+      <span>{{ totalPorParte | number:'1.0-2' }}</span>
+    </div>
+  </div>
+
+  <!-- Modo por items -->
+  <div *ngIf="modo === 'items'" class="items-section">
+    <div class="item-assign" *ngFor="let item of activeItems">
+      <span class="item-name">{{ item.producto?.nombre || 'Producto' }} x{{ item.cantidad }}</span>
+      <mat-form-field appearance="outline" style="width: 120px">
+        <mat-select [ngModel]="getItemGrupo(item)" (ngModelChange)="assignItem(item, $event)">
+          <mat-option *ngFor="let i of [].constructor(cantidadPartes); let idx = index" [value]="idx">
+            CUENTA {{ idx + 1 }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <div class="resultado-section">
+      <div class="resultado-row" *ngFor="let grupo of grupos">
+        <span>{{ grupo.label }} ({{ grupo.items.length }} items):</span>
+        <span>{{ grupo.total | number:'1.0-2' }}</span>
+      </div>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancelar()">CANCELAR</button>
+  <button
+    mat-raised-button
+    color="primary"
+    [disabled]="cantidadPartes < 2"
+    (click)="dividir()"
+  >
+    <mat-icon>call_split</mat-icon>
+    DIVIDIR
+  </button>
+</mat-dialog-actions>

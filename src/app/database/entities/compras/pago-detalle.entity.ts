@@ -50,4 +50,11 @@ export class PagoDetalle extends BaseModel {
   @ManyToOne(() => FormasPago)
   @JoinColumn({ name: 'forma_pago_id' })
   formaPago!: FormasPago;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  observacion?: string;
+
+  // Preparado para vincular pagos a comandas en el futuro
+  @Column({ name: 'comanda_id', nullable: true })
+  comandaId?: number;
 }

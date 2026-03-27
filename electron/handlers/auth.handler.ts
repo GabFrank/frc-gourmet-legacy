@@ -73,6 +73,31 @@ export function registerAuthHandlers(
     }
   });
 
+  // Validate credentials without creating a session (for authorization checks)
+  ipcMain.handle('validate-credentials', async (_event: any, data: { nickname: string, password: string }) => {
+    try {
+      const userRepository = dataSource.getRepository(Usuario);
+      const usuario = await userRepository.createQueryBuilder('usuario')
+        .leftJoinAndSelect('usuario.persona', 'persona')
+        .where('LOWER(usuario.nickname) = LOWER(:nickname)', { nickname: data.nickname })
+        .getOne();
+
+      if (!usuario || !usuario.activo) {
+        return { success: false, message: 'USUARIO NO ENCONTRADO O INACTIVO' };
+      }
+
+      const passwordValid = data.password === usuario.password;
+      if (!passwordValid) {
+        return { success: false, message: 'CONTRASEÑA INCORRECTA' };
+      }
+
+      return { success: true, usuario: { id: usuario.id, nickname: usuario.nickname, persona: usuario.persona } };
+    } catch (error) {
+      console.error('Validate credentials error:', error);
+      return { success: false, message: 'ERROR EN EL SERVIDOR' };
+    }
+  });
+
   ipcMain.handle('logout', async (_event: any, sessionId: number) => {
     try {
       const sessionRepository = dataSource.getRepository(LoginSession);

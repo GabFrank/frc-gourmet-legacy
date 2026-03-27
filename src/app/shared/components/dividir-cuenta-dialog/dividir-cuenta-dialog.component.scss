@@ -1,0 +1,48 @@
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.total-display {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.total-value {
+  font-weight: bold;
+}
+
+.modo-section {
+  margin: 16px 0;
+  display: flex;
+  gap: 16px;
+}
+
+.resultado-section {
+  margin-top: 12px;
+}
+
+.resultado-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  padding: 4px 0;
+}
+
+.items-section {
+  margin-top: 12px;
+}
+
+.item-assign {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.item-name {
+  font-size: 14px;
+}

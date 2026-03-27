@@ -72,6 +72,7 @@ import { PrecioDelivery } from './entities/ventas/precio-delivery.entity';
 import { Delivery } from './entities/ventas/delivery.entity';
 import { Venta } from './entities/ventas/venta.entity';
 import { VentaItem } from './entities/ventas/venta-item.entity';
+import { VentaItemObservacion } from './entities/ventas/venta-item-observacion.entity';
 import { PdvGrupoCategoria } from './entities/ventas/pdv-grupo-categoria.entity';
 import { PdvCategoria } from './entities/ventas/pdv-categoria.entity';
 import { PdvCategoriaItem } from './entities/ventas/pdv-categoria-item.entity';
@@ -81,6 +82,7 @@ import { PdvConfig } from './entities/ventas/pdv-config.entity';
 import { PdvMesa } from './entities/ventas/pdv-mesa.entity';
 import { Reserva } from './entities/ventas/reserva.entity';
 import { Comanda } from './entities/ventas/comanda.entity';
+import { ComandaItem } from './entities/ventas/comanda-item.entity';
 import { Sector } from './entities/ventas/sector.entity';
 
 /**
@@ -156,6 +158,7 @@ export function getDataSourceOptions(userDataPath: string): DataSourceOptions {
       Delivery,
       Venta,
       VentaItem,
+      VentaItemObservacion,
       // PDV entities
       PdvGrupoCategoria,
       PdvCategoria,
@@ -166,6 +169,7 @@ export function getDataSourceOptions(userDataPath: string): DataSourceOptions {
       PdvMesa,
       Reserva,
       Comanda,
+      ComandaItem,
       Sector
     ],
     synchronize: true, // Automatically creates tables in development

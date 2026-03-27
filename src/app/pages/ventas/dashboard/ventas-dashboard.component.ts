@@ -14,6 +14,8 @@ import { ChartConfiguration, ChartData } from 'chart.js';
 import { RepositoryService } from '../../../database/repository.service';
 import { TabsService } from '../../../services/tabs.service';
 import { PdvComponent } from '../pdv/pdv.component';
+import { ListPreciosDeliveryComponent } from '../precios-delivery/list-precios-delivery.component';
+import { ListVentasComponent } from '../historial/list-ventas.component';
 import { PdvConfigDialogComponent } from 'src/app/shared/components/pdv-config-dialog/pdv-config-dialog.component';
 import { PdvMesaDialogComponent } from 'src/app/shared/components/pdv-mesa-dialog/pdv-mesa-dialog.component';
 
@@ -82,6 +84,12 @@ export class VentasDashboardComponent implements OnInit {
       icon: 'tune',
       action: 'pdv-config',
       color: '#9c27b0'
+    },
+    {
+      title: 'Precios Delivery',
+      icon: 'local_shipping',
+      action: 'precios-delivery',
+      color: '#e91e63'
     },
     {
       title: 'Deliveries',
@@ -231,6 +239,12 @@ export class VentasDashboardComponent implements OnInit {
         this.dialog.open(PdvConfigDialogComponent, {
           width: '600px'
         });
+        break;
+      case 'precios-delivery':
+        this.tabsService.openTab('Precios de Delivery', ListPreciosDeliveryComponent);
+        break;
+      case 'ventas-list':
+        this.tabsService.openTab('Historial de Ventas', ListVentasComponent);
         break;
       default:
         break;

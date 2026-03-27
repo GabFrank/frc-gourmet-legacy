@@ -400,9 +400,9 @@ export function registerProductosHandlers(dataSource: DataSource, getCurrentUser
       }
 
       const producto = productoRepository.create({
-        nombre: productoData.nombre,
+        nombre: productoData.nombre?.toUpperCase(),
         tipo: productoData.tipo,
-        unidadBase: productoData.unidadBase,
+        unidadBase: productoData.unidadBase?.toUpperCase(),
         subfamilia: subfamilia,
         activo: productoData.activo !== undefined ? productoData.activo : true,
         // Campos de configuración booleanos
@@ -439,9 +439,9 @@ export function registerProductosHandlers(dataSource: DataSource, getCurrentUser
       }
 
       // Actualizar campos básicos
-      if (productoData.nombre !== undefined) producto.nombre = productoData.nombre;
+      if (productoData.nombre !== undefined) producto.nombre = productoData.nombre.toUpperCase();
       if (productoData.tipo !== undefined) producto.tipo = productoData.tipo;
-      if (productoData.unidadBase !== undefined) producto.unidadBase = productoData.unidadBase;
+      if (productoData.unidadBase !== undefined) producto.unidadBase = productoData.unidadBase?.toUpperCase();
       if (productoData.activo !== undefined) producto.activo = productoData.activo;
 
       // Actualizar campos de configuración booleanos
@@ -1354,6 +1354,93 @@ export function registerProductosHandlers(dataSource: DataSource, getCurrentUser
       } : null;
     } catch (error) {
       console.error('Error searching producto by codigo:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('search-productos-by-nombre', async (_event: any, nombre: string) => {
+    try {
+      const repo = dataSource.getRepository(Producto);
+      const pvRepo = dataSource.getRepository(PrecioVenta);
+
+      const productos = await repo.find({
+        where: { activo: true, esVendible: true },
+        relations: ['presentaciones', 'presentaciones.preciosVenta', 'presentaciones.preciosVenta.moneda', 'receta'],
+        order: { nombre: 'ASC' }
+      });
+
+      const filtered = productos.filter(p =>
+        p.nombre.toUpperCase().includes(nombre.toUpperCase())
+      );
+
+      const mapPrecio = (pv: any) => pv ? {
+        id: pv.id, valor: Number(pv.valor), principal: pv.principal, activo: pv.activo,
+        moneda: pv.moneda ? { id: pv.moneda.id, nombre: pv.moneda.nombre, simbolo: pv.moneda.simbolo } : null,
+      } : null;
+
+      const pickPrecio = (precios: any[]) =>
+        precios?.find((pv: any) => pv.activo && pv.principal)
+        || precios?.find((pv: any) => pv.activo)
+        || precios?.[0]
+        || null;
+
+      const mapPres = (pres: any) => pres ? {
+        id: pres.id, nombre: pres.nombre, cantidad: Number(pres.cantidad),
+        principal: pres.principal, activo: pres.activo,
+      } : null;
+
+      return await Promise.all(filtered.map(async p => {
+        let principalPresentacion: any = null;
+        let principalPrecio: any = null;
+
+        if (p.tipo === 'RETAIL' || p.tipo === 'RETAIL_INGREDIENTE') {
+          const pres = (p.presentaciones as any[])?.find((pr: any) => pr.principal)
+            || (p.presentaciones as any[])?.[0];
+          principalPresentacion = mapPres(pres);
+          principalPrecio = mapPrecio(pickPrecio(pres?.preciosVenta));
+        } else if (p.tipo === 'ELABORADO_SIN_VARIACION') {
+          const pres = (p.presentaciones as any[])?.[0];
+          principalPresentacion = mapPres(pres);
+          // Query receta prices separately to avoid joinColumns error
+          const recetaId = (p as any).receta?.id;
+          if (recetaId) {
+            const precios = await pvRepo.find({
+              where: { receta: { id: recetaId }, activo: true },
+              relations: ['moneda'],
+              order: { principal: 'DESC' }
+            });
+            principalPrecio = mapPrecio(precios?.[0] || null);
+          }
+        } else if (p.tipo === 'ELABORADO_CON_VARIACION') {
+          // Query prices linked to any receta of this product
+          const precios = await pvRepo
+            .createQueryBuilder('pv')
+            .leftJoinAndSelect('pv.moneda', 'moneda')
+            .innerJoin('pv.receta', 'receta')
+            .where('receta.productoVariacion = :prodId', { prodId: p.id })
+            .andWhere('pv.activo = :activo', { activo: true })
+            .orderBy('pv.principal', 'DESC')
+            .getMany();
+          principalPrecio = mapPrecio(precios?.[0] || null);
+        } else if (p.tipo === 'COMBO') {
+          const precios = await pvRepo.find({
+            where: { producto: { id: p.id }, activo: true },
+            relations: ['moneda'],
+            order: { principal: 'DESC' }
+          });
+          principalPrecio = mapPrecio(precios?.[0] || null);
+        }
+
+        return {
+          id: p.id, nombre: p.nombre, tipo: p.tipo, activo: p.activo, esVendible: p.esVendible, unidadBase: p.unidadBase,
+          receta: (p as any).receta ? { id: (p as any).receta.id, costoCalculado: (p as any).receta.costoCalculado } : null,
+          recetas: (p as any).recetas?.map((r: any) => ({ id: r.id, costoCalculado: r.costoCalculado })) || [],
+          principalPresentacion,
+          principalPrecio,
+        };
+      }));
+    } catch (error) {
+      console.error('Error searching productos by nombre:', error);
       throw error;
     }
   });

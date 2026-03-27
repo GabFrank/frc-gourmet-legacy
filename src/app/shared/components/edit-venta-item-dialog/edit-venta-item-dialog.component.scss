@@ -1,0 +1,118 @@
+.item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.item-name {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.item-precio {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.edit-form {
+  display: flex;
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.descuento-section {
+  margin: 12px 0;
+
+  h3 {
+    font-size: 13px;
+    opacity: 0.7;
+    margin: 0 0 8px;
+  }
+
+  mat-radio-group {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+
+  .descuento-inputs {
+    mat-form-field {
+      width: 100%;
+    }
+  }
+}
+
+.porcentaje-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+
+  button {
+    min-width: 50px;
+
+    &.selected {
+      background-color: var(--mdc-chip-elevated-selected-container-color, #4caf50);
+      color: white;
+    }
+  }
+}
+
+.total-section {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  margin-top: 12px;
+}
+
+.total-final {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.subtotal-value {
+  opacity: 0.7;
+}
+
+.total-value {
+  color: #4caf50;
+}
+
+.redondeo-section {
+  margin: 12px 0;
+
+  h3 {
+    font-size: 13px;
+    opacity: 0.7;
+    margin: 0 0 8px;
+  }
+}
+
+.redondeo-chips {
+  display: flex;
+  gap: 8px;
+
+  button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+
+    &.selected {
+      background-color: var(--mdc-chip-elevated-selected-container-color, #4caf50);
+      color: white;
+    }
+  }
+}
+
+.observaciones-section {
+  margin-top: 12px;
+
+  h3 {
+    font-size: 13px;
+    opacity: 0.7;
+    margin: 12px 0 8px;
+  }
+}

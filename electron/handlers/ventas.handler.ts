@@ -4,6 +4,7 @@ import { PrecioDelivery } from '../../src/app/database/entities/ventas/precio-de
 import { Delivery, DeliveryEstado } from '../../src/app/database/entities/ventas/delivery.entity';
 import { Venta, VentaEstado } from '../../src/app/database/entities/ventas/venta.entity';
 import { VentaItem } from '../../src/app/database/entities/ventas/venta-item.entity';
+import { VentaItemObservacion } from '../../src/app/database/entities/ventas/venta-item-observacion.entity';
 import { PdvGrupoCategoria } from '../../src/app/database/entities/ventas/pdv-grupo-categoria.entity';
 import { PdvCategoria } from '../../src/app/database/entities/ventas/pdv-categoria.entity';
 import { PdvCategoriaItem } from '../../src/app/database/entities/ventas/pdv-categoria-item.entity';
@@ -15,7 +16,8 @@ import { Not, IsNull } from 'typeorm';
 import { DeepPartial } from 'typeorm';
 import { Reserva } from '../../src/app/database/entities/ventas/reserva.entity';
 import { PdvMesa, PdvMesaEstado } from '../../src/app/database/entities/ventas/pdv-mesa.entity';
-import { Comanda } from '../../src/app/database/entities/ventas/comanda.entity';
+import { Comanda, ComandaEstado } from '../../src/app/database/entities/ventas/comanda.entity';
+import { ComandaItem } from '../../src/app/database/entities/ventas/comanda-item.entity';
 import { Sector } from '../../src/app/database/entities/ventas/sector.entity';
 
 export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: () => Usuario | null) {
@@ -256,6 +258,50 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
     }
   });
 
+  ipcMain.handle('getVentasByDateRange', async (_event: any, desde: string, hasta: string, filtros?: any) => {
+    try {
+      const repo = dataSource.getRepository(Venta);
+      const qb = repo.createQueryBuilder('venta')
+        .leftJoinAndSelect('venta.caja', 'caja')
+        .leftJoinAndSelect('venta.formaPago', 'formaPago')
+        .leftJoinAndSelect('venta.pago', 'pago')
+        .leftJoinAndSelect('venta.mesa', 'mesa')
+        .leftJoinAndSelect('venta.cliente', 'cliente')
+        .leftJoinAndSelect('cliente.persona', 'persona')
+        .leftJoinAndSelect('venta.createdBy', 'createdBy')
+        .leftJoinAndSelect('createdBy.persona', 'createdByPersona')
+        .where('venta.createdAt >= :desde', { desde })
+        .andWhere('venta.createdAt <= :hasta', { hasta });
+
+      if (filtros?.estado) {
+        qb.andWhere('venta.estado = :estado', { estado: filtros.estado });
+      }
+      if (filtros?.cajaId) {
+        qb.andWhere('caja.id = :cajaId', { cajaId: filtros.cajaId });
+      }
+
+      qb.orderBy('venta.createdAt', 'DESC');
+      return await qb.getMany();
+    } catch (error) {
+      console.error('Error getting ventas by date range:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('getVentasByCaja', async (_event: any, cajaId: number) => {
+    try {
+      const repo = dataSource.getRepository(Venta);
+      return await repo.find({
+        where: { caja: { id: cajaId } },
+        relations: ['caja', 'formaPago', 'pago', 'items'],
+        order: { createdAt: 'DESC' }
+      });
+    } catch (error) {
+      console.error(`Error getting ventas for caja ${cajaId}:`, error);
+      throw error;
+    }
+  });
+
   ipcMain.handle('updateVenta', async (_event: any, id: number, data: any) => {
     try {
       const repo = dataSource.getRepository(Venta);
@@ -378,6 +424,44 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
       return true;
     } catch (error) {
       console.error(`Error deleting venta item ID ${id}:`, error);
+      return false;
+    }
+  });
+
+  // --- VentaItemObservacion Handlers ---
+  ipcMain.handle('getObservacionesByVentaItem', async (_event: any, ventaItemId: number) => {
+    try {
+      const repo = dataSource.getRepository(VentaItemObservacion);
+      return await repo.find({
+        where: { ventaItem: { id: ventaItemId } },
+        relations: ['observacion'],
+      });
+    } catch (error) {
+      console.error(`Error getting observaciones for venta item ${ventaItemId}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('createVentaItemObservacion', async (_event: any, data: any) => {
+    try {
+      const repo = dataSource.getRepository(VentaItemObservacion);
+      const entity = repo.create(data);
+      return await repo.save(entity);
+    } catch (error) {
+      console.error('Error creating venta item observacion:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('deleteVentaItemObservacion', async (_event: any, id: number) => {
+    try {
+      const repo = dataSource.getRepository(VentaItemObservacion);
+      const entity = await repo.findOneBy({ id });
+      if (!entity) throw new Error(`VentaItemObservacion ID ${id} not found`);
+      await repo.remove(entity);
+      return true;
+    } catch (error) {
+      console.error(`Error deleting venta item observacion ${id}:`, error);
       return false;
     }
   });
@@ -567,7 +651,7 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
       const repo = dataSource.getRepository(PdvCategoriaItem);
       return await repo.find({
         where: { categoria: { id: categoriaId } },
-        relations: ['categoria', 'productos', 'productos.producto'],
+        relations: ['categoria', 'productos', 'productos.producto', 'productos.producto.presentaciones', 'productos.producto.presentaciones.preciosVenta'],
         order: { nombre: 'ASC' }
       });
     } catch (error) {
@@ -880,13 +964,19 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
   });
 
   // --- PdvMesa Handlers ---
+  // Helper: query mesas with only the ABIERTA venta joined
+  const queryMesasWithVentaAbierta = (repo: any) => {
+    return repo.createQueryBuilder('mesa')
+      .leftJoinAndSelect('mesa.reserva', 'reserva')
+      .leftJoinAndSelect('mesa.sector', 'sector')
+      .leftJoinAndMapOne('mesa.venta', Venta, 'venta', 'venta.mesa_id = mesa.id AND venta.estado = :ventaEstado', { ventaEstado: VentaEstado.ABIERTA })
+      .orderBy('mesa.numero', 'ASC');
+  };
+
   ipcMain.handle('getPdvMesas', async () => {
     try {
       const repo = dataSource.getRepository(PdvMesa);
-      return await repo.find({
-        relations: ['reserva', 'sector', 'venta'],
-        order: { numero: 'ASC' }
-      });
+      return await queryMesasWithVentaAbierta(repo).getMany();
     } catch (error) {
       console.error('Error getting PDV Mesas:', error);
       throw error;
@@ -896,11 +986,9 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
   ipcMain.handle('getPdvMesasActivas', async () => {
     try {
       const repo = dataSource.getRepository(PdvMesa);
-      return await repo.find({
-        where: { activo: true },
-        relations: ['reserva', 'sector', 'venta'],
-        order: { numero: 'ASC' }
-      });
+      return await queryMesasWithVentaAbierta(repo)
+        .where('mesa.activo = :activo', { activo: true })
+        .getMany();
     } catch (error) {
       console.error('Error getting PDV Mesas activas:', error);
       throw error;
@@ -910,11 +998,11 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
   ipcMain.handle('getPdvMesasDisponibles', async () => {
     try {
       const repo = dataSource.getRepository(PdvMesa);
-      return await repo.find({
-        where: { activo: true, reservado: false, estado: PdvMesaEstado.DISPONIBLE },
-        relations: ['reserva', 'sector', 'venta'],
-        order: { numero: 'ASC' }
-      });
+      return await queryMesasWithVentaAbierta(repo)
+        .where('mesa.activo = :activo AND mesa.reservado = :reservado AND mesa.estado = :estado', {
+          activo: true, reservado: false, estado: PdvMesaEstado.DISPONIBLE
+        })
+        .getMany();
     } catch (error) {
       console.error('Error getting PDV Mesas disponibles:', error);
       throw error;
@@ -924,11 +1012,9 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
   ipcMain.handle('getPdvMesasBySector', async (_event: any, sectorId: number) => {
     try {
       const repo = dataSource.getRepository(PdvMesa);
-      return await repo.find({
-        where: { sector: { id: sectorId } },
-        relations: ['reserva', 'sector', 'venta'],
-        order: { numero: 'ASC' }
-      });
+      return await queryMesasWithVentaAbierta(repo)
+        .where('mesa.sector_id = :sectorId', { sectorId })
+        .getMany();
     } catch (error) {
       console.error(`Error getting PDV Mesas for Sector ID ${sectorId}:`, error);
       throw error;
@@ -956,6 +1042,23 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
       return await repo.save(entity);
     } catch (error) {
       console.error('Error creating PDV Mesa:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('createBatchPdvMesas', async (_event: any, batchData: any[]) => {
+    try {
+      const repo = dataSource.getRepository(PdvMesa);
+      const savedEntities: any[] = [];
+      for (const data of batchData) {
+        const entity = repo.create(data as any);
+        await setEntityUserTracking(dataSource, entity as any, getCurrentUser()?.id, false);
+        const saved = await repo.save(entity as any);
+        savedEntities.push(saved);
+      }
+      return savedEntities;
+    } catch (error) {
+      console.error('Error creating batch PDV Mesas:', error);
       throw error;
     }
   });
@@ -1016,7 +1119,7 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
       const repo = dataSource.getRepository(Comanda);
       return await repo.find({
         where: { activo: true },
-        relations: ['pdv_mesa'],
+        relations: ['pdv_mesa', 'venta', 'items', 'items.ventaItem', 'items.ventaItem.producto'],
         order: { createdAt: 'DESC' }
       });
     } catch (error) {
@@ -1086,6 +1189,79 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
       return await repo.remove(entity);
     } catch (error) {
       console.error(`Error deleting Comanda ID ${id}:`, error);
+      throw error;
+    }
+  });
+
+  // --- ComandaItem Handlers ---
+  ipcMain.handle('getComandasPendientes', async () => {
+    try {
+      const repo = dataSource.getRepository(Comanda);
+      return await repo.find({
+        where: [
+          { estado: ComandaEstado.PENDIENTE },
+          { estado: ComandaEstado.EN_PREPARACION },
+        ],
+        relations: ['pdv_mesa', 'venta', 'items', 'items.ventaItem', 'items.ventaItem.producto'],
+        order: { createdAt: 'ASC' }
+      });
+    } catch (error) {
+      console.error('Error getting comandas pendientes:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('getComandaByVenta', async (_event: any, ventaId: number) => {
+    try {
+      const repo = dataSource.getRepository(Comanda);
+      return await repo.findOne({
+        where: { venta: { id: ventaId }, activo: true },
+        relations: ['items', 'items.ventaItem'],
+        order: { createdAt: 'DESC' }
+      });
+    } catch (error) {
+      console.error(`Error getting comanda for venta ${ventaId}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('createComandaWithItems', async (_event: any, data: { comanda: any, items: any[] }) => {
+    try {
+      const comandaRepo = dataSource.getRepository(Comanda);
+      const itemRepo = dataSource.getRepository(ComandaItem);
+
+      // Generar número secuencial
+      const lastComanda = await comandaRepo.findOne({ order: { numero: 'DESC' } });
+      const numero = (lastComanda?.numero || 0) + 1;
+
+      const comanda = comandaRepo.create({ ...data.comanda, numero, codigo: `CMD-${numero}` });
+      await setEntityUserTracking(dataSource, comanda, getCurrentUser()?.id, false);
+      const savedComanda = await comandaRepo.save(comanda);
+
+      for (const itemData of data.items) {
+        const item = itemRepo.create({ ...itemData, comanda: savedComanda });
+        await itemRepo.save(item);
+      }
+
+      return savedComanda;
+    } catch (error) {
+      console.error('Error creating comanda with items:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('updateComandaItemEstado', async (_event: any, id: number, estado: string) => {
+    try {
+      const repo = dataSource.getRepository(ComandaItem);
+      const entity = await repo.findOneBy({ id });
+      if (!entity) throw new Error(`ComandaItem ID ${id} not found`);
+      entity.estado = estado as any;
+      if (estado === 'LISTO') {
+        entity.fechaListo = new Date();
+      }
+      return await repo.save(entity);
+    } catch (error) {
+      console.error(`Error updating comanda item ${id}:`, error);
       throw error;
     }
   });
