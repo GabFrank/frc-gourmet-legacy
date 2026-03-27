@@ -184,6 +184,24 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
     }
   });
 
+  // --- Cerrar todas las ventas abiertas de una mesa ---
+  ipcMain.handle('cerrarVentasAbiertasMesa', async (_event: any, mesaId: number, estado: string) => {
+    try {
+      const repo = dataSource.getRepository(Venta);
+      const ventasAbiertas = await repo.find({
+        where: { mesa: { id: mesaId }, estado: VentaEstado.ABIERTA },
+      });
+      for (const v of ventasAbiertas) {
+        v.estado = estado as VentaEstado;
+        await repo.save(v);
+      }
+      return ventasAbiertas.length;
+    } catch (error) {
+      console.error(`Error cerrando ventas abiertas de mesa ${mesaId}:`, error);
+      throw error;
+    }
+  });
+
   // --- Venta Handlers ---
   ipcMain.handle('getVentas', async () => {
     try {

@@ -961,13 +961,16 @@ export class PdvComponent implements OnInit, OnDestroy {
       data: dialogData,
     });
 
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe(async result => {
       if (result?.success) {
-        // Liberar mesa
+        // Liberar mesa y limpiar estado completamente
         if (this.selectedMesa) {
+          // Cerrar cualquier venta huérfana abierta en esta mesa
+          await firstValueFrom(this.repositoryService.cerrarVentasAbiertasMesa(this.selectedMesa.id!, VentaEstado.CONCLUIDA));
           this.updateMesaEstado(this.selectedMesa, PdvMesaEstado.DISPONIBLE);
           this.selectedMesa.venta = null as any;
           this.selectedMesa = null;
+          this.clienteNameForm.get('nombre')?.setValue('');
         }
         // Limpiar venta rápida
         if (this.ventaRapidaActual) {
@@ -1004,16 +1007,19 @@ export class PdvComponent implements OnInit, OnDestroy {
             }));
           }
 
-          // Actualizar venta
+          // Cancelar esta venta y cualquier otra abierta de la misma mesa
           await firstValueFrom(this.repositoryService.updateVenta(venta.id, {
             estado: VentaEstado.CANCELADA,
           }));
 
-          // Liberar mesa
+          // Liberar mesa y limpiar estado completamente
           if (this.selectedMesa) {
-            this.updateMesaEstado(this.selectedMesa, PdvMesaEstado.DISPONIBLE);
+            // Cerrar cualquier venta huérfana abierta en esta mesa
+            await firstValueFrom(this.repositoryService.cerrarVentasAbiertasMesa(this.selectedMesa.id!, VentaEstado.CANCELADA));
+            await this.updateMesaEstado(this.selectedMesa, PdvMesaEstado.DISPONIBLE);
             this.selectedMesa.venta = null as any;
             this.selectedMesa = null;
+            this.clienteNameForm.get('nombre')?.setValue('');
           }
 
           // Limpiar venta rápida
@@ -1090,9 +1096,12 @@ export class PdvComponent implements OnInit, OnDestroy {
       }));
 
       if (this.selectedMesa) {
+        // Cerrar cualquier venta huérfana abierta en esta mesa
+        await firstValueFrom(this.repositoryService.cerrarVentasAbiertasMesa(this.selectedMesa.id!, VentaEstado.CONCLUIDA));
         await firstValueFrom(this.repositoryService.updatePdvMesa(this.selectedMesa.id!, { estado: PdvMesaEstado.DISPONIBLE } as any));
         this.selectedMesa.venta = null as any;
         this.selectedMesa = null;
+        this.clienteNameForm.get('nombre')?.setValue('');
       }
       if (this.ventaRapidaActual) {
         this.ventaRapidaActual = null;
@@ -1627,7 +1636,9 @@ export class PdvComponent implements OnInit, OnDestroy {
   async saveClienteName(): Promise<void> {
     if (!this.selectedMesa) return;
 
-    const nombreCliente = this.clienteNameForm.get('nombre')?.value;
+    const raw = this.clienteNameForm.get('nombre')?.value || '';
+    const nombreCliente = raw.replace(/\b\w/g, (c: string) => c.toUpperCase());
+    this.clienteNameForm.get('nombre')?.setValue(nombreCliente, { emitEvent: false });
 
     try {
       let venta = this.selectedMesa.venta;

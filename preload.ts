@@ -1410,6 +1410,11 @@ contextBridge.exposeInMainWorld('api', {
     return await ipcRenderer.invoke('deleteDelivery', deliveryId);
   },
 
+  // Cerrar ventas abiertas de una mesa
+  cerrarVentasAbiertasMesa: async (mesaId: number, estado: string): Promise<number> => {
+    return await ipcRenderer.invoke('cerrarVentasAbiertasMesa', mesaId, estado);
+  },
+
   // Venta methods
   getVentas: async (): Promise<Venta[]> => {
     return await ipcRenderer.invoke('getVentas');

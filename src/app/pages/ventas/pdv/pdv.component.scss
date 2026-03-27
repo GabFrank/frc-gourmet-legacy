@@ -73,6 +73,13 @@
   padding: 15px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.mesas-card {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 /* Total and Saldo sections styling */
@@ -457,11 +464,10 @@ tr.example-element-row:not(.example-expanded-row):active {
 
 /* Tables grid */
 .tables-grid {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  // grid-template-columns: repeat(6, 1fr);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 60px);
   gap: 10px;
+  justify-content: start;
   margin-bottom: 20px;
   flex: 1;
   overflow-y: auto;

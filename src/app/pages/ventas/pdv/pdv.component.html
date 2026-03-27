@@ -557,8 +557,8 @@
       </form>
     </div>
 
-    <!-- Bottom buttons -->
-    <div class="action-buttons">
+    <!-- Bottom buttons: modo normal -->
+    <div class="action-buttons" *ngIf="!moverItemsMode">
       <button
         mat-raised-button
         color="primary"
@@ -593,6 +593,28 @@
         matTooltip="Cancelar (F4)"
       >
         <mat-icon>cancel</mat-icon>
+        <span>CANCELAR</span>
+      </button>
+    </div>
+    <!-- Bottom buttons: modo mover items -->
+    <div class="action-buttons" *ngIf="moverItemsMode">
+      <button
+        mat-raised-button
+        color="warn"
+        class="action-button"
+        [disabled]="selectedItemIds.size === 0"
+        (click)="moverItems()"
+      >
+        <mat-icon>check</mat-icon>
+        <span>CONFIRMAR MOVER ({{ selectedItemIds.size }})</span>
+      </button>
+      <button
+        mat-raised-button
+        color="primary"
+        class="action-button"
+        (click)="cancelarMoverItems()"
+      >
+        <mat-icon>close</mat-icon>
         <span>CANCELAR</span>
       </button>
     </div>
@@ -658,7 +680,7 @@
       </mat-card-content>
     </mat-card>
     <!-- Categories -->
-    <mat-card class="categories-card" style="flex: 4" data-testid="pdv-categorias-panel">
+    <mat-card class="categories-card" style="flex: 1" data-testid="pdv-categorias-panel">
       <mat-card-content>
         <!-- Breadcrumb -->
         <div class="categories-breadcrumb" data-testid="pdv-categorias-breadcrumb" *ngIf="navigationLevel !== 'grupos'">
@@ -742,7 +764,7 @@
     </mat-card>
 
     <!-- Table number buttons -->
-    <mat-card class="tables-card" style="flex: 5">
+    <mat-card class="tables-card mesas-card">
       <mat-card-content
         style="display: flex; flex-direction: column; gap: 10px"
       >
@@ -808,7 +830,7 @@
     </mat-card>
 
     <!-- Bottom action buttons -->
-    <div class="bottom-buttons">
+    <div class="bottom-buttons" *ngIf="!moverItemsMode">
       <button
         mat-raised-button
         color="primary"
@@ -822,24 +844,14 @@
       </button>
       <button
         mat-raised-button
-        [color]="moverItemsMode ? 'warn' : 'primary'"
+        color="primary"
         class="bottom-button"
         [disabled]="!hasActiveVenta || !hasActiveItems"
         (click)="moverItems()"
         data-testid="pdv-btn-mover"
       >
-        <mat-icon>{{ moverItemsMode ? 'check' : 'drive_file_move' }}</mat-icon>
-        <span>{{ moverItemsMode ? 'CONFIRMAR (' + selectedItemIds.size + ')' : 'MOVER ITEMS' }}</span>
-      </button>
-      <button
-        mat-raised-button
-        color="primary"
-        class="bottom-button"
-        *ngIf="moverItemsMode"
-        (click)="cancelarMoverItems()"
-      >
-        <mat-icon>close</mat-icon>
-        <span>CANCELAR</span>
+        <mat-icon>drive_file_move</mat-icon>
+        <span>MOVER ITEMS</span>
       </button>
       <button
         mat-raised-button

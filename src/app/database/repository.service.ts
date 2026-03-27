@@ -243,6 +243,7 @@ interface ElectronAPI {
   createDelivery: (deliveryData: Partial<Delivery>) => Promise<Delivery>;
   updateDelivery: (deliveryId: number, deliveryData: Partial<Delivery>) => Promise<any>;
   deleteDelivery: (deliveryId: number) => Promise<any>;
+  cerrarVentasAbiertasMesa: (mesaId: number, estado: string) => Promise<number>;
   // Venta operations
   getVentas: () => Promise<Venta[]>;
   getVentasByDateRange: (desde: string, hasta: string, filtros?: any) => Promise<Venta[]>;
@@ -1273,6 +1274,10 @@ export class RepositoryService {
 
   deleteDelivery(deliveryId: number): Observable<any> {
     return from(this.api.deleteDelivery(deliveryId));
+  }
+
+  cerrarVentasAbiertasMesa(mesaId: number, estado: string): Observable<number> {
+    return from(this.api.cerrarVentasAbiertasMesa(mesaId, estado));
   }
 
   // Venta methods

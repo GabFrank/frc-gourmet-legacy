@@ -36,6 +36,7 @@ Marcar `[x]` cuando el test pase, `[!]` si falla (registrar en `ERRORES-PDV.md`)
 - [x] Mesas ocupadas se ven en color diferente
 - [x] Mesas reservadas muestran icono de reserva
 - [x] Tooltip muestra estado al hacer hover
+- [x] Auto-refresh cada 1 segundo actualiza estado de mesas
 
 ### 2.2 Filtro por sectores
 - [x] Botón "TODOS" visible y seleccionado por defecto
@@ -73,6 +74,9 @@ Marcar `[x]` cuando el test pase, `[!]` si falla (registrar en `ERRORES-PDV.md`)
 - [x] Presentación/cantidad se muestra correctamente (no "0 / 1")
 - [x] Precio y total se calculan correctamente
 - [x] Menú de acciones (3 puntos) disponible por cada item
+- [x] Items con descuento muestran icono de flecha + precio con descuento
+- [x] Items cancelados se muestran tachados y con opacidad reducida
+- [x] Items con observaciones muestran icono de comentario
 
 ### 3.4 Totales
 - [x] Total se actualiza al agregar items
@@ -126,146 +130,159 @@ Marcar `[x]` cuando el test pase, `[!]` si falla (registrar en `ERRORES-PDV.md`)
 ## 6. Cobrar Venta
 
 ### 6.1 Validaciones
-- [ ] Botón "COBRAR" deshabilitado sin venta activa (gris)
-- [ ] Botón "COBRAR" deshabilitado con venta sin items activos (gris)
-- [ ] Tooltip muestra "Cobrar (F1)"
+- [x] Botón "COBRAR" deshabilitado sin venta activa (gris)
+- [x] Botón "COBRAR" deshabilitado con venta sin items activos (gris)
+- [x] Tooltip muestra "Cobrar (F1)"
 
 ### 6.2 Diálogo de cobro — Layout
-- [ ] Click en COBRAR → abre diálogo "COBRAR VENTA" (80vw x 80vh)
-- [ ] Barra superior muestra totales por moneda con banderas
-- [ ] Info de items, subtotal y descuentos visible
-- [ ] Panel izquierdo: tabla de líneas de pago (vacía al inicio)
-- [ ] Panel derecho: botones de monedas y formas de pago
-- [ ] Moneda principal pre-seleccionada (botón resaltado)
-- [ ] Forma de pago principal pre-seleccionada (botón resaltado)
+- [x] Click en COBRAR → abre diálogo "COBRAR VENTA" (80vw x 80vh)
+- [x] Barra superior muestra totales por moneda con banderas y cotizaciones
+- [x] Info de items, subtotal y descuentos visible en header
+- [x] Panel izquierdo (55%): tabla de líneas de pago (vacía al inicio)
+- [x] Panel derecho (45%): botones de monedas y formas de pago
+- [x] Moneda principal pre-seleccionada (botón resaltado)
+- [x] Forma de pago principal pre-seleccionada (botón resaltado)
+- [x] Formulario: select moneda + select forma pago + input valor + indicador PAGO/VUELTO
 
 ### 6.3 Selección de moneda y forma de pago
-- [ ] Click en botón de moneda → se resalta, valor se auto-llena con saldo
-- [ ] Click en botón de forma de pago → se resalta
-- [ ] Chips debajo muestran selección actual (ej: "EFECTIVO" "GS")
-- [ ] Atajos F1/F2/F3 seleccionan moneda por orden
-- [ ] Atajos F4/F5/F6 seleccionan forma de pago por orden
+- [x] Click en botón de moneda → se resalta, valor se auto-llena con saldo
+- [x] Click en botón de forma de pago → se resalta
+- [x] Selects en formulario sincronizan con botones
+- [x] Atajos F1/F2/F3 seleccionan moneda por orden
+- [x] Atajos F4/F5/F6/F7 seleccionan forma de pago por orden
 
 ### 6.4 Agregar líneas de pago (multi-pago)
-- [ ] Ingresar valor y click ✓ (o Enter) → línea aparece en tabla
-- [ ] Tabla muestra: #, Moneda, Forma Pago, Valor, Tipo
-- [ ] Saldo se actualiza por moneda (barra inferior)
-- [ ] Agregar segunda línea con otra moneda → saldo se ajusta
-- [ ] Botón eliminar en cada línea → elimina y recalcula saldo
-- [ ] Saldo en verde cuando = 0, en naranja cuando pendiente
+- [x] Ingresar valor y click ✓ (o Enter) → línea aparece en tabla
+- [x] Tabla muestra: #, Moneda, Forma Pago, Valor (formateado por decimales de moneda), Tipo
+- [x] Saldo se actualiza por moneda (barra inferior)
+- [x] Agregar segunda línea con otra moneda → saldo se ajusta
+- [x] Mat-menu por línea: Observación, Duplicar, Editar valor, Eliminar
+- [x] Saldo en verde cuando = 0, en naranja cuando pendiente
+- [x] Indicador PAGO/VUELTO al lado del input cambia según saldo
+- [x] Observación por línea (nombre de quien paga)
+- [x] Líneas se persisten inmediatamente en DB
 
-### 6.5 Finalizar cobro
-- [ ] Botón "Finalizar (F10)" habilitado cuando saldo = 0
-- [ ] Click Finalizar → venta pasa a CONCLUIDA
-- [ ] Mesa pasa a estado DISPONIBLE
-- [ ] UI se limpia: mesa deseleccionada, items vacíos, totales en 0
-- [ ] Mesa cambia de color en el panel (vuelve a verde)
-- [ ] Atajo F10 ejecuta finalizar
+### 6.5 Vuelto
+- [x] Si pago > total → indicador cambia a VUELTO y pre-carga el monto
+- [x] Usuario puede cambiar moneda/forma del vuelto antes de confirmar
+- [x] Línea VUELTO aparece en azul en la tabla
+- [x] Saldo neto correcto: deuda - pagos + vueltos
 
-### 6.6 Cobro parcial
-- [ ] Botón "Cobro Parcial" habilitado cuando hay líneas pero saldo > 0
-- [ ] Click → pago se registra, venta queda ABIERTA
+### 6.6 Finalizar cobro
+- [x] Botón "Finalizar (F10)" habilitado cuando saldo = 0 y vuelto resuelto
+- [x] Click Finalizar → venta pasa a CONCLUIDA, pago pasa a PAGADO
+- [x] Mesa pasa a estado DISPONIBLE
+- [x] UI se limpia: mesa deseleccionada, items vacíos, totales en 0
+- [x] Atajo F10 ejecuta finalizar
 
-### 6.7 Descuento en cobro
-- [ ] Botón "Descuento (F9)" agrega línea tipo DESCUENTO
-- [ ] Línea DESCUENTO se muestra en rojo en tabla
-- [ ] Saldo se reduce al aplicar descuento
-- [ ] Atajo F9 ejecuta descuento
+### 6.7 Cobro parcial
+- [x] Botón "Cobro Parcial" habilitado cuando hay líneas pero saldo > 0
+- [x] Click → cierra diálogo, líneas quedan guardadas
+- [x] Al reabrir cobro → líneas existentes se cargan
+
+### 6.8 Descuento/Aumento en cobro
+- [x] Botón cambia entre "Descuento (F9)" y "Aumento (F9)" según saldo
+- [x] Abre diálogo dedicado con %, monto fijo, redondeo
+- [x] Descuento y aumento se registran en moneda principal
+- [x] Alerta si descuento cae por debajo del costo
+- [x] Pre-carga tipo y valor según saldo actual
+
+### 6.9 División de cuenta
+- [x] Sección "División de cuenta" visible en panel derecho
+- [x] Campo personas (1-20)
+- [x] Muestra valor por persona en moneda principal
+- [x] Auto-llena input con valor por persona
+
+### 6.10 Ver costo
+- [x] Botón "Ver Costo" en header
+- [x] Pide credenciales (usuario + contraseña)
+- [x] Al validar muestra: Costo total | Margen
+- [x] Click nuevamente para ocultar
+
+### 6.11 Cobro rápido
+- [x] Botón "COBRO RÁPIDO (F2)" en panel izquierdo
+- [x] Cobra total en moneda principal + forma principal con un click
+- [x] Venta pasa a CONCLUIDA, mesa se libera
 
 ---
 
 ## 7. Cancelar Venta
 
 ### 7.1 Validaciones
-- [ ] Botón "CANCELAR" deshabilitado sin venta activa
-- [ ] Tooltip muestra "Cancelar (F4)"
+- [x] Botón "CANCELAR" deshabilitado sin venta activa
+- [x] Tooltip muestra "Cancelar (F4)"
 
 ### 7.2 Diálogo de cancelación
-- [ ] Click en CANCELAR → abre diálogo con warning
-- [ ] Mensaje explica que la acción no se puede deshacer
-- [ ] Campo de motivo obligatorio (textarea)
-- [ ] Botón "CANCELAR VENTA" deshabilitado sin motivo
-- [ ] Escribir motivo → botón se habilita
+- [x] Click en CANCELAR → abre diálogo con warning
+- [x] Mensaje explica que la acción no se puede deshacer
+- [x] Campo de motivo obligatorio (textarea)
+- [x] Botón "CANCELAR VENTA" deshabilitado sin motivo
+- [x] Escribir motivo → botón se habilita
 
 ### 7.3 Confirmar cancelación
-- [ ] Click "CANCELAR VENTA" → venta pasa a CANCELADA
-- [ ] Todos los items activos pasan a CANCELADO
-- [ ] Mesa pasa a DISPONIBLE
-- [ ] UI se limpia completamente
-- [ ] Botón "VOLVER" cierra el diálogo sin cancelar la venta
+- [x] Click "CANCELAR VENTA" → venta pasa a CANCELADA
+- [x] Todos los items activos pasan a CANCELADO
+- [x] Mesa pasa a DISPONIBLE
+- [x] UI se limpia completamente
+- [x] Botón "VOLVER" cierra el diálogo sin cancelar la venta
 
 ---
 
-## 8. Descuento Global
+## 8. Transferir Mesa
 
-### 8.1 Diálogo de descuento
-- [ ] Click en "DESCUENTO" → abre diálogo
-- [ ] Muestra subtotal actual
-- [ ] Dos modos: PORCENTAJE y MONTO FIJO
-- [ ] Campo motivo obligatorio
-
-### 8.2 Descuento por porcentaje
-- [ ] Seleccionar "PORCENTAJE" → campo de %
-- [ ] Ingresar 10% → muestra monto de descuento y total con descuento
-- [ ] Cálculo correcto: descuento = subtotal * 10%
-
-### 8.3 Descuento por monto fijo
-- [ ] Seleccionar "MONTO FIJO" → campo de monto
-- [ ] Ingresar monto → muestra total con descuento
-- [ ] Cálculo correcto: total = subtotal - monto
-
-### 8.4 Aplicar y quitar
-- [ ] Botón "APLICAR" deshabilitado sin motivo o con descuento 0
-- [ ] Click APLICAR → descuento se guarda en la venta
-- [ ] Reabrir diálogo → muestra descuento existente
-- [ ] Botón "QUITAR DESCUENTO" visible cuando hay descuento
-- [ ] Click QUITAR → descuento se elimina
+- [x] Botón "TRANSFERIR" deshabilitado sin venta activa
+- [x] Click TRANSFERIR → abre diálogo con TODAS las mesas (no solo disponibles)
+- [x] Mesa actual NO aparece en la lista
+- [x] Seleccionar mesa destino → se resalta
+- [x] Transferir a mesa libre → venta se mueve completa (items, pago, cliente)
+- [x] Transferir a mesa ocupada → items se fusionan, pago y nombre se transfieren
+- [x] Mesa origen vuelve a DISPONIBLE
+- [x] Mesa destino pasa/permanece OCUPADO
 
 ---
 
-## 9. Venta Rápida
+## 9. Mover Items
 
-### 9.1 Crear venta rápida
-- [ ] Click "V. RÁPIDA" → indicador visual "VENTA RÁPIDA" aparece
-- [ ] Muestra ID de la venta
-- [ ] No se necesita seleccionar mesa
-- [ ] Card de mesa normal NO se muestra
-
-### 9.2 Operaciones en venta rápida
-- [ ] Se pueden agregar productos normalmente
-- [ ] Botón "V. RÁPIDA" se deshabilita (ya hay una activa)
-- [ ] Botones COBRAR, DESCUENTO, CANCELAR se habilitan
-- [ ] Se puede cobrar normalmente
-- [ ] Se puede cancelar normalmente
-- [ ] Al cobrar/cancelar → indicador desaparece, UI se limpia
+- [x] Botón "MOVER ITEMS" deshabilitado sin venta activa
+- [x] Click → entra en modo selección (checkboxes aparecen en tabla)
+- [x] Checkbox en header selecciona/deselecciona todos
+- [x] Seleccionar items individuales con checkbox
+- [x] Botón cambia a "CONFIRMAR MOVER (N)" con cantidad seleccionada
+- [x] Botón CANCELAR aparece, demás botones se ocultan
+- [x] Si todos seleccionados → pregunta "¿Transferir mesa completa?"
+  - [x] "Transferir mesa" → ejecuta transferencia completa (única opción disponible)
+- [x] Si parcial → abre selector de mesa y mueve items seleccionados
+- [x] Mesa destino ocupada → items se agregan a venta existente
+- [x] Mesa destino libre → se crea nueva venta
+- [x] Si mesa origen queda sin items → se desocupa
 
 ---
 
-## 10. Transferir Mesa
+## 10. Pre-Cuenta / Imprimir
 
-- [ ] Botón "TRANSFERIR" deshabilitado sin venta activa
-- [ ] Click TRANSFERIR → abre diálogo con mesas disponibles
-- [ ] Mesa actual NO aparece en la lista
-- [ ] Seleccionar mesa destino → se resalta
-- [ ] Click "TRANSFERIR A MESA X" → venta se mueve
-- [ ] Mesa origen vuelve a DISPONIBLE
-- [ ] Mesa destino pasa a OCUPADO
-- [ ] PdV ahora muestra la nueva mesa seleccionada
+- [x] Botón "PRE-CUENTA" / "IMPRIMIR (F5)" deshabilitado sin venta activa
+- [x] Click → muestra diálogo con resumen de cuenta
+- [x] Muestra: mesa, fecha, items con precios, total
+- [ ] Futuro: enviará a impresora configurada
 
 ---
 
 ## 11. Asociar Cliente
 
-### 11.1 Desde card de mesa
+### 11.1 Nombre de cliente en mesa
+- [x] Campo de nombre de cliente visible en card de mesa
+- [x] Ingresar nombre → se guarda automáticamente con capitalize
+- [x] Mesa sin venta + agregar nombre → crea venta y mesa pasa a OCUPADO
+- [x] Al transferir mesa → nombre del cliente se transfiere
+- [x] Al cancelar venta → nombre se limpia
+- [x] Al cobrar → nombre se limpia
+- [x] Al cobro rápido → nombre se limpia
+
+### 11.2 Búsqueda de cliente (futuro)
 - [ ] Icono de buscar cliente (persona con lupa) visible
 - [ ] Click → abre diálogo "BUSCAR CLIENTE"
-
-### 11.2 Búsqueda
 - [ ] Campo de búsqueda por nombre, RUC o teléfono
-- [ ] Click "buscar" → filtra resultados
-- [ ] Tabla muestra: nombre, RUC, teléfono
 - [ ] Click en fila → selecciona y cierra diálogo
-- [ ] Nombre del cliente se actualiza en la card de mesa
 
 ---
 
@@ -294,14 +311,14 @@ Marcar `[x]` cuando el test pase, `[!]` si falla (registrar en `ERRORES-PDV.md`)
 
 ## 13. Atajos de Teclado
 
-- [ ] F1 → ejecuta cobrar (si hay venta activa con items)
-- [ ] F2 → crea venta rápida
-- [ ] F3 → abre búsqueda de productos
+- [x] F1 → ejecuta cobrar (si hay venta activa con items)
+- [x] F2 → cobro rápido
+- [x] F3 → abre búsqueda de productos
 - [ ] F4 → ejecuta cancelar venta (si hay venta activa)
-- [ ] F5 → reimprimir (stub por ahora)
-- [ ] Esc → deselecciona mesa y limpia items
+- [x] F5 → imprimir pre-cuenta
+- [x] Esc → deselecciona mesa y limpia items
 - [ ] Atajos NO se disparan cuando hay un diálogo abierto
-- [ ] Tooltips visibles en botones con el atajo correspondiente
+- [x] Tooltips visibles en botones con el atajo correspondiente
 
 ---
 
@@ -345,27 +362,11 @@ Marcar `[x]` cuando el test pase, `[!]` si falla (registrar en `ERRORES-PDV.md`)
 
 ---
 
-## 16. División de Cuenta
-
-### 16.1 Diálogo
-- [ ] Accesible desde método dividirCuenta() (pendiente botón en UI)
-- [ ] Muestra total de la venta
-- [ ] Dos modos: PARTES IGUALES y POR ITEMS
-
-### 16.2 Partes iguales
-- [ ] Campo cantidad de partes (mín 2)
-- [ ] Muestra monto por cada cuenta
-- [ ] Cálculo correcto: total / partes
-
-### 16.3 Por items
-- [ ] Lista de items activos con selector de cuenta
-- [ ] Asignar items a diferentes cuentas
-- [ ] Resumen por cuenta con total
-
----
-
 ## Notas de Testing
 
 - **Prerequisitos**: Tener al menos 1 usuario, 1 moneda principal, mesas creadas, productos con precios de venta
-- **Orden sugerido**: Seguir el orden numérico (1→16) ya que algunos tests dependen de estado previo
+- **Orden sugerido**: Seguir el orden numérico (1→14) ya que algunos tests dependen de estado previo
 - **Registrar errores**: Todo error encontrado registrar en `docs/testing/ERRORES-PDV.md`
+- **Sección 8 (Descuento Global) eliminada**: descuentos se manejan ahora en el diálogo de cobro y en edición de items
+- **Sección 9 (Venta Rápida) eliminada**: reemplazada por "Cobro Rápido" en sección 6.11
+- **Sección 16 (División de Cuenta) movida**: ahora es parte del diálogo de cobro (sección 6.9)
