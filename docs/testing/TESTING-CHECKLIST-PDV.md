@@ -289,23 +289,31 @@ Marcar `[x]` cuando el test pase, `[!]` si falla (registrar en `ERRORES-PDV.md`)
 ## 12. Cierre de Caja
 
 ### 12.1 Botón visible
-- [ ] Botón "CERRAR CAJA" visible en la card de caja
+- [x] Botón "CERRAR CAJA" visible en la card de caja
 
 ### 12.2 Validación de ventas abiertas
-- [ ] Con ventas abiertas → diálogo muestra warning con lista
-- [ ] Botón "CERRAR CAJA" deshabilitado
-- [ ] Sin ventas abiertas → muestra formulario de cierre
+- [x] Con ventas abiertas → diálogo muestra alerta con lista de ventas
+- [x] Sin ventas abiertas → abre diálogo de conteo de cierre
 
-### 12.3 Formulario de cierre
-- [ ] Resumen: cantidad de ventas concluidas
-- [ ] Campo "TOTAL CONTADO" por moneda
-- [ ] Diferencia se calcula (contado - esperado)
-- [ ] Sobrante en verde, faltante en rojo
-- [ ] Campo de observaciones
+### 12.3 Diálogo de cierre (conteo de billetes)
+- [x] Dispositivo se muestra en el header (auto-detectado)
+- [x] Salta directo al step de Conteo Cierre
+- [x] Conteo de billetes por moneda (tabs por moneda)
+- [x] Total por moneda se calcula en vivo
+- [x] Step Resumen muestra: ventas por forma de pago, retiros (placeholder), gastos (placeholder), conteo apertura, conteo cierre
+- [x] Diferencia NO se muestra antes del cierre (seguridad)
 
 ### 12.4 Confirmar cierre
-- [ ] Click "CERRAR CAJA" → caja pasa a CERRADO
-- [ ] Tab del PdV se cierra automáticamente
+- [x] Click "GUARDAR CONTEO" → caja pasa a CERRADO
+- [x] Muestra resumen post-cierre con diferencias (esperado vs contado)
+- [x] Sobrante en verde, faltante en rojo
+- [x] Click "CERRAR" → tab del PdV se cierra automáticamente
+
+### 12.5 Apertura de caja desde PdV
+- [x] Sin caja abierta → pregunta si abrir nueva
+- [x] Dispositivo en header (auto-detectado)
+- [x] Steps: Conteo Apertura → Resumen (2 steps)
+- [x] Al abrir caja → PdV carga datos correctamente
 
 ---
 
@@ -314,10 +322,10 @@ Marcar `[x]` cuando el test pase, `[!]` si falla (registrar en `ERRORES-PDV.md`)
 - [x] F1 → ejecuta cobrar (si hay venta activa con items)
 - [x] F2 → cobro rápido
 - [x] F3 → abre búsqueda de productos
-- [ ] F4 → ejecuta cancelar venta (si hay venta activa)
+- [x] F4 → ejecuta cancelar venta (si hay venta activa)
 - [x] F5 → imprimir pre-cuenta
 - [x] Esc → deselecciona mesa y limpia items
-- [ ] Atajos NO se disparan cuando hay un diálogo abierto
+- [x] Atajos NO se disparan cuando hay un diálogo abierto
 - [x] Tooltips visibles en botones con el atajo correspondiente
 
 ---

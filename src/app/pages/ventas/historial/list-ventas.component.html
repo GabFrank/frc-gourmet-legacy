@@ -1,33 +1,36 @@
 <div class="page-container">
   <div class="page-header">
     <h2>HISTORIAL DE VENTAS</h2>
+    <button mat-icon-button matTooltip="RESETEAR FILTROS" (click)="resetFiltros()">
+      <mat-icon>restart_alt</mat-icon>
+    </button>
   </div>
 
   <!-- Rangos rápidos -->
   <div class="rangos-chips">
-    <button mat-stroked-button (click)="setRango('hoy')">HOY</button>
-    <button mat-stroked-button (click)="setRango('semana')">ESTA SEMANA</button>
-    <button mat-stroked-button (click)="setRango('mes')">ESTE MES</button>
-    <button mat-stroked-button (click)="setRango('trimestre')">ÚLTIMO TRIMESTRE</button>
+    <button mat-stroked-button (click)="setRango('hoy')" [disabled]="fechasDeshabilitadas">HOY</button>
+    <button mat-stroked-button (click)="setRango('semana')" [disabled]="fechasDeshabilitadas">ESTA SEMANA</button>
+    <button mat-stroked-button (click)="setRango('mes')" [disabled]="fechasDeshabilitadas">ESTE MES</button>
+    <button mat-stroked-button (click)="setRango('trimestre')" [disabled]="fechasDeshabilitadas">ÚLTIMO TRIMESTRE</button>
   </div>
 
-  <!-- Filtros -->
+  <!-- Filtros básicos -->
   <div class="filtros-row">
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="filtro-field">
       <mat-label>DESDE</mat-label>
-      <input matInput [matDatepicker]="pickerDesde" [(ngModel)]="fechaDesde" />
+      <input matInput [matDatepicker]="pickerDesde" [(ngModel)]="fechaDesde" [disabled]="fechasDeshabilitadas" />
       <mat-datepicker-toggle matIconSuffix [for]="pickerDesde"></mat-datepicker-toggle>
       <mat-datepicker #pickerDesde></mat-datepicker>
     </mat-form-field>
 
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="filtro-field">
       <mat-label>HASTA</mat-label>
-      <input matInput [matDatepicker]="pickerHasta" [(ngModel)]="fechaHasta" />
+      <input matInput [matDatepicker]="pickerHasta" [(ngModel)]="fechaHasta" [disabled]="fechasDeshabilitadas" />
       <mat-datepicker-toggle matIconSuffix [for]="pickerHasta"></mat-datepicker-toggle>
       <mat-datepicker #pickerHasta></mat-datepicker>
     </mat-form-field>
 
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="filtro-field">
       <mat-label>ESTADO</mat-label>
       <mat-select [(value)]="estadoFiltro">
         <mat-option value="">TODOS</mat-option>
@@ -35,73 +38,104 @@
       </mat-select>
     </mat-form-field>
 
-    <button mat-raised-button color="primary" (click)="filtrar()" style="height: 56px">
-      <mat-icon>filter_list</mat-icon>
-      FILTRAR
-    </button>
+    <mat-form-field appearance="outline" class="filtro-field filtro-caja">
+      <mat-label>CAJA</mat-label>
+      <mat-select [(value)]="cajaFiltro" (selectionChange)="onCajaChange()">
+        <mat-option [value]="null">TODAS</mat-option>
+        <mat-option *ngFor="let c of cajas" [value]="c.id">{{ getCajaLabel(c) }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <div class="filtros-buttons">
+      <button mat-raised-button color="primary" (click)="filtrar()">
+        <mat-icon>filter_list</mat-icon>
+        FILTRAR
+      </button>
+      <button mat-stroked-button (click)="openFiltrosAvanzados()"
+        [matBadge]="filtrosAvanzadosCount || null" matBadgeColor="accent" matBadgeSize="small">
+        <mat-icon>tune</mat-icon>
+        AVANZADOS
+      </button>
+    </div>
   </div>
 
   <!-- Tabla -->
-  <table mat-table [dataSource]="ventas" class="mat-elevation-z2" style="width: 100%">
+  <table mat-table [dataSource]="ventaRows" class="mat-elevation-z2 ventas-table">
     <ng-container matColumnDef="fecha">
       <th mat-header-cell *matHeaderCellDef>FECHA</th>
-      <td mat-cell *matCellDef="let v">{{ v.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+      <td mat-cell *matCellDef="let row">{{ row.venta.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
     </ng-container>
 
     <ng-container matColumnDef="mesa">
       <th mat-header-cell *matHeaderCellDef>MESA</th>
-      <td mat-cell *matCellDef="let v">{{ v.mesa?.numero || 'S/M' }}</td>
+      <td mat-cell *matCellDef="let row">{{ row.venta.mesa?.numero || 'S/M' }}</td>
     </ng-container>
 
     <ng-container matColumnDef="cajero">
       <th mat-header-cell *matHeaderCellDef>CAJERO</th>
-      <td mat-cell *matCellDef="let v">{{ v.createdBy?.persona?.nombre || '-' }}</td>
+      <td mat-cell *matCellDef="let row">{{ row.venta.createdBy?.persona?.nombre || '-' }}</td>
     </ng-container>
 
     <ng-container matColumnDef="estado">
       <th mat-header-cell *matHeaderCellDef>ESTADO</th>
-      <td mat-cell *matCellDef="let v">
-        <mat-chip-listbox>
-          <mat-chip
-            [color]="v.estado === 'CONCLUIDA' ? 'primary' : v.estado === 'CANCELADA' ? 'warn' : 'accent'"
-            selected
-          >
-            {{ v.estado }}
-          </mat-chip>
-        </mat-chip-listbox>
+      <td mat-cell *matCellDef="let row">
+        <span class="estado-chip"
+          [class.estado-concluida]="row.venta.estado === 'CONCLUIDA'"
+          [class.estado-cancelada]="row.venta.estado === 'CANCELADA'"
+          [class.estado-abierta]="row.venta.estado === 'ABIERTA'">
+          {{ row.venta.estado }}
+        </span>
       </td>
-    </ng-container>
-
-    <ng-container matColumnDef="formaPago">
-      <th mat-header-cell *matHeaderCellDef>FORMA PAGO</th>
-      <td mat-cell *matCellDef="let v">{{ v.formaPago?.nombre || '-' }}</td>
     </ng-container>
 
     <ng-container matColumnDef="total">
       <th mat-header-cell *matHeaderCellDef>TOTAL</th>
-      <td mat-cell *matCellDef="let v">{{ getTotal(v) | number:'1.0-2' }}</td>
+      <td mat-cell *matCellDef="let row">{{ row.total | number:'1.0-2' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="duracion">
+      <th mat-header-cell *matHeaderCellDef>DURACIÓN</th>
+      <td mat-cell *matCellDef="let row">{{ row.duracion }}</td>
     </ng-container>
 
     <ng-container matColumnDef="acciones">
       <th mat-header-cell *matHeaderCellDef></th>
-      <td mat-cell *matCellDef="let v">
+      <td mat-cell *matCellDef="let row">
         <button mat-icon-button [matMenuTriggerFor]="menu">
           <mat-icon>more_vert</mat-icon>
         </button>
         <mat-menu #menu="matMenu">
-          <button mat-menu-item (click)="verDetalle(v)">
+          <button mat-menu-item (click)="verDetalle(row.venta)">
             <mat-icon>visibility</mat-icon>
             <span>VER DETALLE</span>
+          </button>
+          <button mat-menu-item (click)="cancelarVenta(row.venta)" *ngIf="row.venta.estado !== 'CANCELADA'">
+            <mat-icon>cancel</mat-icon>
+            <span>CANCELAR VENTA</span>
+          </button>
+          <button mat-menu-item (click)="rehabilitarVenta(row.venta)" *ngIf="row.venta.estado === 'CANCELADA'">
+            <mat-icon>replay</mat-icon>
+            <span>REHABILITAR VENTA</span>
           </button>
         </mat-menu>
       </td>
     </ng-container>
 
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"
+      [class.row-cancelada]="row.venta.estado === 'CANCELADA'"></tr>
   </table>
 
-  <div *ngIf="ventas.length === 0" style="text-align: center; padding: 40px; opacity: 0.7">
-    No se encontraron ventas para el período seleccionado.
+  <mat-paginator
+    [length]="totalVentas"
+    [pageSize]="pageSize"
+    [pageIndex]="pageIndex"
+    [pageSizeOptions]="pageSizeOptions"
+    (page)="onPageChange($event)"
+    showFirstLastButtons>
+  </mat-paginator>
+
+  <div *ngIf="ventaRows.length === 0" class="empty-state">
+    No se encontraron ventas para los filtros seleccionados.
   </div>
 </div>

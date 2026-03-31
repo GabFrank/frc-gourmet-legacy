@@ -1,25 +1,96 @@
 .page-container {
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .page-header {
-  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+
+  h2 {
+    margin: 0;
+  }
 }
 
 .rangos-chips {
   display: flex;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .filtros-row {
   display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+  align-items: center;
 }
 
-table {
+.filtro-field {
+  min-width: 140px;
+  max-width: 180px;
+}
+
+.filtro-caja {
+  flex: 1;
+  min-width: 300px;
+}
+
+.filtros-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: auto;
+
+  button {
+    height: 28px;
+    font-size: 12px;
+    line-height: 28px;
+  }
+}
+
+.ventas-table {
   width: 100%;
+
+  th.mat-mdc-header-cell,
+  td.mat-mdc-cell {
+    text-align: center;
+  }
+}
+
+// Estado chips
+.estado-chip {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.estado-concluida {
+  background-color: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+}
+
+.estado-cancelada {
+  background-color: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+}
+
+.estado-abierta {
+  background-color: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+}
+
+.row-cancelada {
+  opacity: 0.5;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  opacity: 0.7;
 }

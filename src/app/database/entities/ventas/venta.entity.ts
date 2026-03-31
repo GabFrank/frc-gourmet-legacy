@@ -73,6 +73,9 @@ export class Venta extends BaseModel {
   @JoinColumn({ name: 'descuento_autorizado_por_id' })
   descuentoAutorizadoPor?: Usuario;
 
+  @Column({ name: 'fecha_cierre', type: 'datetime', nullable: true })
+  fechaCierre?: Date;
+
   // División de cuenta
   @ManyToOne('Venta', { nullable: true })
   @JoinColumn({ name: 'venta_padre_id' })

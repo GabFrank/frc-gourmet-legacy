@@ -222,6 +222,39 @@ Componente: `list-ventas.component.ts`
 - [ ] Accion: reimprimir ticket (pendiente: impresion de tickets 2.3)
 - [x] Accesible desde dashboard de ventas
 
+**Mejoras pendientes:**
+
+Entidad:
+- [ ] Agregar campo `fechaCierre` (datetime, nullable) a Venta — se setea al finalizar cobro, permite calcular tiempo de permanencia del cliente
+
+Paginacion:
+- [ ] Implementar paginacion en handler `getVentasByDateRange` (limit/offset) y en frontend con mat-paginator
+
+Columnas de la tabla:
+- [ ] Remover columna forma de pago (puede ser multi-pago)
+- [ ] Chip de estado: rojo=CANCELADA, verde=CONCLUIDA, naranja=ABIERTA
+- [ ] Agregar columna duracion (fechaCierre - createdAt) cuando exista fechaCierre
+- [ ] Acciones: ver detalle, cancelar/rehabilitar venta (requiere admin, funciona con caja cerrada)
+
+Filtros basicos (header visible):
+- [ ] Rango de fechas (HOY, SEMANA, MES, TRIMESTRE + datepickers)
+- [ ] Estado (select)
+- [ ] Caja: select con ultimas 20 cajas (#ID - DISPOSITIVO - FECHA - CAJERO), al seleccionar deshabilita filtros de fecha
+
+Filtros avanzados (seccion expandible "FILTROS AVANZADOS"):
+- [ ] Mozo/vendedor: select de usuarios, filtra ventas donde el usuario creo al menos un venta_item
+- [ ] Forma de pago: seleccion multiple (una venta puede tener varias formas de pago)
+- [ ] Moneda: seleccion multiple
+- [ ] Rango de valores: min/max, habilitado al seleccionar una moneda especifica
+- [ ] Mesa: select de mesas
+- [ ] Descuento/aumento: select (CON DESCUENTO, CON AUMENTO, SIN DESCUENTO)
+
+Detalle de venta (dialogo):
+- [ ] Seccion detalle de cobro: moneda, forma de pago, valor por linea de pago, descuento general, aumento
+- [ ] Mozo que adiciono cada item (ventaItem.createdBy)
+- [ ] Items cancelados: mostrar motivo de cancelacion
+- [ ] Tiempo de permanencia: createdAt → fechaCierre
+
 ---
 
 ## ETAPA 3: REPORTES, RESERVAS Y OPTIMIZACIONES

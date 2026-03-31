@@ -1,7 +1,36 @@
 <div class="full-container">
-  <div style="width: 100%; text-align: center; padding-top: 10px;">
+  <!-- Header con título y dispositivo -->
+  <div class="dialog-header">
     <h4>{{ dialogTitle }}</h4>
+    <div class="device-header" [formGroup]="cajaInfoForm">
+      <div *ngIf="loadingDeviceInfo" class="device-detection-status">
+        <mat-spinner diameter="14"></mat-spinner>
+        <span>DETECTANDO...</span>
+      </div>
+
+      <div *ngIf="detectedDispositivoId && !loadingDeviceInfo" class="device-detection-status success">
+        <mat-icon color="primary" style="font-size: 16px; width: 16px; height: 16px;">check_circle</mat-icon>
+        <span>{{ dispositivoName }}</span>
+      </div>
+
+      <div *ngIf="!detectedDispositivoId && !loadingDeviceInfo && dispositivos.length > 0" class="device-select-inline">
+        <mat-form-field appearance="outline" class="compact-field device-field">
+          <mat-label>DISPOSITIVO</mat-label>
+          <mat-select formControlName="dispositivoId">
+            <mat-option *ngFor="let dispositivo of dispositivos" [value]="dispositivo.id">
+              {{ dispositivo.nombre }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div *ngIf="dispositivos.length === 0 && !loading && !loadingDeviceInfo" class="device-detection-status warning">
+        <mat-icon color="warn" style="font-size: 16px; width: 16px; height: 16px;">warning</mat-icon>
+        <span>SIN DISPOSITIVOS DISPONIBLES</span>
+      </div>
+    </div>
   </div>
+
   <mat-dialog-content class="dialog-content" style="height: 100%">
     <div *ngIf="loading" class="loading-overlay">
       <mat-spinner diameter="40"></mat-spinner>
@@ -13,78 +42,9 @@
       class="compact-stepper"
       style="height: 100%"
     >
-    <!-- Step 1: Select dispositivo and basic info -->
-      <mat-step [stepControl]="cajaInfoForm" [label]="dialogMode === 'conteo' ? 'INFORMACIÓN DE LA CAJA' : 'INFORMACIÓN DE CAJA'">
-        <form [formGroup]="cajaInfoForm" style="height: 100%">
-        <div class="step-content">
-            <div style="height: 100%">
-              <h4>{{ dialogMode === 'conteo' ? 'Dispositivo de la caja' : 'Seleccione el dispositivo para la caja' }}</h4>
 
-          <div *ngIf="loadingDeviceInfo" class="device-detection-status">
-                <mat-spinner diameter="16"></mat-spinner>
-                <span>DETECTANDO DISPOSITIVO ACTUAL...</span>
-          </div>
-
-              <div
-                *ngIf="detectedDispositivoId && !loadingDeviceInfo"
-                class="device-detection-status success"
-              >
-                <mat-icon color="primary">check_circle</mat-icon>
-                <span>DISPOSITIVO DETECTADO AUTOMÁTICAMENTE</span>
-              </div>
-
-              <div
-                *ngIf="dispositivos.length === 0 && !loading"
-                class="device-detection-status warning"
-              >
-                <mat-icon color="warn">warning</mat-icon>
-                <span>NO HAY DISPOSITIVOS DISPONIBLES. TODOS LOS DISPOSITIVOS YA TIENEN CAJAS ABIERTAS.</span>
-              </div>
-
-              <mat-form-field
-                appearance="outline"
-                class="full-width compact-field"
-              >
-                <mat-label>DISPOSITIVO</mat-label>
-                <mat-select formControlName="dispositivoId">
-                  <mat-option
-                    *ngFor="let dispositivo of dispositivos"
-                    [value]="dispositivo.id"
-                  >
-                    {{ dispositivo.nombre }}
-                    <span
-                      *ngIf="dispositivo.id === detectedDispositivoId"
-                      class="detected-device"
-                    >
-                      (DISPOSITIVO ACTUAL)</span
-                    >
-                  </mat-option>
-                </mat-select>
-                <mat-error
-                  *ngIf="cajaInfoForm.get('dispositivoId')?.hasError('required')"
-                >
-                  DISPOSITIVO ES REQUERIDO
-                </mat-error>
-              </mat-form-field>
-            </div>
-
-          <div class="step-actions">
-              <button mat-button mat-dialog-close>SALIR</button>
-              <button
-                mat-button
-                matStepperNext
-                color="primary"
-                [disabled]="cajaInfoForm.invalid || dispositivos.length === 0"
-              >
-                SIGUIENTE
-              </button>
-          </div>
-        </div>
-      </form>
-    </mat-step>
-
-    <!-- Step 2: Conteo Apertura -->
-      <mat-step [stepControl]="conteoInicialForm" [label]="dialogMode === 'conteo' ? 'CONTEO APERTURA' : 'CONTEO APERTURA'">
+    <!-- Step 1: Conteo Apertura -->
+      <mat-step [stepControl]="conteoInicialForm" [label]="'CONTEO APERTURA'">
         <form [formGroup]="conteoInicialForm" style="height: 100%">
         <div class="step-content">
           <div *ngIf="loading" class="loading-indicator">
@@ -97,7 +57,7 @@
               class="no-currencies"
             >
               <p>
-                NO HAY MONEDAS CONFIGURADAS PARA CAJAS.POR FAVOR CONFIGURE LAS
+                NO HAY MONEDAS CONFIGURADAS PARA CAJAS. POR FAVOR CONFIGURE LAS
                 MONEDAS PRIMERO.
               </p>
           </div>
@@ -181,20 +141,6 @@
                                 [attr.data-index]="i"
                                 [attr.data-currency-id]="activeCurrency.moneda.id"
                               />
-                              <!-- <span
-                                matSuffix
-                                *ngIf="
-                                  conteoInicialForm.get('billete_' + billete.id)
-                                    ?.value
-                                "
-                                class="billete-suffix"
-                              >
-                                =
-                                {{
-                                  conteoInicialForm.get("billete_" + billete.id)
-                                    ?.value * billete.valor | number : "1.0-2"
-                                }}
-                              </span> -->
                             </mat-form-field>
                           </div>
                         </ng-container>
@@ -242,19 +188,6 @@
                                 "
                                 [attr.data-currency-id]="activeCurrency.moneda.id"
                               />
-                              <!-- <span
-                                matSuffix
-                                *ngIf="
-                                  conteoInicialForm.get('billete_' + billete.id)
-                                    ?.value
-                                "
-                                class="billete-suffix"
-                              >
-                                ={{
-                                  conteoInicialForm.get("billete_" + billete.id)
-                                    ?.value * billete.valor | number : "1.0-2"
-                                }}
-                              </span> -->
                             </mat-form-field>
                           </div>
                         </ng-container>
@@ -288,12 +221,11 @@
 
           <div class="step-actions">
               <button mat-button mat-dialog-close>SALIR</button>
-              <button mat-button matStepperPrevious>ATRÁS</button>
               <button
                 mat-button
                 matStepperNext
                 color="primary"
-                [disabled]="conteoInicialForm.invalid"
+                [disabled]="conteoInicialForm.invalid || cajaInfoForm.invalid"
               >
                 SIGUIENTE
               </button>
@@ -302,7 +234,7 @@
       </form>
     </mat-step>
 
-    <!-- Step 3: Conteo Cierre (New) -->
+    <!-- Step 2: Conteo Cierre -->
       <mat-step [stepControl]="conteoCierreForm" [label]="'CONTEO CIERRE'" *ngIf="dialogMode === 'conteo'">
         <form [formGroup]="conteoCierreForm" style="height: 100%">
       <div class="step-content">
@@ -494,89 +426,190 @@
       </form>
     </mat-step>
 
-    <!-- Step 4: Resumen (formerly "Confirmation") -->
+    <!-- Step 3 (or 2 in create mode): Resumen -->
       <mat-step [label]="'RESUMEN'">
         <div class="step-content compact-summary-step" style="height: 100%">
-          <h3 class="compact-title">{{ dialogMode === 'conteo' ? 'RESUMEN DE CONTEO' : 'CONFIRMAR APERTURA DE CAJA' }}</h3>
 
-          <div class="confirmation-summary compact-confirmation">
-            <div class="confirmation-item">
-              <span class="confirmation-label">DISPOSITIVO:</span>
-              <span class="confirmation-value">{{ dispositivoName }}</span>
+          <!-- PRE-SAVE: Resumen antes de confirmar -->
+          <div *ngIf="!cierreCompleted" class="resumen-scroll-container">
+            <h3 class="compact-title">{{ dialogMode === 'conteo' ? 'RESUMEN DE CIERRE' : 'CONFIRMAR APERTURA DE CAJA' }}</h3>
+
+            <div class="resumen-cards-container">
+              <!-- Ventas por forma de pago (solo en cierre) -->
+              <div class="resumen-card" *ngIf="dialogMode === 'conteo' && ventasSummary">
+                <div class="resumen-card-header">
+                  <mat-icon>receipt_long</mat-icon>
+                  <h4>VENTAS ({{ ventasSummary.cantidadVentas }})</h4>
+                </div>
+                <div class="resumen-card-body">
+                  <div class="resumen-row" *ngFor="let item of ventasSummary.totalPorFormaPago">
+                    <span>{{ item.formaPago }}:</span>
+                    <span>{{ item.monedaSimbolo }} {{ item.total | number: '1.0-2' }}</span>
+                  </div>
+                  <div class="resumen-row resumen-row-total" *ngFor="let item of ventasSummary.totalPorMoneda">
+                    <span>TOTAL {{ item.monedaSimbolo }}:</span>
+                    <span class="confirmation-value">{{ item.monedaSimbolo }} {{ item.total | number: '1.0-2' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Retiros de efectivo placeholder -->
+              <div class="resumen-card" *ngIf="dialogMode === 'conteo'">
+                <div class="resumen-card-header">
+                  <mat-icon>money_off</mat-icon>
+                  <h4>RETIROS DE EFECTIVO</h4>
+                </div>
+                <div class="resumen-card-body">
+                  <p class="placeholder-text">SIN RETIROS REGISTRADOS</p>
+                </div>
+              </div>
+
+              <!-- Gastos placeholder -->
+              <div class="resumen-card" *ngIf="dialogMode === 'conteo'">
+                <div class="resumen-card-header">
+                  <mat-icon>shopping_cart</mat-icon>
+                  <h4>GASTOS</h4>
+                </div>
+                <div class="resumen-card-body">
+                  <p class="placeholder-text">SIN GASTOS REGISTRADOS</p>
+                </div>
+              </div>
+
+              <!-- Conteo Apertura -->
+              <div class="resumen-card">
+                <div class="resumen-card-header">
+                  <mat-icon>lock_open</mat-icon>
+                  <h4>CONTEO APERTURA</h4>
+                </div>
+                <div class="resumen-card-body">
+                  <ng-container *ngFor="let monedaConfig of monedasConfig">
+                    <div class="resumen-row" *ngIf="currencyHasValues[monedaConfig.moneda.id]">
+                      <span>{{ monedaConfig.moneda.denominacion }}:</span>
+                      <span>{{ monedaConfig.moneda.simbolo }} {{ currencyTotals[monedaConfig.moneda.id] | number: '1.0-2' }}</span>
+                    </div>
+                  </ng-container>
+                </div>
+              </div>
+
+              <!-- Conteo Cierre -->
+              <div class="resumen-card" *ngIf="dialogMode === 'conteo'">
+                <div class="resumen-card-header">
+                  <mat-icon>lock</mat-icon>
+                  <h4>CONTEO CIERRE</h4>
+                </div>
+                <div class="resumen-card-body">
+                  <ng-container *ngFor="let monedaConfig of monedasConfig">
+                    <div class="resumen-row" *ngIf="cierreCurrencyHasValues[monedaConfig.moneda.id]">
+                      <span>{{ monedaConfig.moneda.denominacion }}:</span>
+                      <span>{{ monedaConfig.moneda.simbolo }} {{ cierreCurrencyTotals[monedaConfig.moneda.id] | number: '1.0-2' }}</span>
+                    </div>
+                  </ng-container>
+                </div>
+              </div>
+
             </div>
 
-            <!-- Total summary of all currencies -->
-            <div class="all-currencies-total compact-totals">
-              <h4>TOTAL CONTEO APERTURA:</h4>
-              <div class="currency-totals-grid">
-                <ng-container *ngFor="let monedaConfig of monedasConfig">
-                  <div
-                    class="currency-total-item"
-                    *ngIf="currencyHasValues[monedaConfig.moneda.id]"
-                  >
-                    <span>{{ monedaConfig.moneda.denominacion }}:</span>
-                    <span>{{
-                      currencyTotals[monedaConfig.moneda.id] | number : "1.0-2"
-                    }}</span>
-                  </div>
-                </ng-container>
-              </div>
-            </div>
-
-            <!-- Total summary of conteo cierre -->
-            <div class="all-currencies-total compact-totals" *ngIf="dialogMode === 'conteo'">
-              <h4>TOTAL CONTEO CIERRE:</h4>
-              <div class="currency-totals-grid">
-                <ng-container *ngFor="let monedaConfig of monedasConfig">
-                  <div
-                    class="currency-total-item"
-                    *ngIf="cierreCurrencyHasValues[monedaConfig.moneda.id]"
-                  >
-                    <span>{{ monedaConfig.moneda.denominacion }}:</span>
-                    <span>{{
-                      cierreCurrencyTotals[monedaConfig.moneda.id] | number : "1.0-2"
-                    }}</span>
-                  </div>
-                </ng-container>
-              </div>
-            </div>
-
-            <!-- Difference summary -->
-            <div class="all-currencies-total compact-totals" *ngIf="dialogMode === 'conteo'">
-              <h4>DIFERENCIA:</h4>
-              <div class="currency-totals-grid">
-                <ng-container *ngFor="let monedaConfig of monedasConfig">
-                  <div
-                    class="currency-total-item"
-                    *ngIf="currencyHasValues[monedaConfig.moneda.id] || cierreCurrencyHasValues[monedaConfig.moneda.id]"
-                  >
-                    <span>{{ monedaConfig.moneda.denominacion }}:</span>
-                    <span [ngClass]="{
-                      'positive-amount': getDifference(monedaConfig.moneda.id) > 0,
-                      'negative-amount': getDifference(monedaConfig.moneda.id) < 0
-                    }">{{
-                      getDifference(monedaConfig.moneda.id) | number : "1.0-2"
-                    }}</span>
-                  </div>
-                </ng-container>
-              </div>
+            <div class="step-actions">
+              <button mat-button mat-dialog-close>SALIR</button>
+              <button mat-button matStepperPrevious>ATRÁS</button>
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="onSubmit()"
+                [disabled]="loading || cajaInfoForm.invalid"
+              >
+                <mat-icon>check</mat-icon>
+                {{ dialogMode === 'conteo' ? 'GUARDAR CONTEO' : loading ? 'PROCESANDO...' : 'ABRIR CAJA' }}
+              </button>
             </div>
           </div>
 
-          <div class="step-actions">
-            <button mat-button mat-dialog-close>SALIR</button>
-            <button mat-button matStepperPrevious>ATRÁS</button>
-            <button
-              mat-raised-button
-              color="primary"
-              (click)="onSubmit()"
-              [disabled]="loading"
-            >
-            <mat-icon>check</mat-icon>
-              {{ dialogMode === 'conteo' ? 'GUARDAR CONTEO' : 'ABRIR CAJA' }}
-          </button>
+          <!-- POST-SAVE: Resumen final de cierre exitoso -->
+          <div *ngIf="cierreCompleted" class="resumen-scroll-container">
+            <div class="cierre-success-header">
+              <mat-icon class="cierre-success-icon">check_circle</mat-icon>
+              <h3>CAJA CERRADA EXITOSAMENTE</h3>
+            </div>
+
+            <div class="resumen-cards-container">
+              <!-- Ventas -->
+              <div class="resumen-card" *ngIf="ventasSummary">
+                <div class="resumen-card-header">
+                  <mat-icon>receipt_long</mat-icon>
+                  <h4>VENTAS ({{ ventasSummary.cantidadVentas }})</h4>
+                </div>
+                <div class="resumen-card-body">
+                  <div class="resumen-row" *ngFor="let item of ventasSummary.totalPorFormaPago">
+                    <span>{{ item.formaPago }}:</span>
+                    <span>{{ item.monedaSimbolo }} {{ item.total | number: '1.0-2' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Apertura -->
+              <div class="resumen-card">
+                <div class="resumen-card-header">
+                  <mat-icon>lock_open</mat-icon>
+                  <h4>CONTEO APERTURA</h4>
+                </div>
+                <div class="resumen-card-body">
+                  <ng-container *ngFor="let monedaConfig of monedasConfig">
+                    <div class="resumen-row" *ngIf="currencyHasValues[monedaConfig.moneda.id]">
+                      <span>{{ monedaConfig.moneda.denominacion }}:</span>
+                      <span>{{ monedaConfig.moneda.simbolo }} {{ currencyTotals[monedaConfig.moneda.id] | number: '1.0-2' }}</span>
+                    </div>
+                  </ng-container>
+                </div>
+              </div>
+
+              <!-- Cierre -->
+              <div class="resumen-card">
+                <div class="resumen-card-header">
+                  <mat-icon>lock</mat-icon>
+                  <h4>CONTEO CIERRE</h4>
+                </div>
+                <div class="resumen-card-body">
+                  <ng-container *ngFor="let monedaConfig of monedasConfig">
+                    <div class="resumen-row" *ngIf="cierreCurrencyHasValues[monedaConfig.moneda.id]">
+                      <span>{{ monedaConfig.moneda.denominacion }}:</span>
+                      <span>{{ monedaConfig.moneda.simbolo }} {{ cierreCurrencyTotals[monedaConfig.moneda.id] | number: '1.0-2' }}</span>
+                    </div>
+                  </ng-container>
+                </div>
+              </div>
+
+              <!-- Diferencia -->
+              <div class="resumen-card resumen-card-diferencia">
+                <div class="resumen-card-header">
+                  <mat-icon>compare_arrows</mat-icon>
+                  <h4>DIFERENCIA</h4>
+                </div>
+                <div class="resumen-card-body">
+                  <ng-container *ngFor="let monedaConfig of monedasConfig">
+                    <div class="resumen-row" *ngIf="expectedByMoneda[monedaConfig.moneda.id] || cierreCurrencyHasValues[monedaConfig.moneda.id]">
+                      <span>{{ monedaConfig.moneda.denominacion }}:</span>
+                      <span [ngClass]="{
+                        'positive-amount': differenceByCurrency[monedaConfig.moneda.id] > 0,
+                        'negative-amount': differenceByCurrency[monedaConfig.moneda.id] < 0,
+                        'neutral-amount': differenceByCurrency[monedaConfig.moneda.id] === 0
+                      }" class="diferencia-valor">
+                        {{ differenceByCurrency[monedaConfig.moneda.id] >= 0 ? '+' : '' }}{{ differenceByCurrency[monedaConfig.moneda.id] | number: '1.0-2' }}
+                      </span>
+                    </div>
+                  </ng-container>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-actions" style="justify-content: center;">
+              <button mat-raised-button color="primary" (click)="closeFinalDialog()">
+                <mat-icon>close</mat-icon>
+                CERRAR
+              </button>
+            </div>
+          </div>
+
         </div>
-      </div>
     </mat-step>
   </mat-stepper>
 </mat-dialog-content>

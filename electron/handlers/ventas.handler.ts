@@ -281,6 +281,9 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
       const repo = dataSource.getRepository(Venta);
       const qb = repo.createQueryBuilder('venta')
         .leftJoinAndSelect('venta.caja', 'caja')
+        .leftJoinAndSelect('caja.dispositivo', 'dispositivo')
+        .leftJoinAndSelect('caja.createdBy', 'cajaCreatedBy')
+        .leftJoinAndSelect('cajaCreatedBy.persona', 'cajaCreatedByPersona')
         .leftJoinAndSelect('venta.formaPago', 'formaPago')
         .leftJoinAndSelect('venta.pago', 'pago')
         .leftJoinAndSelect('venta.mesa', 'mesa')
@@ -288,18 +291,105 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
         .leftJoinAndSelect('cliente.persona', 'persona')
         .leftJoinAndSelect('venta.createdBy', 'createdBy')
         .leftJoinAndSelect('createdBy.persona', 'createdByPersona')
-        .where('venta.createdAt >= :desde', { desde })
-        .andWhere('venta.createdAt <= :hasta', { hasta });
+        .leftJoinAndSelect('venta.items', 'items');
 
+      // Date range filter (skip if cajaId is provided — caja has its own date range)
+      if (!filtros?.cajaId) {
+        qb.where('venta.createdAt >= :desde', { desde })
+          .andWhere('venta.createdAt <= :hasta', { hasta });
+      } else {
+        qb.where('caja.id = :cajaId', { cajaId: filtros.cajaId });
+      }
+
+      // Estado
       if (filtros?.estado) {
         qb.andWhere('venta.estado = :estado', { estado: filtros.estado });
       }
-      if (filtros?.cajaId) {
-        qb.andWhere('caja.id = :cajaId', { cajaId: filtros.cajaId });
+
+      // Mesa
+      if (filtros?.mesaId) {
+        qb.andWhere('mesa.id = :mesaId', { mesaId: filtros.mesaId });
+      }
+
+      // Formas de pago (multi-select) — subquery en pago_detalles
+      if (filtros?.formasPagoIds?.length > 0) {
+        qb.andWhere(qb2 => {
+          const subQuery = qb2.subQuery()
+            .select('pd_fp.pago_id')
+            .from('pagos_detalles', 'pd_fp')
+            .where('pd_fp.forma_pago_id IN (:...formasPagoIds)')
+            .getQuery();
+          return 'pago.id IN ' + subQuery;
+        }).setParameter('formasPagoIds', filtros.formasPagoIds);
+      }
+
+      // Monedas (multi-select) — subquery en pago_detalles
+      if (filtros?.monedaIds?.length > 0) {
+        qb.andWhere(qb2 => {
+          const subQuery = qb2.subQuery()
+            .select('pd_m.pago_id')
+            .from('pagos_detalles', 'pd_m')
+            .where('pd_m.moneda_id IN (:...monedaIds)')
+            .getQuery();
+          return 'pago.id IN ' + subQuery;
+        }).setParameter('monedaIds', filtros.monedaIds);
+      }
+
+      // Rango de valores por moneda
+      if (filtros?.monedaValorId && (filtros?.valorMin != null || filtros?.valorMax != null)) {
+        qb.andWhere(qb2 => {
+          let subQuery = qb2.subQuery()
+            .select('pd_v.pago_id')
+            .from('pagos_detalles', 'pd_v')
+            .where('pd_v.moneda_id = :monedaValorId')
+            .andWhere('pd_v.tipo = :tipoPago')
+            .groupBy('pd_v.pago_id');
+          if (filtros.valorMin != null) {
+            subQuery = subQuery.having('SUM(pd_v.valor) >= :valorMin');
+          }
+          if (filtros.valorMax != null) {
+            subQuery = subQuery.andHaving('SUM(pd_v.valor) <= :valorMax');
+          }
+          return 'pago.id IN ' + subQuery.getQuery();
+        })
+        .setParameter('monedaValorId', filtros.monedaValorId)
+        .setParameter('tipoPago', 'PAGO');
+        if (filtros.valorMin != null) qb.setParameter('valorMin', filtros.valorMin);
+        if (filtros.valorMax != null) qb.setParameter('valorMax', filtros.valorMax);
+      }
+
+      // Descuento/Aumento
+      if (filtros?.tieneDescuento === 'CON_DESCUENTO') {
+        qb.andWhere('(venta.descuento_monto > 0 OR EXISTS (SELECT 1 FROM venta_items vi_d WHERE vi_d.venta_id = venta.id AND vi_d.descuento_unitario > 0))');
+      } else if (filtros?.tieneDescuento === 'CON_AUMENTO') {
+        qb.andWhere(qb2 => {
+          const subQuery = qb2.subQuery()
+            .select('pd_a.pago_id')
+            .from('pagos_detalles', 'pd_a')
+            .where('pd_a.tipo = :tipoAumento')
+            .getQuery();
+          return 'pago.id IN ' + subQuery;
+        }).setParameter('tipoAumento', 'AUMENTO');
+      } else if (filtros?.tieneDescuento === 'SIN_DESCUENTO') {
+        qb.andWhere('(venta.descuento_monto IS NULL OR venta.descuento_monto = 0)')
+          .andWhere('NOT EXISTS (SELECT 1 FROM venta_items vi_nd WHERE vi_nd.venta_id = venta.id AND vi_nd.descuento_unitario > 0)');
+      }
+
+      // Mozo (usuario que creó al menos un item)
+      if (filtros?.mozoId) {
+        qb.andWhere('EXISTS (SELECT 1 FROM venta_items vi_m WHERE vi_m.venta_id = venta.id AND vi_m.created_by = :mozoId)')
+          .setParameter('mozoId', filtros.mozoId);
       }
 
       qb.orderBy('venta.createdAt', 'DESC');
-      return await qb.getMany();
+
+      // Paginación
+      const page = filtros?.page || 1;
+      const pageSize = filtros?.pageSize || 25;
+      qb.skip((page - 1) * pageSize).take(pageSize);
+
+      const [data, total] = await qb.getManyAndCount();
+      return { data, total };
     } catch (error) {
       console.error('Error getting ventas by date range:', error);
       throw error;

@@ -595,6 +595,7 @@ export class CobrarVentaDialogComponent implements OnInit, AfterViewInit {
         estado: VentaEstado.CONCLUIDA,
         formaPago: principalFp || this.selectedFormaPago!,
         pago: this.pago!,
+        fechaCierre: new Date(),
       }));
 
       this.dialogRef.close({ success: true, pago: this.pago });

@@ -227,7 +227,7 @@ export class VentasDashboardComponent implements OnInit {
   navigateTo(action: string): void {
     switch (action) {
       case 'pdv':
-        this.tabsService.openTab('Punto de Venta (PDV)', PdvComponent);
+        this.tabsService.openTab('Punto de Venta (PDV)', PdvComponent, {}, 'pdv');
         break;
       case 'mesas':
         this.dialog.open(PdvMesaDialogComponent, {

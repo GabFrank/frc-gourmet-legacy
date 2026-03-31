@@ -246,7 +246,7 @@ interface ElectronAPI {
   cerrarVentasAbiertasMesa: (mesaId: number, estado: string) => Promise<number>;
   // Venta operations
   getVentas: () => Promise<Venta[]>;
-  getVentasByDateRange: (desde: string, hasta: string, filtros?: any) => Promise<Venta[]>;
+  getVentasByDateRange: (desde: string, hasta: string, filtros?: any) => Promise<{ data: Venta[], total: number }>;
   getVentasByEstado: (estado: VentaEstado) => Promise<Venta[]>;
   getVentasByCaja: (cajaId: number) => Promise<Venta[]>;
   getVenta: (ventaId: number) => Promise<Venta>;
@@ -1285,7 +1285,7 @@ export class RepositoryService {
     return from(this.api.getVentas());
   }
 
-  getVentasByDateRange(desde: string, hasta: string, filtros?: any): Observable<Venta[]> {
+  getVentasByDateRange(desde: string, hasta: string, filtros?: any): Observable<{ data: Venta[], total: number }> {
     return from(this.api.getVentasByDateRange(desde, hasta, filtros));
   }
 

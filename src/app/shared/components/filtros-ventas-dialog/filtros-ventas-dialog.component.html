@@ -1,0 +1,95 @@
+<h2 mat-dialog-title>FILTROS AVANZADOS</h2>
+
+<mat-dialog-content>
+  <div class="filtros-grid">
+    <!-- Mozo / Vendedor (autocomplete) -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>MOZO / VENDEDOR</mat-label>
+      <input matInput [formControl]="mozoControl" [matAutocomplete]="autoMozo" placeholder="Buscar por nombre..." />
+      <button mat-icon-button matSuffix *ngIf="selectedMozo" (click)="clearMozo()">
+        <mat-icon>close</mat-icon>
+      </button>
+      <mat-autocomplete #autoMozo="matAutocomplete" (optionSelected)="onMozoSelected($event.option.value)">
+        <mat-option *ngFor="let u of filteredUsuarios" [value]="u">
+          {{ getUsuarioNombre(u) }}
+        </mat-option>
+      </mat-autocomplete>
+    </mat-form-field>
+
+    <!-- Forma de pago (múltiple) -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>FORMA DE PAGO</mat-label>
+      <mat-select [(value)]="formasPagoIds" multiple>
+        <mat-option *ngFor="let fp of formasPago" [value]="fp.id">
+          {{ fp.nombre }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Moneda (múltiple) -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>MONEDA</mat-label>
+      <mat-select [(value)]="monedaIds" multiple>
+        <mat-option *ngFor="let m of monedas" [value]="m.id">
+          {{ m.simbolo }} {{ m.denominacion }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Rango de valores -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>MONEDA PARA RANGO DE VALORES</mat-label>
+      <mat-select [(value)]="monedaValorId">
+        <mat-option [value]="null">NINGUNA</mat-option>
+        <mat-option *ngFor="let m of monedas" [value]="m.id">
+          {{ m.simbolo }} {{ m.denominacion }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <div class="range-row" *ngIf="monedaValorId">
+      <mat-form-field appearance="outline">
+        <mat-label>VALOR MÍNIMO</mat-label>
+        <input matInput type="number" [(ngModel)]="valorMin" min="0" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>VALOR MÁXIMO</mat-label>
+        <input matInput type="number" [(ngModel)]="valorMax" min="0" />
+      </mat-form-field>
+    </div>
+
+    <!-- Mesa -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>MESA</mat-label>
+      <mat-select [(value)]="mesaId">
+        <mat-option [value]="null">TODAS</mat-option>
+        <mat-option *ngFor="let m of mesas" [value]="m.id">
+          MESA {{ m.numero }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Descuento/Aumento -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>DESCUENTO / AUMENTO</mat-label>
+      <mat-select [(value)]="tieneDescuento">
+        <mat-option value="">TODOS</mat-option>
+        <mat-option value="CON_DESCUENTO">CON DESCUENTO</mat-option>
+        <mat-option value="CON_AUMENTO">CON AUMENTO</mat-option>
+        <mat-option value="SIN_DESCUENTO">SIN DESCUENTO</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button color="warn" (click)="reset()">
+    <mat-icon>restart_alt</mat-icon>
+    RESET
+  </button>
+  <button mat-button (click)="cancelar()">CANCELAR</button>
+  <button mat-raised-button color="primary" (click)="aplicar()">
+    <mat-icon>check</mat-icon>
+    APLICAR
+  </button>
+</mat-dialog-actions>

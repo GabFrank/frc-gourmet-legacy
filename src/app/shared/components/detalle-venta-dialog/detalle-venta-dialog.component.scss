@@ -1,34 +1,167 @@
-.info-section {
+.detalle-content {
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+// Cards
+.detalle-card {
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: var(--surface-hover, rgba(255,255,255,0.04));
+
+  .detalle-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background-color: rgba(0, 0, 0, 0.12);
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      opacity: 0.7;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+    }
+  }
+
+  .detalle-card-body {
+    padding: 10px 12px;
+  }
+}
+
+// Info grid
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 24px;
 }
 
 .info-row {
   display: flex;
-  justify-content: space-between;
-  font-size: 14px;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
 }
 
-h3 {
-  font-size: 14px;
-  margin: 12px 0 8px;
-  opacity: 0.7;
+.info-label {
+  font-weight: 600;
+  color: var(--text-secondary, rgba(255,255,255,0.7));
+  min-width: 120px;
 }
 
-table {
+.descuento-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: rgba(255, 152, 0, 0.1);
+  border-radius: 4px;
+  font-size: 13px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #ff9800;
+  }
+}
+
+// Tables
+.items-table, .cobro-table {
   width: 100%;
+  font-size: 13px;
 }
 
 .total-section {
   display: flex;
-  justify-content: space-between;
-  font-size: 18px;
-  font-weight: bold;
-  margin-top: 12px;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .total-value {
+  color: var(--primary-color, #b39ddb);
+}
+
+// Estado chips
+.estado-chip {
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.estado-concluida {
+  background-color: rgba(76, 175, 80, 0.2);
   color: #4caf50;
+}
+
+.estado-cancelada {
+  background-color: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+}
+
+.estado-abierta {
+  background-color: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+}
+
+// Tipo chips
+.tipo-chip {
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.tipo-pago {
+  background-color: rgba(76, 175, 80, 0.15);
+  color: #4caf50;
+}
+
+.tipo-vuelto {
+  background-color: rgba(33, 150, 243, 0.15);
+  color: #2196f3;
+}
+
+.tipo-descuento {
+  background-color: rgba(255, 152, 0, 0.15);
+  color: #ff9800;
+}
+
+.tipo-aumento {
+  background-color: rgba(156, 39, 176, 0.15);
+  color: #9c27b0;
+}
+
+.row-cancelado {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+.cancel-info {
+  color: #f44336;
+  cursor: help;
+  font-size: 11px;
+}
+
+.no-cobro {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  opacity: 0.6;
+  font-size: 13px;
 }

@@ -1,7 +1,7 @@
-import { Component, OnInit, Inject, AfterViewInit } from '@angular/core';
+import { Component, OnInit, Inject, AfterViewInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
-import { MatStepperModule } from '@angular/material/stepper';
+import { MatStepperModule, MatStepper } from '@angular/material/stepper';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -18,9 +18,11 @@ import { MonedaBillete } from 'src/app/database/entities/financiero/moneda-bille
 import { Caja, CajaEstado } from 'src/app/database/entities/financiero/caja.entity';
 import { Conteo } from 'src/app/database/entities/financiero/conteo.entity';
 import { ConteoDetalle } from 'src/app/database/entities/financiero/conteo-detalle.entity';
-import { forkJoin, Observable, of } from 'rxjs';
+import { forkJoin, Observable, of, firstValueFrom } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import { AuthService } from 'src/app/services/auth.service';
+import { VentaEstado } from 'src/app/database/entities/ventas/venta.entity';
+import { TipoDetalle } from 'src/app/database/entities/compras/pago-detalle.entity';
 
 interface MonedaConfig {
   moneda: Moneda;
@@ -48,46 +50,57 @@ interface MonedaConfig {
   ]
 })
 export class CreateCajaDialogComponent implements OnInit, AfterViewInit {
+  @ViewChild('stepper') stepper!: MatStepper;
+
   // Form groups for each step
   cajaInfoForm!: FormGroup;
   conteoInicialForm!: FormGroup;
-  conteoCierreForm!: FormGroup; // New form for cierre
+  conteoCierreForm!: FormGroup;
   dispositivos: Dispositivo[] = [];
   monedasConfig: MonedaConfig[] = [];
   activeCurrency: MonedaConfig | null = null;
-  activeCierreCurrency: MonedaConfig | null = null; // Active currency for cierre
+  activeCierreCurrency: MonedaConfig | null = null;
   isLinear = true;
   loading = false;
   loadingDeviceInfo = false;
   detectedDispositivoId: number | null = null;
-  isViewMode = false; // New property to track if the component is in view mode
+  isViewMode = false;
 
   // Properties to replace direct function calls in template
   selectedTabIndex = 0;
-  selectedCierreTabIndex = 0; // Tab index for cierre
+  selectedCierreTabIndex = 0;
   dispositivoName = '';
   currencyTotals: { [key: number]: number } = {};
   currencyHasValues: { [key: number]: boolean } = {};
-  cierreCurrencyTotals: { [key: number]: number } = {}; // Totals for cierre
-  cierreCurrencyHasValues: { [key: number]: boolean } = {}; // Has values for cierre
+  cierreCurrencyTotals: { [key: number]: number } = {};
+  cierreCurrencyHasValues: { [key: number]: boolean } = {};
   billeteValues: { [key: number]: number } = {};
   previousTabIndex = 0;
 
-  // Add field to store billete values across tab changes
   billeteValuesStore: { [key: string]: number } = {};
-  cierreBilleteValuesStore: { [key: string]: number } = {}; // Store for cierre values
+  cierreBilleteValuesStore: { [key: string]: number } = {};
 
-  // Mode of operation ('create' or 'conteo')
+  // Mode of operation
   dialogMode: 'create' | 'conteo' = 'create';
   dialogTitle = 'Abrir nueva caja';
   existingCaja: Caja | null = null;
   existingConteo: Conteo | null = null;
-  existingConteoCierre: Conteo | null = null; // New property for conteo cierre
+  existingConteoCierre: Conteo | null = null;
   conteoDetalles: ConteoDetalle[] = [];
-  conteoCierreDetalles: ConteoDetalle[] = []; // New property for conteo cierre details
+  conteoCierreDetalles: ConteoDetalle[] = [];
 
-  // Add a property to store the excluded dispositivo ID
   excludeDispositivoId: number | null = null;
+
+  // Cierre summary
+  cierreCompleted = false;
+  ventasSummary: {
+    cantidadVentas: number;
+    totalPorFormaPago: { formaPago: string; monedaSimbolo: string; monedaId: number; total: number }[];
+    totalPorMoneda: { monedaId: number; monedaSimbolo: string; total: number }[];
+    efectivoPorMoneda: { [monedaId: number]: number };
+  } | null = null;
+  expectedByMoneda: { [monedaId: number]: number } = {};
+  differenceByCurrency: { [monedaId: number]: number } = {};
 
   constructor(
     private dialogRef: MatDialogRef<CreateCajaDialogComponent>,
@@ -596,10 +609,109 @@ export class CreateCajaDialogComponent implements OnInit, AfterViewInit {
       this.cierreCurrencyTotals[monedaConfig.moneda.id] = total;
       this.cierreCurrencyHasValues[monedaConfig.moneda.id] = hasValues;
     }
+
+    this.updateDifferenceCalculation();
   }
 
   onCancel(): void {
     this.dialogRef.close();
+  }
+
+  closeFinalDialog(): void {
+    this.dialogRef.close({ success: true, message: 'CAJA CERRADA CORRECTAMENTE' });
+  }
+
+  private navigateToCierreStep(): void {
+    if (this.dialogMode !== 'conteo' || !this.stepper) return;
+    this.isLinear = false;
+    setTimeout(() => {
+      // Mark apertura step as completed so SIGUIENTE works from cierre step
+      this.stepper.steps.toArray().forEach((step, i) => {
+        if (i < 1) {
+          step.completed = true;
+          step.editable = true;
+        }
+      });
+      // Cierre step is now index 1 (was 2 before removing dispositivo step)
+      this.stepper.selectedIndex = 1;
+    }, 0);
+  }
+
+  private async loadVentasSummary(cajaId: number): Promise<void> {
+    try {
+      const ventas = await firstValueFrom(this.repositoryService.getVentasByCaja(cajaId));
+      const ventasConcluidas = ventas.filter(v => v.estado === VentaEstado.CONCLUIDA);
+
+      const totalPorFormaPagoMap: { [key: string]: { formaPago: string; monedaSimbolo: string; monedaId: number; total: number } } = {};
+      const totalPorMonedaMap: { [key: string]: { monedaId: number; monedaSimbolo: string; total: number } } = {};
+      const efectivoPorMoneda: { [monedaId: number]: number } = {};
+
+      for (const venta of ventasConcluidas) {
+        if (venta.pago && venta.pago.id) {
+          const detalles = await firstValueFrom(this.repositoryService.getPagoDetalles(venta.pago.id));
+          for (const detalle of detalles) {
+            if (!detalle.moneda || !detalle.formaPago) continue;
+            const monedaId = detalle.moneda.id;
+            const monedaSimbolo = detalle.moneda.simbolo || '';
+
+            if (detalle.tipo === TipoDetalle.PAGO) {
+              // Por forma de pago
+              const fpKey = `${detalle.formaPago.nombre}_${monedaId}`;
+              if (!totalPorFormaPagoMap[fpKey]) {
+                totalPorFormaPagoMap[fpKey] = { formaPago: detalle.formaPago.nombre, monedaSimbolo, monedaId, total: 0 };
+              }
+              totalPorFormaPagoMap[fpKey].total += detalle.valor || 0;
+
+              // Por moneda
+              const mKey = `${monedaId}`;
+              if (!totalPorMonedaMap[mKey]) {
+                totalPorMonedaMap[mKey] = { monedaId, monedaSimbolo, total: 0 };
+              }
+              totalPorMonedaMap[mKey].total += detalle.valor || 0;
+
+              // Efectivo por moneda (solo formas que movimentan caja)
+              if (detalle.formaPago.movimentaCaja) {
+                efectivoPorMoneda[monedaId] = (efectivoPorMoneda[monedaId] || 0) + (detalle.valor || 0);
+              }
+            } else if (detalle.tipo === TipoDetalle.VUELTO) {
+              // Restar vueltos del total por moneda y efectivo
+              const mKey = `${monedaId}`;
+              if (!totalPorMonedaMap[mKey]) {
+                totalPorMonedaMap[mKey] = { monedaId, monedaSimbolo, total: 0 };
+              }
+              totalPorMonedaMap[mKey].total -= detalle.valor || 0;
+
+              if (detalle.formaPago?.movimentaCaja) {
+                efectivoPorMoneda[monedaId] = (efectivoPorMoneda[monedaId] || 0) - (detalle.valor || 0);
+              }
+            }
+          }
+        }
+      }
+
+      this.ventasSummary = {
+        cantidadVentas: ventasConcluidas.length,
+        totalPorFormaPago: Object.values(totalPorFormaPagoMap),
+        totalPorMoneda: Object.values(totalPorMonedaMap),
+        efectivoPorMoneda,
+      };
+
+      this.updateDifferenceCalculation();
+    } catch (error) {
+      console.error('Error loading ventas summary:', error);
+    }
+  }
+
+  updateDifferenceCalculation(): void {
+    // Esperado = apertura + ventas en efectivo (movimenta caja)
+    // Diferencia = cierre - esperado
+    for (const monedaConfig of this.monedasConfig) {
+      const monedaId = monedaConfig.moneda.id;
+      const apertura = this.currencyTotals[monedaId] || 0;
+      const ventasEfectivo = this.ventasSummary?.efectivoPorMoneda[monedaId] || 0;
+      this.expectedByMoneda[monedaId] = apertura + ventasEfectivo;
+      this.differenceByCurrency[monedaId] = (this.cierreCurrencyTotals[monedaId] || 0) - this.expectedByMoneda[monedaId];
+    }
   }
 
   onSubmit(): void {
@@ -1141,10 +1253,7 @@ export class CreateCajaDialogComponent implements OnInit, AfterViewInit {
         forkJoin(updateObservables).subscribe(
                 () => {
                   this.loading = false;
-                  this.dialogRef.close({
-                    success: true,
-              message: 'CONTEO ACTUALIZADO CORRECTAMENTE'
-                  });
+                  this.cierreCompleted = true;
                 },
           (error: any) => {
             console.error('Error updating conteo detalles:', error);
@@ -1158,10 +1267,7 @@ export class CreateCajaDialogComponent implements OnInit, AfterViewInit {
             } else {
         // No changes needed
               this.loading = false;
-              this.dialogRef.close({
-                success: true,
-          message: 'NO SE REALIZARON CAMBIOS'
-              });
+              this.cierreCompleted = true;
             }
     }, error => {
       console.error('Error creating conteo cierre:', error);
@@ -1209,8 +1315,12 @@ export class CreateCajaDialogComponent implements OnInit, AfterViewInit {
                   this.activeCierreCurrency = this.monedasConfig[0];
                   this.initConteoCierreFields();
                 }
+                this.navigateToCierreStep();
               }, 500);
             }
+
+            // Load ventas summary for cierre resumen
+            this.loadVentasSummary(cajaId);
       },
       error => {
             console.error('Error loading dispositivos:', error);

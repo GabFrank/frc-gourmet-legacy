@@ -44,7 +44,6 @@ import { PdvGrupoCategoria } from 'src/app/database/entities/ventas/pdv-grupo-ca
 import { CobrarVentaDialogComponent, CobrarVentaDialogData } from 'src/app/shared/components/cobrar-venta-dialog/cobrar-venta-dialog.component';
 import { CancelarVentaDialogComponent } from 'src/app/shared/components/cancelar-venta-dialog/cancelar-venta-dialog.component';
 import { EditVentaItemDialogComponent } from 'src/app/shared/components/edit-venta-item-dialog/edit-venta-item-dialog.component';
-import { CierreCajaDialogComponent } from 'src/app/shared/components/cierre-caja-dialog/cierre-caja-dialog.component';
 import { TransferirMesaDialogComponent } from 'src/app/shared/components/transferir-mesa-dialog/transferir-mesa-dialog.component';
 import { BuscarClienteDialogComponent } from 'src/app/shared/components/buscar-cliente-dialog/buscar-cliente-dialog.component';
 import { DescuentoDialogComponent } from 'src/app/shared/components/descuento-dialog/descuento-dialog.component';
@@ -215,14 +214,18 @@ export class PdvComponent implements OnInit, OnDestroy {
         dialogRef.afterClosed().subscribe(result => {
           if (result) {
             // open create caja dialog
-            this.dialog.open(CreateCajaDialogComponent, {
+            const cajaDialogRef = this.dialog.open(CreateCajaDialogComponent, {
               width: '80vw',
               height: '80vh',
               disableClose: true
             });
-            dialogRef.afterClosed().subscribe(result => {
-              if (result) {
-                this.loadInitialData();
+            cajaDialogRef.afterClosed().subscribe(async (cajaResult) => {
+              if (cajaResult?.success) {
+                // Recargar la caja abierta
+                this.caja = await firstValueFrom(this.repositoryService.getCajaAbiertaByUsuario(this.authService.currentUser!.id));
+                if (this.caja) {
+                  this.loadInitialData();
+                }
               } else {
                 // close tab
                 this.tabsService.removeTabById('pdv');
@@ -1093,6 +1096,7 @@ export class PdvComponent implements OnInit, OnDestroy {
         estado: VentaEstado.CONCLUIDA,
         formaPago: fpPrincipal,
         pago,
+        fechaCierre: new Date(),
       }));
 
       if (this.selectedMesa) {
@@ -1115,12 +1119,33 @@ export class PdvComponent implements OnInit, OnDestroy {
     }
   }
 
-  cerrarCaja(): void {
-    const dialogRef = this.dialog.open(CierreCajaDialogComponent, {
+  async cerrarCaja(): Promise<void> {
+    if (!this.caja) return;
+
+    // Verificar ventas abiertas
+    const ventas = await firstValueFrom(this.repositoryService.getVentasByCaja(this.caja.id));
+    const ventasAbiertas = ventas.filter(v => v.estado === VentaEstado.ABIERTA);
+
+    if (ventasAbiertas.length > 0) {
+      const listaVentas = ventasAbiertas.map(v => `• Venta #${v.id} - ${v.nombreCliente || 'Sin cliente'}`).join('\n');
+      this.dialog.open(ConfirmationDialogComponent, {
+        width: '400px',
+        data: {
+          title: 'NO SE PUEDE CERRAR LA CAJA',
+          message: `Hay ${ventasAbiertas.length} venta(s) abierta(s). Debe cerrar o cancelar todas las ventas antes de cerrar la caja.\n\n${listaVentas}`,
+          confirmText: 'ENTENDIDO',
+          showCancel: false
+        },
+      });
+      return;
+    }
+
+    // Abrir diálogo de cierre con conteo de billetes (mismo componente que apertura)
+    const dialogRef = this.dialog.open(CreateCajaDialogComponent, {
       width: '80vw',
       height: '80vh',
       disableClose: true,
-      data: { caja: this.caja, monedas: this.filteredMonedas.length > 0 ? this.filteredMonedas : this.monedas },
+      data: { mode: 'conteo', cajaId: this.caja.id },
     });
 
     dialogRef.afterClosed().subscribe(result => {
