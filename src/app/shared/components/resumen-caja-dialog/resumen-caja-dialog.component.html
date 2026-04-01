@@ -1,0 +1,150 @@
+<h2 mat-dialog-title>RESUMEN DE CAJA #{{ data.cajaId }}</h2>
+
+<mat-dialog-content class="resumen-content">
+  <div *ngIf="loading" class="loading-state">Cargando resumen...</div>
+
+  <div *ngIf="!loading && resumen" class="cards-container">
+    <!-- Card: Información General -->
+    <div class="resumen-card">
+      <div class="resumen-card-header">
+        <mat-icon>info</mat-icon>
+        <h3>INFORMACIÓN GENERAL</h3>
+      </div>
+      <div class="resumen-card-body">
+        <div class="info-grid">
+          <div class="info-row">
+            <span class="info-label">CAJERO:</span>
+            <span>{{ resumen.caja.createdBy?.persona?.nombre || '-' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">DISPOSITIVO:</span>
+            <span>{{ resumen.caja.dispositivo?.nombre || '-' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">APERTURA:</span>
+            <span>{{ resumen.caja.fechaApertura | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">CIERRE:</span>
+            <span>{{ resumen.caja.fechaCierre ? (resumen.caja.fechaCierre | date:'dd/MM/yyyy HH:mm') : '-' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">DURACIÓN:</span>
+            <span>{{ duracion }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">ESTADO:</span>
+            <span class="estado-chip"
+              [class.estado-abierto]="resumen.caja.estado === 'ABIERTO'"
+              [class.estado-cerrado]="resumen.caja.estado === 'CERRADO'"
+              [class.estado-cancelado]="resumen.caja.estado === 'CANCELADO'">
+              {{ resumen.caja.estado }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Conteo Apertura -->
+    <div class="resumen-card" *ngIf="resumen.conteoApertura.length > 0">
+      <div class="resumen-card-header">
+        <mat-icon>lock_open</mat-icon>
+        <h3>CONTEO APERTURA</h3>
+      </div>
+      <div class="resumen-card-body">
+        <div class="resumen-row" *ngFor="let c of resumen.conteoApertura">
+          <span>{{ c.monedaDenominacion }}:</span>
+          <span>{{ c.monedaSimbolo }} {{ c.total | number:'1.0-2' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Conteo Cierre -->
+    <div class="resumen-card" *ngIf="resumen.conteoCierre.length > 0">
+      <div class="resumen-card-header">
+        <mat-icon>lock</mat-icon>
+        <h3>CONTEO CIERRE</h3>
+      </div>
+      <div class="resumen-card-body">
+        <div class="resumen-row" *ngFor="let c of resumen.conteoCierre">
+          <span>{{ c.monedaDenominacion }}:</span>
+          <span>{{ c.monedaSimbolo }} {{ c.total | number:'1.0-2' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Ventas -->
+    <div class="resumen-card">
+      <div class="resumen-card-header">
+        <mat-icon>receipt_long</mat-icon>
+        <h3>VENTAS ({{ resumen.cantidadVentas }})</h3>
+      </div>
+      <div class="resumen-card-body">
+        <div class="resumen-row" *ngFor="let v of resumen.ventasPorFormaPago">
+          <span>{{ v.formaPago }}:</span>
+          <span>{{ v.monedaSimbolo }} {{ v.total | number:'1.0-2' }}</span>
+        </div>
+        <div class="resumen-row resumen-row-total" *ngFor="let t of resumen.ventasTotalPorMoneda">
+          <span>TOTAL {{ t.monedaSimbolo }}:</span>
+          <span class="total-value">{{ t.monedaSimbolo }} {{ t.total | number:'1.0-2' }}</span>
+        </div>
+        <div *ngIf="resumen.cantidadVentas === 0" class="placeholder-text">SIN VENTAS REGISTRADAS</div>
+      </div>
+    </div>
+
+    <!-- Card: Retiros -->
+    <div class="resumen-card">
+      <div class="resumen-card-header">
+        <mat-icon>money_off</mat-icon>
+        <h3>RETIROS DE EFECTIVO</h3>
+      </div>
+      <div class="resumen-card-body">
+        <div class="placeholder-text">SIN RETIROS REGISTRADOS</div>
+      </div>
+    </div>
+
+    <!-- Card: Gastos -->
+    <div class="resumen-card">
+      <div class="resumen-card-header">
+        <mat-icon>shopping_cart</mat-icon>
+        <h3>GASTOS</h3>
+      </div>
+      <div class="resumen-card-body">
+        <div class="placeholder-text">SIN GASTOS REGISTRADOS</div>
+      </div>
+    </div>
+
+    <!-- Card: Diferencias -->
+    <div class="resumen-card resumen-card-diferencia" *ngIf="resumen.conteoCierre.length > 0">
+      <div class="resumen-card-header">
+        <mat-icon>compare_arrows</mat-icon>
+        <h3>DIFERENCIAS</h3>
+      </div>
+      <div class="resumen-card-body">
+        <ng-container *ngFor="let c of resumen.conteoCierre">
+          <div class="diferencia-block">
+            <div class="diferencia-moneda">{{ c.monedaDenominacion }}</div>
+            <div class="diferencia-detail-row">
+              <span class="detail-label">Esperado:</span>
+              <span>{{ c.monedaSimbolo }} {{ resumen.esperadoPorMoneda[c.monedaId] | number:'1.0-2' }}</span>
+            </div>
+            <div class="diferencia-detail-row">
+              <span class="detail-label">Contado:</span>
+              <span>{{ c.monedaSimbolo }} {{ c.total | number:'1.0-2' }}</span>
+            </div>
+            <div class="diferencia-detail-row diferencia-resultado" [ngClass]="getDiferenciaClass(c.monedaId)">
+              <span class="detail-label">Diferencia:</span>
+              <span>
+                {{ resumen.diferenciaPorMoneda[c.monedaId] >= 0 ? '+' : '' }}{{ resumen.diferenciaPorMoneda[c.monedaId] | number:'1.0-2' }}
+              </span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-raised-button (click)="cerrar()">CERRAR</button>
+</mat-dialog-actions>

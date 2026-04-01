@@ -333,34 +333,88 @@ Marcar `[x]` cuando el test pase, `[!]` si falla (registrar en `ERRORES-PDV.md`)
 ## 14. Historial de Ventas
 
 ### 14.1 Acceso
-- [ ] Dashboard → click "Listado Ventas" → abre tab historial
+- [x] Dashboard → click "Listado Ventas" → abre tab historial
 
-### 14.2 Filtros
-- [ ] Rangos rápidos: HOY, ESTA SEMANA, ESTE MES, ÚLTIMO TRIMESTRE
-- [ ] Click en rango → recarga datos
-- [ ] Selector de fecha DESDE y HASTA con datepicker
-- [ ] Filtro por estado (ABIERTA, CONCLUIDA, CANCELADA)
-- [ ] Botón FILTRAR → aplica filtros
+### 14.2 Filtros básicos
+- [x] Rangos rápidos: HOY, ESTA SEMANA, ESTE MES, ÚLTIMO TRIMESTRE
+- [x] Click en rango → recarga datos
+- [x] Selector de fecha DESDE y HASTA con datepicker
+- [x] Filtro por estado (ABIERTA, CONCLUIDA, CANCELADA)
+- [x] Filtro por caja (select con últimas 20 cajas, deshabilita fechas al seleccionar)
+- [x] Botón FILTRAR → aplica filtros
+- [x] Botón RESET → limpia todos los filtros
 
-### 14.3 Tabla de ventas
-- [ ] Columnas: fecha, mesa, cajero, estado, forma pago, total
-- [ ] Estado con chip de color (verde=CONCLUIDA, rojo=CANCELADA)
-- [ ] Menú acciones → "VER DETALLE"
+### 14.3 Filtros avanzados
+- [x] Botón AVANZADOS abre diálogo con badge de filtros activos
+- [x] Mozo/vendedor con autocomplete
+- [x] Forma de pago (selección múltiple)
+- [x] Moneda (selección múltiple)
+- [x] Rango de valores (habilitado al seleccionar moneda)
+- [x] Mesa (select)
+- [x] Descuento/aumento (CON DESCUENTO, CON AUMENTO, SIN DESCUENTO)
+- [x] Estado de filtros se mantiene al abrir/cerrar diálogo
+- [x] Botón RESET dentro del diálogo limpia filtros avanzados
 
-### 14.4 Detalle de venta
-- [ ] Diálogo muestra: fecha, estado, mesa, cliente, forma pago
-- [ ] Si tiene descuento → muestra info de descuento
-- [ ] Tabla de items con producto, cantidad, precio, total, estado
-- [ ] Total general calculado correctamente
+### 14.4 Tabla de ventas
+- [x] Columnas: fecha, mesa, cajero, estado, total, duración, acciones
+- [x] Estado con chip de color (verde=CONCLUIDA, rojo=CANCELADA, naranja=ABIERTA)
+- [x] Paginación con mat-paginator (25, 50, 100)
+- [x] Textos centrados en tabla
+- [x] Filas canceladas con opacidad reducida
+- [x] Menú acciones: ver detalle, cancelar venta, rehabilitar venta
+
+### 14.5 Detalle de venta
+- [x] Diálogo 80vw x 80vh con cards separadas
+- [x] Card Info General: fecha apertura, cierre, duración, estado, mesa, cliente, cajero
+- [x] Card Items: tabla con mozo por item, descuento, estado, info de cancelación con tooltip
+- [x] Card Detalle de Cobro: líneas de pago con moneda, forma pago, valor, tipo (PAGO/VUELTO/DESCUENTO/AUMENTO), observación
+- [x] Descuento global de venta se muestra si existe
+- [x] Total items calculado correctamente
 
 ---
 
-## 15. Precios de Delivery
+## 15. Lista de Cajas (Financiero)
 
 ### 15.1 Acceso
+- [x] Financiero Dashboard → click "Cajas" → abre tab
+
+### 15.2 Tabla
+- [x] Columnas: ID, cajero, apertura, cierre, estado, total ventas, salud, acciones
+- [x] Estado con chip de color (verde=ABIERTO, gris=CERRADO, rojo=CANCELADO)
+- [x] Total ventas en moneda principal
+- [x] Indicador de salud: verde (≤5%), amarillo (5-15%), rojo (>15%), gris (sin cierre)
+- [x] Tooltip en indicador muestra diferencia % y monto
+- [x] Click en fila abre resumen de caja
+
+### 15.3 Filtros
+- [x] Filtro por ID de caja
+- [x] Filtro por cajero con autocomplete
+- [x] Rango de fechas (apertura/cierre toggle)
+- [x] Botón limpiar filtros
+
+### 15.4 Resumen de caja (diálogo)
+- [x] Card Información General: cajero, dispositivo, apertura, cierre, duración, estado
+- [x] Card Conteo Apertura: total por moneda
+- [x] Card Conteo Cierre: total por moneda
+- [x] Card Ventas: cantidad, por forma de pago, total por moneda
+- [x] Card Retiros de Efectivo (placeholder)
+- [x] Card Gastos (placeholder)
+- [x] Card Diferencias: esperado vs contado con colores según umbrales
+
+### 15.5 Acciones
+- [x] Ver resumen
+- [x] Ir a conteo
+- [x] Abrir nueva caja (con verificación de caja existente)
+- [ ] Cancelar caja (TODO — pendiente implementar)
+
+---
+
+## 16. Precios de Delivery
+
+### 16.1 Acceso
 - [ ] Dashboard → click "Precios Delivery" → abre tab
 
-### 15.2 ABM
+### 16.2 ABM
 - [ ] Tabla muestra precios existentes: descripción, valor, estado
 - [ ] Botón "NUEVO PRECIO" → abre diálogo de crear
 - [ ] Formulario: descripción, valor, activo (toggle)

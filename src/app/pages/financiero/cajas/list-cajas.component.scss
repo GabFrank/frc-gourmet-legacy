@@ -1,5 +1,5 @@
 .page-container {
-  padding: 20px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -9,186 +9,112 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 
-  h1 {
-    margin: 0;
-    font-size: 24px;
-    font-weight: 500;
-  }
+  h2 { margin: 0; }
 
   .actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
+    align-items: center;
   }
 }
 
 .filters-container {
-  background-color: rgba(0, 0, 0, 0.03);
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 12px;
 
   .filter-row {
     display: flex;
+    gap: 10px;
+    align-items: center;
     flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 16px;
-    align-items: flex-start;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-
-    mat-form-field {
-      flex: 1;
-      min-width: 150px;
-    }
-
-    .id-field {
-      max-width: 100px;
-      flex: 0 0 auto;
-    }
-
-    .usuario-field {
-      flex: 2;
-      min-width: 250px;
-    }
-
-    .filter-button {
-      align-self: center;
-      height: 48px;
-    }
   }
 
-  .date-filters-row {
-    .date-container {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: flex-end;
-      gap: 10px;
-      flex: 1;
-    }
+  .id-field {
+    max-width: 80px;
+  }
 
-    .date-field {
-      min-width: 260px;
-      flex: 1;
-    }
+  .usuario-field {
+    min-width: 200px;
+    flex: 1;
+  }
 
-    .date-toggle-container {
-      display: flex;
-      align-items: center;
-      margin-bottom: 20px;
+  .date-field {
+    min-width: 220px;
+  }
 
-      .toggle-label {
-        margin-right: 8px;
-        color: rgba(0, 0, 0, 0.6);
-        font-size: 12px;
-        white-space: nowrap;
-      }
-
-      .date-toggle {
-        height: 36px;
-
-        &.compact {
-          transform: scale(0.9);
-          margin-left: -8px;
-        }
-      }
-    }
+  .date-toggle {
+    height: 36px;
+    font-size: 11px;
   }
 }
 
-.table-container {
-  flex: 1;
-  overflow: auto;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  background-color: var(--mat-table-background-color);
+.cajas-table {
+  width: 100%;
 
-  .loading-message, .error-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-    color: rgba(0, 0, 0, 0.6);
-  }
-
-  table {
-    width: 100%;
-  }
-
-  .mat-column-id {
-    width: 80px;
-  }
-
-  .mat-column-actions {
-    width: 100px;
+  th.mat-mdc-header-cell,
+  td.mat-mdc-cell {
     text-align: center;
   }
+}
 
-  .mat-column-estado {
-    width: 120px;
+.clickable-row {
+  cursor: pointer;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.04);
   }
 }
 
-/* Dark theme adjustments */
-:host-context(.dark-theme) {
-  .filters-container {
-    background-color: rgba(255, 255, 255, 0.05);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-
-    .date-toggle-container {
-      .toggle-label {
-        color: rgba(255, 255, 255, 0.7);
-      }
-    }
-  }
-
-  .table-container {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-
-    .loading-message, .error-container {
-      color: rgba(255, 255, 255, 0.7);
-    }
-  }
-
-  .mat-button-toggle-group {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
+// Estado chips
+.estado-chip {
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
 }
 
-.mat-mdc-row:hover {
-  background-color: rgba(0, 0, 0, 0.04);
+.estado-abierto {
+  background-color: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
 }
 
-:host-context(.dark-theme) .mat-mdc-row:hover {
-  background-color: rgba(255, 255, 255, 0.04);
+.estado-cerrado {
+  background-color: rgba(158, 158, 158, 0.2);
+  color: #9e9e9e;
 }
 
-@media (max-width: 768px) {
-  .filters-container {
-    .filter-row {
-      flex-direction: column;
+.estado-cancelado {
+  background-color: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+}
 
-      .id-field, .usuario-field {
-        max-width: 100%;
-        width: 100%;
-      }
+// Salud indicator
+.salud-indicator {
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
 
-      .filter-button {
-        align-self: flex-end;
-      }
-    }
-
-    .date-filters-row {
-      .date-container {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-    }
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
   }
 }
 
+.salud-green mat-icon { color: #4caf50; }
+.salud-yellow mat-icon { color: #ff9800; }
+.salud-red mat-icon { color: #f44336; }
+.salud-gray mat-icon { color: #9e9e9e; }
+
+.loading-state {
+  text-align: center;
+  padding: 40px;
+  opacity: 0.7;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  opacity: 0.7;
+}

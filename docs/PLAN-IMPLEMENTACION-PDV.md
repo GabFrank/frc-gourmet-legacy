@@ -93,18 +93,28 @@ Panel derecho (bajo las mesas):
 
 ### 1.6 Cierre de caja
 
-Componente: `cerrar-caja-dialog.component.ts`
+Componente: reutiliza `create-caja-dialog.component.ts` en modo conteo
 
-- [x] Verificar que no haya ventas abiertas en la caja (obligar a cerrar/cancelar primero)
-- [x] Formulario de conteo final por moneda (campo para cada denominacion)
-- [x] Mostrar resumen:
-  - Monto de apertura por moneda
-  - Total de ventas por moneda
-  - Total esperado (apertura + ventas)
-  - Total contado (ingresado por usuario)
-  - Diferencia (sobrante/faltante)
-- [x] Al confirmar: actualizar estado de caja a CERRADO, registrar fecha de cierre
-- [x] Accesible desde: boton en el PdV y desde el dashboard de ventas
+- [x] Verificar que no haya ventas abiertas (alerta simple si hay)
+- [x] Dispositivo en header (auto-detectado), no como step
+- [x] Skip directo al step de conteo cierre
+- [x] Conteo por denominacion y moneda (tabs por moneda)
+- [x] Resumen pre-cierre: ventas por forma de pago, conteo apertura/cierre (sin diferencia para seguridad)
+- [x] Resumen post-cierre: diferencias con colores (verde/amarillo/rojo segun umbrales)
+- [x] Umbrales configurables en PdvConfig (umbralDiferenciaBaja, umbralDiferenciaAlta)
+- [x] Al confirmar: caja pasa a CERRADO, tab PdV se cierra
+
+### 1.6.1 Lista de cajas (Financiero)
+
+Componente: `list-cajas.component.ts`
+
+- [x] Tabla: ID, cajero, apertura, cierre, estado, total ventas (moneda principal), indicador salud
+- [x] Indicador salud: verde (≤5%), amarillo (5-15%), rojo (>15%), gris (sin cierre)
+- [x] Filtros: ID, cajero autocomplete, rango fechas (apertura/cierre toggle)
+- [x] Click en fila abre dialogo resumen de caja
+- [x] Dialogo resumen: cards (info general, conteo apertura, conteo cierre, ventas por forma pago, retiros placeholder, gastos placeholder, diferencias)
+- [x] Acciones: ver resumen, ir a conteo, abrir caja
+- [ ] Cancelar caja (TODO — cancela ventas, cobros, movimientos de stock)
 
 ### 1.7 Venta rapida (sin mesa)
 
@@ -222,36 +232,39 @@ Componente: `list-ventas.component.ts`
 - [ ] Accion: reimprimir ticket (pendiente: impresion de tickets 2.3)
 - [x] Accesible desde dashboard de ventas
 
-**Mejoras pendientes:**
+**Mejoras implementadas:**
 
 Entidad:
-- [ ] Agregar campo `fechaCierre` (datetime, nullable) a Venta — se setea al finalizar cobro, permite calcular tiempo de permanencia del cliente
+- [x] Campo `fechaCierre` (datetime, nullable) en Venta — se setea al finalizar cobro y cobro rapido
 
 Paginacion:
-- [ ] Implementar paginacion en handler `getVentasByDateRange` (limit/offset) y en frontend con mat-paginator
+- [x] Handler `getVentasByDateRange` con paginacion (limit/offset) y frontend con mat-paginator (25/50/100)
 
 Columnas de la tabla:
-- [ ] Remover columna forma de pago (puede ser multi-pago)
-- [ ] Chip de estado: rojo=CANCELADA, verde=CONCLUIDA, naranja=ABIERTA
-- [ ] Agregar columna duracion (fechaCierre - createdAt) cuando exista fechaCierre
-- [ ] Acciones: ver detalle, cancelar/rehabilitar venta (requiere admin, funciona con caja cerrada)
+- [x] Removida columna forma de pago (puede ser multi-pago)
+- [x] Chip de estado: rojo=CANCELADA, verde=CONCLUIDA, naranja=ABIERTA
+- [x] Columna duracion (fechaCierre - createdAt)
+- [x] Acciones: ver detalle, cancelar/rehabilitar venta
 
 Filtros basicos (header visible):
-- [ ] Rango de fechas (HOY, SEMANA, MES, TRIMESTRE + datepickers)
-- [ ] Estado (select)
-- [ ] Caja: select con ultimas 20 cajas (#ID - DISPOSITIVO - FECHA - CAJERO), al seleccionar deshabilita filtros de fecha
+- [x] Rango de fechas (HOY, SEMANA, MES, TRIMESTRE + datepickers)
+- [x] Estado (select)
+- [x] Caja: select con ultimas 20 cajas (#ID - DISPOSITIVO - FECHA - CAJERO), al seleccionar deshabilita fechas
+- [x] Boton RESET para limpiar todos los filtros
 
-Filtros avanzados (seccion expandible "FILTROS AVANZADOS"):
-- [ ] Mozo/vendedor: select de usuarios, filtra ventas donde el usuario creo al menos un venta_item
-- [ ] Forma de pago: seleccion multiple (una venta puede tener varias formas de pago)
-- [ ] Moneda: seleccion multiple
-- [ ] Rango de valores: min/max, habilitado al seleccionar una moneda especifica
-- [ ] Mesa: select de mesas
-- [ ] Descuento/aumento: select (CON DESCUENTO, CON AUMENTO, SIN DESCUENTO)
+Filtros avanzados (dialogo con estado persistente):
+- [x] Mozo/vendedor: autocomplete de usuarios
+- [x] Forma de pago: seleccion multiple
+- [x] Moneda: seleccion multiple
+- [x] Rango de valores: min/max, habilitado al seleccionar moneda
+- [x] Mesa: select de mesas
+- [x] Descuento/aumento: select (CON DESCUENTO, CON AUMENTO, SIN DESCUENTO)
+- [x] Badge con cantidad de filtros activos
 
-Detalle de venta (dialogo):
-- [ ] Seccion detalle de cobro: moneda, forma de pago, valor por linea de pago, descuento general, aumento
-- [ ] Mozo que adiciono cada item (ventaItem.createdBy)
+Detalle de venta (dialogo 80vw x 80vh con cards):
+- [x] Card info general: apertura, cierre, duracion, estado, mesa, cliente, cajero
+- [x] Card items: mozo por item, descuento, cancelacion con tooltip
+- [x] Card detalle de cobro: lineas de pago con moneda, forma pago, valor, tipo, observacion
 - [ ] Items cancelados: mostrar motivo de cancelacion
 - [ ] Tiempo de permanencia: createdAt → fechaCierre
 

@@ -1425,6 +1425,12 @@ contextBridge.exposeInMainWorld('api', {
   getVentasByCaja: async (cajaId: number): Promise<Venta[]> => {
     return await ipcRenderer.invoke('getVentasByCaja', cajaId);
   },
+  getResumenCaja: async (cajaId: number): Promise<any> => {
+    return await ipcRenderer.invoke('getResumenCaja', cajaId);
+  },
+  getVentasTotalByCaja: async (cajaId: number): Promise<any[]> => {
+    return await ipcRenderer.invoke('getVentasTotalByCaja', cajaId);
+  },
   getVentasByEstado: async (estado: VentaEstado): Promise<Venta[]> => {
     return await ipcRenderer.invoke('getVentasByEstado', estado);
   },

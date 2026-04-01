@@ -1,184 +1,135 @@
 <div class="page-container">
   <div class="header-container">
-    <h1>Cajas</h1>
+    <h2>CAJAS</h2>
     <div class="actions">
       <button mat-raised-button color="primary" (click)="openCaja()">
-        <mat-icon>add</mat-icon> Abrir Caja
+        <mat-icon>add</mat-icon> ABRIR CAJA
       </button>
-      <button mat-raised-button color="warn" (click)="clearFilters()">
-        <mat-icon>clear</mat-icon> Limpiar Filtros
+      <button mat-icon-button matTooltip="LIMPIAR FILTROS" (click)="clearFilters()">
+        <mat-icon>restart_alt</mat-icon>
       </button>
     </div>
   </div>
 
-  <div class="filters-container" [formGroup]="filterForm" style="flex-direction: row;">
+  <!-- Filtros -->
+  <div class="filters-container" [formGroup]="filterForm">
     <div class="filter-row">
       <mat-form-field appearance="outline" class="id-field">
-        <mat-label>ID Caja</mat-label>
-        <input matInput formControlName="cajaId" placeholder="Buscar por ID" />
+        <mat-label>ID</mat-label>
+        <input matInput formControlName="cajaId" placeholder="ID" />
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="usuario-field">
-        <mat-label>Usuario</mat-label>
-        <input
-          matInput
-          formControlName="usuario"
-          placeholder="Buscar por usuario"
-          [matAutocomplete]="usuarioAuto"
-        />
-        <mat-autocomplete
-          #usuarioAuto="matAutocomplete"
-          [displayWith]="displayUsuario"
-        >
-          <mat-option
-            *ngFor="let usuario of filteredUsuarios | async"
-            [value]="usuario"
-          >
-            {{ usuario.persona?.nombre }} ({{ usuario.nickname }})
+        <mat-label>CAJERO</mat-label>
+        <input matInput formControlName="usuario" [matAutocomplete]="usuarioAuto" placeholder="Buscar..." />
+        <mat-autocomplete #usuarioAuto="matAutocomplete" [displayWith]="displayUsuario">
+          <mat-option *ngFor="let u of filteredUsuarios | async" [value]="u">
+            {{ u.persona?.nombre }} ({{ u.nickname }})
           </mat-option>
         </mat-autocomplete>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="date-field">
-        <mat-label>Rango de fechas</mat-label>
+        <mat-label>RANGO DE FECHAS</mat-label>
         <mat-date-range-input [rangePicker]="rangePicker">
-          <input
-            matStartDate
-            formControlName="fechaInicio"
-            placeholder="Fecha inicial"
-          />
-          <input
-            matEndDate
-            formControlName="fechaFin"
-            placeholder="Fecha final"
-          />
+          <input matStartDate formControlName="fechaInicio" placeholder="Desde" />
+          <input matEndDate formControlName="fechaFin" placeholder="Hasta" />
         </mat-date-range-input>
-        <mat-datepicker-toggle
-          matSuffix
-          [for]="rangePicker"
-        ></mat-datepicker-toggle>
+        <mat-datepicker-toggle matSuffix [for]="rangePicker"></mat-datepicker-toggle>
         <mat-date-range-picker #rangePicker></mat-date-range-picker>
       </mat-form-field>
 
-      <div class="date-toggle-container">
-        <span class="toggle-label">Tipo:</span>
-        <mat-button-toggle-group
-          formControlName="dateType"
-          class="date-toggle compact"
-        >
-          <mat-button-toggle value="apertura">Apertura</mat-button-toggle>
-          <mat-button-toggle value="cierre">Cierre</mat-button-toggle>
-        </mat-button-toggle-group>
-      </div>
+      <mat-button-toggle-group formControlName="dateType" class="date-toggle">
+        <mat-button-toggle value="apertura">APERTURA</mat-button-toggle>
+        <mat-button-toggle value="cierre">CIERRE</mat-button-toggle>
+      </mat-button-toggle-group>
     </div>
   </div>
 
-  <div class="table-container">
-    <div *ngIf="loading" class="loading-message">
-      <p>Cargando cajas...</p>
-    </div>
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-state">Cargando cajas...</div>
 
-    <div *ngIf="error" class="error-container">
-      <p>{{ error }}</p>
-      <button mat-button color="primary" (click)="loadCajas()">
-        Reintentar
-      </button>
-    </div>
+  <!-- Tabla -->
+  <table mat-table [dataSource]="cajaRows" class="mat-elevation-z2 cajas-table" *ngIf="!loading">
+    <ng-container matColumnDef="id">
+      <th mat-header-cell *matHeaderCellDef>ID</th>
+      <td mat-cell *matCellDef="let row">{{ row.caja.id }}</td>
+    </ng-container>
 
-    <div class="table-wrapper">
-      <table
-      mat-table
-      [dataSource]="dataSource"
-      matSort
-      class="mat-elevation-z2"
-      *ngIf="!loading && !error"
-    >
-      <!-- ID Column -->
-      <ng-container matColumnDef="id">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
-        <td mat-cell *matCellDef="let caja">{{ caja.id }}</td>
-      </ng-container>
+    <ng-container matColumnDef="cajero">
+      <th mat-header-cell *matHeaderCellDef>CAJERO</th>
+      <td mat-cell *matCellDef="let row">{{ row.cajeroNombre }}</td>
+    </ng-container>
 
-      <!-- Dispositivo Column -->
-      <ng-container matColumnDef="dispositivo">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Dispositivo</th>
-        <td mat-cell *matCellDef="let caja">
-          {{ caja.dispositivo?.nombre || "N/A" }}
-        </td>
-      </ng-container>
+    <ng-container matColumnDef="fechaApertura">
+      <th mat-header-cell *matHeaderCellDef>APERTURA</th>
+      <td mat-cell *matCellDef="let row">{{ row.caja.fechaApertura | date:'dd/MM/yyyy HH:mm' }}</td>
+    </ng-container>
 
-      <!-- Cajero Column -->
-      <ng-container matColumnDef="cajero">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Cajero</th>
-        <td mat-cell *matCellDef="let caja">
-          {{ caja.createdBy?.persona?.nombre || "N/A" }}
-        </td>
-      </ng-container>
+    <ng-container matColumnDef="fechaCierre">
+      <th mat-header-cell *matHeaderCellDef>CIERRE</th>
+      <td mat-cell *matCellDef="let row">
+        {{ row.caja.fechaCierre ? (row.caja.fechaCierre | date:'dd/MM/yyyy HH:mm') : '-' }}
+      </td>
+    </ng-container>
 
-      <!-- Fecha Apertura Column -->
-      <ng-container matColumnDef="fechaApertura">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Apertura</th>
-        <td mat-cell *matCellDef="let caja">
-          {{ caja.fechaApertura | date : "dd/MM/yyyy HH:mm" }}
-        </td>
-      </ng-container>
+    <ng-container matColumnDef="estado">
+      <th mat-header-cell *matHeaderCellDef>ESTADO</th>
+      <td mat-cell *matCellDef="let row">
+        <span class="estado-chip"
+          [class.estado-abierto]="row.caja.estado === 'ABIERTO'"
+          [class.estado-cerrado]="row.caja.estado === 'CERRADO'"
+          [class.estado-cancelado]="row.caja.estado === 'CANCELADO'">
+          {{ row.caja.estado }}
+        </span>
+      </td>
+    </ng-container>
 
-      <!-- Fecha Cierre Column -->
-      <ng-container matColumnDef="fechaCierre">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Cierre</th>
-        <td mat-cell *matCellDef="let caja">
-          {{
-            caja.fechaCierre
-              ? (caja.fechaCierre | date : "dd/MM/yyyy HH:mm")
-              : "No cerrado"
-          }}
-        </td>
-      </ng-container>
+    <ng-container matColumnDef="totalVentas">
+      <th mat-header-cell *matHeaderCellDef>TOTAL VENTAS</th>
+      <td mat-cell *matCellDef="let row">{{ row.totalVentas | number:'1.0-0' }}</td>
+    </ng-container>
 
-      <!-- Estado Column -->
-      <ng-container matColumnDef="estado">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
-        <td mat-cell *matCellDef="let caja">
-          <mat-chip-set>
-            <mat-chip [color]="caja.estadoColor" selected>{{
-              caja.estado
-            }}</mat-chip>
-          </mat-chip-set>
-        </td>
-      </ng-container>
+    <ng-container matColumnDef="salud">
+      <th mat-header-cell *matHeaderCellDef>SALUD</th>
+      <td mat-cell *matCellDef="let row">
+        <span class="salud-indicator" [class]="'salud-' + row.saludColor" [matTooltip]="row.saludTooltip">
+          <mat-icon *ngIf="row.saludColor === 'green'">check_circle</mat-icon>
+          <mat-icon *ngIf="row.saludColor === 'yellow'">warning</mat-icon>
+          <mat-icon *ngIf="row.saludColor === 'red'">error</mat-icon>
+          <mat-icon *ngIf="row.saludColor === 'gray'">remove</mat-icon>
+        </span>
+      </td>
+    </ng-container>
 
-      <!-- Actions Column -->
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>Acciones</th>
-        <td mat-cell *matCellDef="let caja">
-          <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Acciones">
-            <mat-icon>more_vert</mat-icon>
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let row">
+        <button mat-icon-button [matMenuTriggerFor]="menu">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #menu="matMenu">
+          <button mat-menu-item (click)="verResumen(row.caja)">
+            <mat-icon>visibility</mat-icon>
+            <span>VER RESUMEN</span>
           </button>
-          <mat-menu #menu="matMenu">
-            <button mat-menu-item (click)="handleAction('view', caja)">
-              <mat-icon>visibility</mat-icon>
-              <span>Ver detalles</span>
-            </button>
-            <button mat-menu-item *ngIf="caja.estado === cajaEstado.ABIERTO" (click)="handleAction('close', caja)">
-              <mat-icon>close</mat-icon>
-              <span>Cerrar caja</span>
-            </button>
-            <button mat-menu-item (click)="handleAction('conteo', caja)">
-              <mat-icon>account_balance_wallet</mat-icon>
-              <span>Ir a conteo</span>
-            </button>
-          </mat-menu>
-        </td>
-      </ng-container>
+          <button mat-menu-item (click)="goToConteo(row.caja)">
+            <mat-icon>account_balance_wallet</mat-icon>
+            <span>IR A CONTEO</span>
+          </button>
+          <button mat-menu-item disabled matTooltip="Próximamente">
+            <mat-icon>cancel</mat-icon>
+            <span>CANCELAR CAJA</span>
+          </button>
+        </mat-menu>
+      </td>
+    </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-    </table>
-    </div>
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns" (click)="verResumen(row.caja)" class="clickable-row"></tr>
+  </table>
 
-    <mat-paginator
-      [pageSizeOptions]="[5, 10, 25, 100]"
-      showFirstLastButtons
-    ></mat-paginator>
+  <div *ngIf="!loading && cajaRows.length === 0" class="empty-state">
+    No se encontraron cajas.
   </div>
 </div>

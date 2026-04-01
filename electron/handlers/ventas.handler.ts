@@ -19,6 +19,8 @@ import { PdvMesa, PdvMesaEstado } from '../../src/app/database/entities/ventas/p
 import { Comanda, ComandaEstado } from '../../src/app/database/entities/ventas/comanda.entity';
 import { ComandaItem } from '../../src/app/database/entities/ventas/comanda-item.entity';
 import { Sector } from '../../src/app/database/entities/ventas/sector.entity';
+import { PagoDetalle } from '../../src/app/database/entities/compras/pago-detalle.entity';
+import { Caja } from '../../src/app/database/entities/financiero/caja.entity';
 
 export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: () => Usuario | null) {
   // Remove this line - get the current user in each handler instead
@@ -406,6 +408,157 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
       });
     } catch (error) {
       console.error(`Error getting ventas for caja ${cajaId}:`, error);
+      throw error;
+    }
+  });
+
+  // Resumen completo de una caja (para diálogo de resumen)
+  ipcMain.handle('getResumenCaja', async (_event: any, cajaId: number) => {
+    try {
+      const cajaRepo = dataSource.getRepository(Caja);
+      const caja = await cajaRepo.findOne({
+        where: { id: cajaId },
+        relations: ['dispositivo', 'conteoApertura', 'conteoCierre', 'createdBy', 'createdBy.persona'],
+      });
+      if (!caja) throw new Error(`Caja ${cajaId} not found`);
+
+      // Conteo apertura por moneda
+      const conteoApertura: any[] = [];
+      if (caja.conteoApertura?.id) {
+        const rows = await dataSource.query(`
+          SELECT mb.moneda_id, m.simbolo, m.denominacion, SUM(cd.cantidad * mb.valor) as total
+          FROM conteos_detalles cd
+          JOIN monedas_billetes mb ON cd.moneda_billete_id = mb.id
+          JOIN monedas m ON mb.moneda_id = m.id
+          WHERE cd.conteo_id = ?
+          GROUP BY mb.moneda_id, m.simbolo, m.denominacion
+        `, [caja.conteoApertura.id]);
+        for (const r of rows) {
+          conteoApertura.push({ monedaId: r.moneda_id, monedaSimbolo: r.simbolo, monedaDenominacion: r.denominacion, total: r.total || 0 });
+        }
+      }
+
+      // Conteo cierre por moneda
+      const conteoCierre: any[] = [];
+      if (caja.conteoCierre?.id) {
+        const rows = await dataSource.query(`
+          SELECT mb.moneda_id, m.simbolo, m.denominacion, SUM(cd.cantidad * mb.valor) as total
+          FROM conteos_detalles cd
+          JOIN monedas_billetes mb ON cd.moneda_billete_id = mb.id
+          JOIN monedas m ON mb.moneda_id = m.id
+          WHERE cd.conteo_id = ?
+          GROUP BY mb.moneda_id, m.simbolo, m.denominacion
+        `, [caja.conteoCierre.id]);
+        for (const r of rows) {
+          conteoCierre.push({ monedaId: r.moneda_id, monedaSimbolo: r.simbolo, monedaDenominacion: r.denominacion, total: r.total || 0 });
+        }
+      }
+
+      // Ventas de esta caja
+      const ventaRepo = dataSource.getRepository(Venta);
+      const ventas = await ventaRepo.find({
+        where: { caja: { id: cajaId }, estado: VentaEstado.CONCLUIDA },
+        relations: ['pago'],
+      });
+
+      const cantidadVentas = ventas.length;
+      const ventasPorFormaPagoMap: { [key: string]: any } = {};
+      const ventasTotalPorMonedaMap: { [key: string]: any } = {};
+      const efectivoPorMoneda: { [monedaId: number]: number } = {};
+
+      const pagoDetalleRepo = dataSource.getRepository(PagoDetalle);
+      for (const venta of ventas) {
+        if (!venta.pago?.id) continue;
+        const detalles = await pagoDetalleRepo.find({
+          where: { pago: { id: venta.pago.id } },
+          relations: ['moneda', 'formaPago'],
+        });
+        for (const d of detalles) {
+          if (!d.moneda || !d.formaPago) continue;
+          const monedaId = d.moneda.id;
+          const simbolo = d.moneda.simbolo || '';
+
+          if (d.tipo === 'PAGO') {
+            const fpKey = `${d.formaPago.nombre}_${monedaId}`;
+            if (!ventasPorFormaPagoMap[fpKey]) {
+              ventasPorFormaPagoMap[fpKey] = { formaPago: d.formaPago.nombre, monedaId, monedaSimbolo: simbolo, total: 0 };
+            }
+            ventasPorFormaPagoMap[fpKey].total += d.valor || 0;
+
+            const mKey = `${monedaId}`;
+            if (!ventasTotalPorMonedaMap[mKey]) {
+              ventasTotalPorMonedaMap[mKey] = { monedaId, monedaSimbolo: simbolo, total: 0 };
+            }
+            ventasTotalPorMonedaMap[mKey].total += d.valor || 0;
+
+            if ((d.formaPago as any).movimentaCaja) {
+              efectivoPorMoneda[monedaId] = (efectivoPorMoneda[monedaId] || 0) + (d.valor || 0);
+            }
+          } else if (d.tipo === 'VUELTO') {
+            const mKey = `${monedaId}`;
+            if (!ventasTotalPorMonedaMap[mKey]) {
+              ventasTotalPorMonedaMap[mKey] = { monedaId, monedaSimbolo: simbolo, total: 0 };
+            }
+            ventasTotalPorMonedaMap[mKey].total -= d.valor || 0;
+
+            if ((d.formaPago as any)?.movimentaCaja) {
+              efectivoPorMoneda[monedaId] = (efectivoPorMoneda[monedaId] || 0) - (d.valor || 0);
+            }
+          }
+        }
+      }
+
+      // Calcular esperado y diferencia
+      const esperadoPorMoneda: { [monedaId: number]: number } = {};
+      const diferenciaPorMoneda: { [monedaId: number]: number } = {};
+      const allMonedaIds = new Set<number>();
+      conteoApertura.forEach(c => allMonedaIds.add(c.monedaId));
+      conteoCierre.forEach(c => allMonedaIds.add(c.monedaId));
+      Object.keys(efectivoPorMoneda).forEach(k => allMonedaIds.add(Number(k)));
+
+      for (const monedaId of allMonedaIds) {
+        const apertura = conteoApertura.find(c => c.monedaId === monedaId)?.total || 0;
+        const cierre = conteoCierre.find(c => c.monedaId === monedaId)?.total || 0;
+        const efectivo = efectivoPorMoneda[monedaId] || 0;
+        esperadoPorMoneda[monedaId] = apertura + efectivo;
+        diferenciaPorMoneda[monedaId] = cierre - esperadoPorMoneda[monedaId];
+      }
+
+      return {
+        caja,
+        conteoApertura,
+        conteoCierre,
+        ventasPorFormaPago: Object.values(ventasPorFormaPagoMap),
+        ventasTotalPorMoneda: Object.values(ventasTotalPorMonedaMap),
+        cantidadVentas,
+        efectivoPorMoneda,
+        esperadoPorMoneda,
+        diferenciaPorMoneda,
+      };
+    } catch (error) {
+      console.error(`Error getting resumen caja ${cajaId}:`, error);
+      throw error;
+    }
+  });
+
+  // Total ventas de una caja en moneda principal (liviano, para la lista)
+  ipcMain.handle('getVentasTotalByCaja', async (_event: any, cajaId: number) => {
+    try {
+      const result = await dataSource.query(`
+        SELECT
+          COUNT(DISTINCT v.id) as cantidadVentas,
+          COALESCE(SUM(CASE WHEN pd.tipo = 'PAGO' THEN pd.valor ELSE 0 END), 0)
+          - COALESCE(SUM(CASE WHEN pd.tipo = 'VUELTO' THEN pd.valor ELSE 0 END), 0) as totalVentas,
+          pd.moneda_id as monedaId
+        FROM ventas v
+        LEFT JOIN pagos p ON v.pago_id = p.id
+        LEFT JOIN pagos_detalles pd ON pd.pago_id = p.id
+        WHERE v.caja_id = ? AND v.estado = 'CONCLUIDA'
+        GROUP BY pd.moneda_id
+      `, [cajaId]);
+      return result;
+    } catch (error) {
+      console.error(`Error getting ventas total for caja ${cajaId}:`, error);
       throw error;
     }
   });

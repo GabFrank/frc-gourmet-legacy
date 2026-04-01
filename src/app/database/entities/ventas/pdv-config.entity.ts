@@ -15,4 +15,11 @@ export class PdvConfig extends BaseModel {
   @ManyToOne(() => PdvGrupoCategoria, { nullable: true })
   @JoinColumn({ name: 'pdvGrupoCategoriaId' })
   pdvGrupoCategoria?: PdvGrupoCategoria;
+
+  // Umbrales de diferencia de caja (porcentaje)
+  @Column({ name: 'umbral_diferencia_baja', type: 'decimal', precision: 10, scale: 2, default: 5 })
+  umbralDiferenciaBaja!: number;
+
+  @Column({ name: 'umbral_diferencia_alta', type: 'decimal', precision: 10, scale: 2, default: 15 })
+  umbralDiferenciaAlta!: number;
 } 
