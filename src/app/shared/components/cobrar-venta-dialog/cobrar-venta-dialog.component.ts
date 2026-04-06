@@ -195,7 +195,7 @@ export class CobrarVentaDialogComponent implements OnInit, AfterViewInit {
     this.descuentoTotal = 0;
 
     for (const item of this.activeItems) {
-      this.subtotal += item.precioVentaUnitario * item.cantidad;
+      this.subtotal += (item.precioVentaUnitario + (item.precioAdicionales || 0)) * item.cantidad;
       this.descuentoTotal += (item.descuentoUnitario || 0) * item.cantidad;
     }
 
@@ -597,6 +597,12 @@ export class CobrarVentaDialogComponent implements OnInit, AfterViewInit {
         pago: this.pago!,
         fechaCierre: new Date(),
       }));
+
+      // Procesar stock (fire-and-forget, no bloquea la venta)
+      this.repositoryService.procesarStockVenta(this.data.venta.id).subscribe({
+        next: (r) => console.log('Stock procesado:', r),
+        error: (e) => console.error('Error procesando stock (no-blocking):', e),
+      });
 
       this.dialogRef.close({ success: true, pago: this.pago });
     } catch (error) {

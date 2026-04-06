@@ -276,12 +276,31 @@ export class ProductoInformacionGeneralComponent implements OnInit, OnDestroy {
   /**
    * Actualiza la habilitación de campos según el tipo de producto
    */
+  stockTooltip = '';
+
   private actualizarHabilitacionCampos(tipo: ProductoTipo): void {
-    // Para elaborados, no mostrar esComprable ni controlaStock
     const tiposSinComprable = [ProductoTipo.ELABORADO_SIN_VARIACION, ProductoTipo.ELABORADO_CON_VARIACION, ProductoTipo.COMBO];
-    const tiposSinStock = [ProductoTipo.ELABORADO_SIN_VARIACION, ProductoTipo.ELABORADO_CON_VARIACION, ProductoTipo.COMBO];
     this.esComprableHabilitado = !tiposSinComprable.includes(tipo);
-    this.controlaStockHabilitado = !tiposSinStock.includes(tipo);
+    this.controlaStockHabilitado = true; // Visible para todos los tipos
+
+    // Tooltip informativo por tipo
+    switch (tipo) {
+      case ProductoTipo.RETAIL:
+        this.stockTooltip = 'Stock se descuenta directamente al vender este producto.';
+        break;
+      case ProductoTipo.RETAIL_INGREDIENTE:
+        this.stockTooltip = 'Stock se descuenta al vender o al ser usado como ingrediente en recetas.';
+        break;
+      case ProductoTipo.ELABORADO_SIN_VARIACION:
+      case ProductoTipo.ELABORADO_CON_VARIACION:
+        this.stockTooltip = 'ON: Se descuenta este producto directamente (requiere produccion previa). OFF: Se descontaran los ingredientes de su receta al vender.';
+        break;
+      case ProductoTipo.COMBO:
+        this.stockTooltip = 'ON: Se descuenta el combo como producto. OFF: Se descontaran los productos componentes del combo al vender.';
+        break;
+      default:
+        this.stockTooltip = '';
+    }
   }
 
   /**

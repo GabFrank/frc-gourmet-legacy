@@ -1,0 +1,88 @@
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 0;
+}
+
+.full-width {
+  width: 100%;
+}
+
+// Teléfono + botón buscar
+.telefono-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.telefono-field {
+  flex: 1;
+}
+
+.buscar-cliente-btn {
+  margin-top: 8px;
+}
+
+// Autocomplete options
+.autocomplete-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.autocomplete-tel {
+  font-weight: 500;
+  min-width: 100px;
+}
+
+.autocomplete-sep {
+  opacity: 0.4;
+}
+
+.autocomplete-name {
+  opacity: 0.75;
+}
+
+// Warnings
+.precio-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: rgba(255, 152, 0, 0.12);
+  border-radius: 4px;
+  font-size: 12px;
+  margin-top: 4px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #ff9800;
+  }
+}
+
+.cliente-found {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: rgba(76, 175, 80, 0.1);
+  border-radius: 4px;
+  font-size: 13px;
+  margin-bottom: 4px;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #4caf50;
+  }
+}
+
+.cliente-tel {
+  opacity: 0.5;
+  font-size: 12px;
+}

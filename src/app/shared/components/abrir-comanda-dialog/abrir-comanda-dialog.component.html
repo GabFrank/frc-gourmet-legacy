@@ -1,0 +1,51 @@
+<h2 mat-dialog-title>
+  <mat-icon>receipt_long</mat-icon>
+  {{ data.isEditing ? 'Editar' : 'Abrir' }} Comanda #{{ data.comanda.numero }}
+</h2>
+
+<mat-dialog-content>
+  <div class="comanda-info">
+    <span class="info-label">Código:</span>
+    <span class="info-value">{{ data.comanda.codigo }}</span>
+    <span class="info-label" *ngIf="data.comanda.descripcion">Descripción:</span>
+    <span class="info-value" *ngIf="data.comanda.descripcion">{{ data.comanda.descripcion }}</span>
+  </div>
+
+  <form [formGroup]="form" class="form-fields">
+    <mat-form-field appearance="outline">
+      <mat-label>Mesa (opcional)</mat-label>
+      <mat-select formControlName="mesaId">
+        <mat-option [value]="null">Sin mesa</mat-option>
+        <mat-option *ngFor="let mesa of data.mesas" [value]="mesa.id">
+          Mesa {{ mesa.numero }}
+          <span *ngIf="mesa.sector"> — {{ mesa.sector.nombre }}</span>
+        </mat-option>
+      </mat-select>
+      <mat-hint>Vincula la comanda a una mesa para ubicar al cliente</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Sector</mat-label>
+      <mat-select formControlName="sectorId">
+        <mat-option [value]="null">Sin sector</mat-option>
+        <mat-option *ngFor="let sector of data.sectores" [value]="sector.id">
+          {{ sector.nombre }}
+        </mat-option>
+      </mat-select>
+      <mat-hint>Donde se encuentra el cliente</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Observación</mat-label>
+      <textarea matInput formControlName="observacion" rows="2" placeholder="Notas adicionales..."></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Cancelar</button>
+  <button mat-raised-button color="primary" (click)="confirm()">
+    <mat-icon>check</mat-icon>
+    {{ data.isEditing ? 'Actualizar' : 'Abrir Comanda' }}
+  </button>
+</mat-dialog-actions>

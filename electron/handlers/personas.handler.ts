@@ -664,4 +664,86 @@ export function registerPersonasHandlers(dataSource: DataSource, getCurrentUser:
     }
   });
 
+  // Buscar cliente por teléfono
+  ipcMain.handle('buscar-cliente-por-telefono', async (_event: any, telefono: string) => {
+    try {
+      const personaRepo = dataSource.getRepository(Persona);
+      const personas = await personaRepo.createQueryBuilder('persona')
+        .where('persona.telefono LIKE :telefono', { telefono: `%${telefono}%` })
+        .getMany();
+
+      if (personas.length === 0) return null;
+
+      // Buscar cliente vinculado a la primera persona encontrada
+      const clienteRepo = dataSource.getRepository(Cliente);
+      for (const persona of personas) {
+        const cliente = await clienteRepo.findOne({
+          where: { persona: { id: persona.id }, activo: true },
+          relations: ['persona'],
+        });
+        if (cliente) return cliente;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error buscando cliente por teléfono:', error);
+      throw error;
+    }
+  });
+
+  // Buscar clientes por teléfono (lista, máximo 15)
+  ipcMain.handle('buscar-clientes-por-telefono', async (_event: any, telefono: string) => {
+    try {
+      const clienteRepo = dataSource.getRepository(Cliente);
+      const clientes = await clienteRepo.createQueryBuilder('cliente')
+        .innerJoinAndSelect('cliente.persona', 'persona')
+        .where('persona.telefono LIKE :telefono', { telefono: `%${telefono}%` })
+        .andWhere('cliente.activo = :activo', { activo: true })
+        .orderBy('persona.nombre', 'ASC')
+        .take(15)
+        .getMany();
+      return clientes;
+    } catch (error) {
+      console.error('Error buscando clientes por teléfono:', error);
+      throw error;
+    }
+  });
+
+  // Crear cliente rápido (con datos mínimos)
+  ipcMain.handle('crear-cliente-rapido', async (_event: any, data: { telefono: string; nombre?: string; direccion?: string }) => {
+    try {
+      const currentUser = getCurrentUser();
+      const personaRepo = dataSource.getRepository(Persona);
+      const clienteRepo = dataSource.getRepository(Cliente);
+
+      // Crear persona
+      const persona = personaRepo.create({
+        nombre: (data.nombre || 'DELIVERY').toUpperCase(),
+        telefono: data.telefono,
+        direccion: data.direccion?.toUpperCase() || undefined,
+      });
+      await setEntityUserTracking(dataSource, persona, currentUser?.id, false);
+      const savedPersona = await personaRepo.save(persona);
+
+      // Crear cliente
+      const cliente = clienteRepo.create({
+        persona: savedPersona,
+        activo: true,
+        tributa: false,
+        credito: false,
+        limite_credito: 0,
+      });
+      await setEntityUserTracking(dataSource, cliente, currentUser?.id, false);
+      const savedCliente = await clienteRepo.save(cliente);
+
+      // Retornar con persona cargada
+      return await clienteRepo.findOne({
+        where: { id: savedCliente.id },
+        relations: ['persona'],
+      });
+    } catch (error) {
+      console.error('Error creando cliente rápido:', error);
+      throw error;
+    }
+  });
+
 } 

@@ -102,4 +102,7 @@ export class VentaItem extends BaseModel {
 
   @Column({ name: 'historial_cambios', type: 'text', nullable: true })
   historialCambios?: string;
+
+  @Column({ name: 'precio_adicionales', type: 'decimal', precision: 10, scale: 2, default: 0 })
+  precioAdicionales!: number;
 } 

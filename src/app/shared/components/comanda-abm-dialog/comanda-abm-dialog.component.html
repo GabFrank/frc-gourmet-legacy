@@ -1,0 +1,147 @@
+<h2 mat-dialog-title>
+  <mat-icon>receipt_long</mat-icon>
+  Gestionar Comandas
+</h2>
+
+<mat-dialog-content>
+  <!-- Action buttons -->
+  <div class="action-buttons">
+    <button mat-raised-button color="primary" (click)="toggleCreateForm()" [disabled]="submitting">
+      <mat-icon>add</mat-icon>
+      Nueva Comanda
+    </button>
+    <button mat-raised-button color="accent" (click)="toggleBatchForm()" [disabled]="submitting">
+      <mat-icon>playlist_add</mat-icon>
+      Creación Masiva
+    </button>
+    <button mat-icon-button (click)="loadComandas()" [disabled]="loading" matTooltip="Actualizar">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </div>
+
+  <!-- Create/Edit form -->
+  <div class="form-section" *ngIf="showCreateForm">
+    <h3>{{ editingComanda ? 'Editar Comanda #' + editingComanda.numero : 'Nueva Comanda' }}</h3>
+    <form [formGroup]="createForm" (ngSubmit)="saveComanda()" class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Código</mat-label>
+        <input matInput formControlName="codigo" placeholder="Ej: CMD-001" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Número</mat-label>
+        <input matInput formControlName="numero" type="number" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Descripción</mat-label>
+        <input matInput formControlName="descripcion" placeholder="Ej: TARJETA AZUL" />
+      </mat-form-field>
+      <div class="form-actions">
+        <button mat-raised-button color="primary" type="submit" [disabled]="createForm.invalid || submitting">
+          {{ editingComanda ? 'Guardar' : 'Crear' }}
+        </button>
+        <button mat-button type="button" (click)="cancelForm()">Cancelar</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Batch form -->
+  <div class="form-section" *ngIf="showBatchForm">
+    <h3>Creación Masiva</h3>
+    <form [formGroup]="batchForm" (ngSubmit)="createBatch()" class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Cantidad</mat-label>
+        <input matInput formControlName="cantidad" type="number" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Prefijo código</mat-label>
+        <input matInput formControlName="prefijoCodigo" placeholder="Ej: CMD" />
+      </mat-form-field>
+      <div class="form-actions">
+        <button mat-raised-button color="accent" type="submit" [disabled]="batchForm.invalid || submitting">
+          Crear
+        </button>
+        <button mat-button type="button" (click)="cancelForm()">Cancelar</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-section" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <span>Cargando comandas...</span>
+  </div>
+
+  <!-- Table -->
+  <div class="table-section" *ngIf="!loading">
+    <div class="empty-state" *ngIf="comandas.length === 0">
+      <mat-icon>receipt_long</mat-icon>
+      <p>No hay comandas registradas</p>
+      <p class="hint">Cree comandas individuales o use la creación masiva</p>
+    </div>
+
+    <table mat-table [dataSource]="comandas" *ngIf="comandas.length > 0" class="comandas-table">
+      <ng-container matColumnDef="numero">
+        <th mat-header-cell *matHeaderCellDef>#</th>
+        <td mat-cell *matCellDef="let comanda">{{ comanda.numero }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="codigo">
+        <th mat-header-cell *matHeaderCellDef>Código</th>
+        <td mat-cell *matCellDef="let comanda">{{ comanda.codigo }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="descripcion">
+        <th mat-header-cell *matHeaderCellDef>Descripción</th>
+        <td mat-cell *matCellDef="let comanda">{{ comanda.descripcion || '-' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="estado">
+        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let comanda">
+          <span class="status-badge" [class.status-disponible]="comanda.estado === 'DISPONIBLE'" [class.status-ocupado]="comanda.estado === 'OCUPADO'">
+            {{ comanda.estado }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="activo">
+        <th mat-header-cell *matHeaderCellDef>Activo</th>
+        <td mat-cell *matCellDef="let comanda">
+          <span class="status-badge" [class.status-activo]="comanda.activo" [class.status-inactivo]="!comanda.activo">
+            {{ comanda.activo ? 'SÍ' : 'NO' }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let comanda">
+          <button mat-icon-button [matMenuTriggerFor]="actionMenu">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #actionMenu="matMenu">
+            <button mat-menu-item (click)="editComanda(comanda)" [disabled]="comanda.estado === 'OCUPADO'">
+              <mat-icon>edit</mat-icon>
+              <span>Editar</span>
+            </button>
+            <button mat-menu-item (click)="toggleActivo(comanda)" [disabled]="comanda.estado === 'OCUPADO'">
+              <mat-icon>{{ comanda.activo ? 'visibility_off' : 'visibility' }}</mat-icon>
+              <span>{{ comanda.activo ? 'Desactivar' : 'Activar' }}</span>
+            </button>
+            <button mat-menu-item (click)="deleteComanda(comanda)" [disabled]="comanda.estado === 'OCUPADO'">
+              <mat-icon>delete</mat-icon>
+              <span>Eliminar</span>
+            </button>
+          </mat-menu>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" [class.row-inactive]="!row.activo"></tr>
+    </table>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Cerrar</button>
+</mat-dialog-actions>

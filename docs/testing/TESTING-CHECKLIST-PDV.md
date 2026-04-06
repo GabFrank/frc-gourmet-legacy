@@ -424,10 +424,112 @@ Marcar `[x]` cuando el test pase, `[!]` si falla (registrar en `ERRORES-PDV.md`)
 
 ---
 
+## 17. Delivery — Diálogo Principal
+
+### 17.1 Acceso
+- [ ] PdV → botón DELIVERY → abre diálogo 90vw × 85vh
+- [ ] Header muestra "LISTA DE DELIVERY", filtro estado, botón "+ NUEVO DELIVERY"
+- [ ] Sin deliveries → mensaje vacío centrado "No hay deliveries para esta caja"
+
+### 17.2 Lista de deliveries (70%)
+- [ ] Tabla con columnas: Tel, Nombre, Estado, Espera, Delivery, Total, Entregador, Obs
+- [ ] Estado con chip de color (celeste=ABIERTO, amarillo=PARA_ENTREGA, naranja=EN_CAMINO, verde=ENTREGADO, rojo=CANCELADO)
+- [ ] Espera con chip de color según umbrales (sin color < 30min, amarillo 30-60min, rojo > 60min)
+- [ ] Timer de espera se actualiza cada segundo
+- [ ] Sin color de espera para ENTREGADO/CANCELADO
+- [ ] Paginación backend (10, 20, 50 por página)
+- [ ] Filtro por estado funciona correctamente
+- [ ] Click en fila selecciona delivery y muestra detalle
+- [ ] Fila seleccionada resaltada en azul
+- [ ] Columna Obs muestra icono tooltip si hay observación
+
+### 17.3 Detalle ticket (30%)
+- [ ] Sin selección → mensaje "SELECCIONE UN DELIVERY"
+- [ ] Card CLIENTE: nombre, teléfono, dirección, observación (si hay)
+- [ ] Card ITEMS: lista con cantidad × producto + precio, descuento si hay
+- [ ] Items cancelados tachados con opacidad
+- [ ] Sin items → "SIN ITEMS"
+- [ ] Card TOTALES: valor delivery + total general en azul
+- [ ] Card COBRO: líneas de pago (moneda, forma pago, valor, tipo) — solo si hay cobro
+
+### 17.4 Botones de avance de estado
+- [ ] Sin selección → ningún botón de avance visible
+- [ ] ABIERTO seleccionado → solo botón LISTO visible
+- [ ] PARA_ENTREGA seleccionado → solo botón ENVIAR visible
+- [ ] EN_CAMINO seleccionado → solo botón FINALIZAR visible
+- [ ] ENTREGADO seleccionado → ningún botón de avance visible
+- [ ] CANCELADO seleccionado → ningún botón de avance visible
+- [ ] Click LISTO → delivery pasa a PARA_ENTREGA
+- [ ] Click ENVIAR → delivery pasa a EN_CAMINO
+- [ ] Click FINALIZAR sin cobro → abre diálogo de cobro primero
+- [ ] Click FINALIZAR con cobro completo → delivery pasa a ENTREGADO
+
+### 17.5 Botón ESTADO (retroceso)
+- [ ] Deshabilitado sin selección
+- [ ] Deshabilitado si ABIERTO
+- [ ] Menú muestra opciones válidas según estado actual
+- [ ] Cambiar estado → confirmación con advertencia → estado cambia
+- [ ] Desde CANCELADO → reactivar delivery y venta
+
+### 17.6 Botones de acción
+- [ ] DATOS: abre diálogo edición, deshabilitado si terminal
+- [ ] ITEMS: cierra diálogo y entra en modo delivery en PdV, deshabilitado si terminal
+- [ ] PAGO: abre cobro, deshabilitado si terminal. Post-cobro pregunta "¿Finalizar delivery?"
+- [ ] IMPRIMIR: siempre habilitado con selección (placeholder)
+- [ ] CANCELAR: pide motivo, cancela delivery + venta, deshabilitado si terminal
+- [ ] Todos deshabilitados sin selección
+
+---
+
+## 18. Delivery — Crear/Editar
+
+### 18.1 Crear nuevo delivery
+- [ ] Click "+ NUEVO DELIVERY" → abre diálogo 450px
+- [ ] Campo teléfono → al escribir busca cliente con debounce 500ms
+- [ ] Cliente encontrado → autocompleta nombre + dirección + mensaje "Cliente encontrado"
+- [ ] Cliente no encontrado → campos nombre y dirección editables
+- [ ] Select de precio delivery (solo activos)
+- [ ] Campo observación
+- [ ] Toggle cobro anticipado
+- [ ] Confirmar → crea Persona+Cliente (si nuevo) + Delivery + Venta
+- [ ] Cierra diálogo de delivery y entra en modo delivery en PdV
+
+### 18.2 Editar delivery existente
+- [ ] Botón DATOS en footer → abre diálogo en modo edición
+- [ ] Datos pre-cargados (teléfono, nombre, dirección, precio, observación)
+- [ ] Cambiar precio delivery → muestra advertencia
+- [ ] Guardar → delivery actualizado en lista
+
+---
+
+## 19. Delivery — Modo Delivery en PdV
+
+### 19.1 Activación
+- [ ] Al crear nuevo delivery → PdV entra en modo delivery
+- [ ] Al click ITEMS en diálogo → PdV entra en modo delivery
+
+### 19.2 Visual
+- [ ] Card delivery con fondo ámbar muestra: teléfono, nombre, dirección
+- [ ] Mesas deshabilitadas (opacity 0.3, sin clicks)
+- [ ] Botones TRANSFERIR y MOVER ITEMS deshabilitados
+
+### 19.3 Operación
+- [ ] Agregar productos → se agregan a la venta del delivery
+- [ ] Buscar productos funciona normalmente
+- [ ] Totales se calculan correctamente
+
+### 19.4 Salir del modo delivery
+- [ ] Botón X en card delivery → cierra modo delivery
+- [ ] ESC → cierra modo delivery (prioridad sobre deselección de mesa)
+- [ ] Mesas vuelven a habilitarse
+- [ ] Botones TRANSFERIR y MOVER ITEMS vuelven a habilitarse
+
+---
+
 ## Notas de Testing
 
-- **Prerequisitos**: Tener al menos 1 usuario, 1 moneda principal, mesas creadas, productos con precios de venta
-- **Orden sugerido**: Seguir el orden numérico (1→14) ya que algunos tests dependen de estado previo
+- **Prerequisitos**: Tener al menos 1 usuario, 1 moneda principal, mesas creadas, productos con precios de venta, al menos 1 precio de delivery activo
+- **Orden sugerido**: Seguir el orden numérico (1→19) ya que algunos tests dependen de estado previo
 - **Registrar errores**: Todo error encontrado registrar en `docs/testing/ERRORES-PDV.md`
 - **Sección 8 (Descuento Global) eliminada**: descuentos se manejan ahora en el diálogo de cobro y en edición de items
 - **Sección 9 (Venta Rápida) eliminada**: reemplazada por "Cobro Rápido" en sección 6.11

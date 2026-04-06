@@ -1,0 +1,91 @@
+<h2 mat-dialog-title>{{ isEditMode ? 'EDITAR DELIVERY' : 'NUEVO DELIVERY' }}</h2>
+
+<mat-dialog-content>
+  <div class="form-container">
+    <!-- Teléfono con autocomplete + botón buscar -->
+    <div class="telefono-row">
+      <mat-form-field appearance="outline" class="telefono-field">
+        <mat-label>TELÉFONO</mat-label>
+        <input matInput
+          #telefonoInput
+          [(ngModel)]="telefono"
+          (ngModelChange)="onTelefonoChange()"
+          (keydown.enter)="onEnterTelefono($event)"
+          [matAutocomplete]="autoCliente"
+          placeholder="Ej: 0981..."
+          autofocus />
+        <mat-icon matSuffix *ngIf="buscando">sync</mat-icon>
+        <mat-icon matSuffix *ngIf="clienteEncontrado && !buscando" style="color: #4caf50">check_circle</mat-icon>
+        <mat-autocomplete #autoCliente="matAutocomplete" (optionSelected)="onAutoCompleteSelected($event)">
+          <mat-option *ngFor="let c of clientesSugeridos" [value]="c">
+            <span class="autocomplete-option">
+              <span class="autocomplete-tel">{{ c.persona?.telefono }}</span>
+              <span class="autocomplete-sep">—</span>
+              <span class="autocomplete-name">{{ c.persona?.nombre }}</span>
+            </span>
+          </mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
+      <button mat-icon-button (click)="abrirBuscarCliente()" matTooltip="Buscar cliente" class="buscar-cliente-btn" tabindex="-1">
+        <mat-icon>person_search</mat-icon>
+      </button>
+    </div>
+
+    <div *ngIf="clienteEncontrado" class="cliente-found">
+      <mat-icon>person</mat-icon>
+      <span>{{ clienteEncontrado.persona?.nombre }}</span>
+      <span class="cliente-tel" *ngIf="clienteEncontrado.persona?.telefono">· {{ clienteEncontrado.persona?.telefono }}</span>
+    </div>
+
+    <!-- Nombre -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>NOMBRE</mat-label>
+      <input matInput #nombreInput [(ngModel)]="nombre" placeholder="Nombre del cliente (opcional)"
+        (keydown.enter)="focusDireccion()" />
+    </mat-form-field>
+
+    <!-- Dirección -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>DIRECCIÓN</mat-label>
+      <textarea matInput #direccionInput [(ngModel)]="direccion" rows="2" placeholder="Dirección de entrega"
+        (keydown.enter)="focusPrecio(); $event.preventDefault()"></textarea>
+    </mat-form-field>
+
+    <!-- Precio Delivery -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>PRECIO DELIVERY</mat-label>
+      <mat-select #precioSelect [(value)]="precioDeliveryId"
+        (keydown.enter)="focusObservacion(); $event.preventDefault()">
+        <mat-option [value]="null">SIN CARGO</mat-option>
+        <mat-option *ngFor="let p of preciosDelivery" [value]="p.id">
+          {{ p.descripcion }} — {{ p.valor | number:'1.0-0' }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Observación -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>OBSERVACIÓN</mat-label>
+      <textarea matInput #observacionInput [(ngModel)]="observacion" rows="2" placeholder="Ej: Llevar maquina pix, timbre no funciona..."
+        (keydown.enter)="focusConfirmar(); $event.preventDefault()"></textarea>
+    </mat-form-field>
+
+    <!-- Cobro anticipado -->
+    <mat-slide-toggle [(ngModel)]="cobroAnticipado" tabindex="-1">COBRO ANTICIPADO</mat-slide-toggle>
+
+    <!-- Advertencia cambio de precio -->
+    <div *ngIf="precioDeliveryCambio" class="precio-warning">
+      <mat-icon>warning</mat-icon>
+      <span>El cambio de precio de delivery puede afectar el valor de cobro final.</span>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancelar()" tabindex="-1">CANCELAR</button>
+  <button mat-raised-button color="primary" #confirmarBtn (click)="confirmar()" [disabled]="!canConfirm"
+    (keydown.enter)="confirmar()">
+    <mat-icon>{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+    {{ processing ? 'PROCESANDO...' : isEditMode ? 'GUARDAR' : 'CREAR DELIVERY' }}
+  </button>
+</mat-dialog-actions>

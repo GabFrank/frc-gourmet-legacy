@@ -668,19 +668,19 @@ export class GestionarProductoService {
       [ProductoTipo.ELABORADO_SIN_VARIACION]: {
         esVendibleHabilitado: true,
         esComprableHabilitado: false,
-        controlaStockHabilitado: false,
-        esIngredienteHabilitado: true  // Cambiado de false a true
+        controlaStockHabilitado: true,
+        esIngredienteHabilitado: true
       },
       [ProductoTipo.ELABORADO_CON_VARIACION]: {
         esVendibleHabilitado: true,
         esComprableHabilitado: false,
-        controlaStockHabilitado: false,
-        esIngredienteHabilitado: true  // Cambiado de false a true
+        controlaStockHabilitado: true,
+        esIngredienteHabilitado: true
       },
       [ProductoTipo.COMBO]: {
         esVendibleHabilitado: true,
         esComprableHabilitado: false,
-        controlaStockHabilitado: false,
+        controlaStockHabilitado: true,
         esIngredienteHabilitado: false
       }
     };

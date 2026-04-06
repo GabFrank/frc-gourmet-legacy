@@ -51,6 +51,11 @@ import { DividirCuentaDialogComponent } from 'src/app/shared/components/dividir-
 import { PdvCategoria } from 'src/app/database/entities/ventas/pdv-categoria.entity';
 import { PdvCategoriaItem } from 'src/app/database/entities/ventas/pdv-categoria-item.entity';
 import { Sector } from 'src/app/database/entities/ventas/sector.entity';
+import { DeliveryDialogComponent, DeliveryDialogData } from 'src/app/shared/components/delivery-dialog/delivery-dialog.component';
+import { Delivery } from 'src/app/database/entities/ventas/delivery.entity';
+import { PersonalizarProductoDialogComponent, PersonalizarProductoDialogResult } from 'src/app/shared/components/personalizar-producto-dialog/personalizar-producto-dialog.component';
+import { AbrirComandaDialogComponent, AbrirComandaDialogData, AbrirComandaDialogResult } from 'src/app/shared/components/abrir-comanda-dialog/abrir-comanda-dialog.component';
+import { Comanda, ComandaEstado } from 'src/app/database/entities/ventas/comanda.entity';
 
 interface MonedaWithTotal {
   moneda: Moneda;
@@ -133,6 +138,18 @@ export class PdvComponent implements OnInit, OnDestroy {
 
   // Venta rápida (sin mesa)
   ventaRapidaActual: Venta | null = null;
+
+  // Delivery activo (cuando se editan items de un delivery)
+  deliveryActual: Delivery | null = null;
+
+  // Comandas (tarjetas de cuenta individual)
+  comandas: any[] = [];
+  loadingComandas = false;
+  selectedComanda: any = null;
+  activeTab: 'MESAS' | 'COMANDAS' = 'MESAS';
+  mesasOcupadasCount = 0;
+  comandasOcupadasCount = 0;
+  private refreshingComandas = false;
 
   // Sector filter for tables
   sectores: Sector[] = [];
@@ -289,6 +306,20 @@ export class PdvComponent implements OnInit, OnDestroy {
       // Load sectores
       this.sectores = await firstValueFrom(this.repositoryService.getSectoresActivos());
 
+      // Load comandas
+      await this.loadComandas();
+
+      // Load PdV config for tab default
+      try {
+        const pdvConfigs = await firstValueFrom(this.repositoryService.getPdvConfig());
+        if (pdvConfigs) {
+          const config = Array.isArray(pdvConfigs) ? pdvConfigs[0] : pdvConfigs;
+          if (config?.pdvTabDefault) {
+            this.activeTab = config.pdvTabDefault as 'MESAS' | 'COMANDAS';
+          }
+        }
+      } catch (e) { /* use default */ }
+
       // Load PdV grupo categorias
       this.pdvGrupoCategorias = await firstValueFrom(this.repositoryService.getPdvGrupoCategorias());
 
@@ -302,9 +333,10 @@ export class PdvComponent implements OnInit, OnDestroy {
       console.error('Error loading initial data:', error);
     }
 
-    // Auto-refresh mesas cada 1 segundo
+    // Auto-refresh mesas y comandas cada 1 segundo
     this.mesasRefreshInterval = setInterval(() => {
       this.refreshMesasSilent();
+      this.refreshComandasSilent();
     }, 1000);
   }
 
@@ -329,6 +361,7 @@ export class PdvComponent implements OnInit, OnDestroy {
         const mesaLocal = this.mesas.find(m => m.id === mesaFresca.id);
         if (mesaLocal) {
           mesaLocal.estado = mesaFresca.estado;
+          mesaLocal.comandas = mesaFresca.comandas;
           // Actualizar venta solo si no es la mesa seleccionada (para no pisar datos en edición)
           if (!this.selectedMesa || this.selectedMesa.id !== mesaLocal.id) {
             mesaLocal.venta = mesaFresca.venta;
@@ -344,6 +377,7 @@ export class PdvComponent implements OnInit, OnDestroy {
       }
 
       this.mesas = [...this.mesas];
+      this.mesasOcupadasCount = this.mesas.filter(m => m.estado === PdvMesaEstado.OCUPADO).length;
     } catch (error) {
       // Silencioso — no interrumpir al usuario
     } finally {
@@ -365,6 +399,7 @@ export class PdvComponent implements OnInit, OnDestroy {
 
       // Sort tables by number
       this.mesas.sort((a, b) => a.numero - b.numero);
+      this.mesasOcupadasCount = this.mesas.filter(m => m.estado === PdvMesaEstado.OCUPADO).length;
 
       console.log(`Loaded ${this.mesas.length} tables`);
     } catch (error) {
@@ -408,6 +443,252 @@ export class PdvComponent implements OnInit, OnDestroy {
   async resetMesasFilter(): Promise<void> {
     this.selectedSectorId = null;
     await this.loadMesas();
+  }
+
+  // --- Comandas ---
+
+  async loadComandas(): Promise<void> {
+    this.loadingComandas = true;
+    try {
+      this.comandas = await firstValueFrom(this.repositoryService.getComandasActivas());
+      this.comandas.sort((a: any, b: any) => a.numero - b.numero);
+      this.comandasOcupadasCount = this.comandas.filter((c: any) => c.estado === 'OCUPADO').length;
+    } catch (error) {
+      console.error('Error loading comandas:', error);
+      this.comandas = [];
+    } finally {
+      this.loadingComandas = false;
+    }
+  }
+
+  private async refreshComandasSilent(): Promise<void> {
+    if (this.refreshingComandas) return;
+    this.refreshingComandas = true;
+    try {
+      const comandasFrescas = await firstValueFrom(this.repositoryService.getComandasActivas());
+      const sorted = comandasFrescas.sort((a: any, b: any) => a.numero - b.numero);
+
+      // Para las ocupadas, cargar venta abierta
+      for (const cf of sorted) {
+        if (cf.estado === 'OCUPADO') {
+          const conVenta = await firstValueFrom(this.repositoryService.getComandaWithVenta(cf.id));
+          if (conVenta) {
+            cf.venta = conVenta.venta;
+          }
+        }
+      }
+
+      // Actualizar sin perder selección
+      for (const cf of sorted) {
+        const local = this.comandas.find((c: any) => c.id === cf.id);
+        if (local) {
+          local.estado = cf.estado;
+          local.pdv_mesa = cf.pdv_mesa;
+          local.sector = cf.sector;
+          if (!this.selectedComanda || this.selectedComanda.id !== local.id) {
+            local.venta = cf.venta;
+          }
+        }
+      }
+
+      // Agregar nuevas
+      for (const cf of sorted) {
+        if (!this.comandas.find((c: any) => c.id === cf.id)) {
+          this.comandas.push(cf);
+        }
+      }
+
+      // Remover las que ya no están activas
+      this.comandas = this.comandas.filter((c: any) => sorted.find((cf: any) => cf.id === c.id));
+      this.comandasOcupadasCount = this.comandas.filter((c: any) => c.estado === 'OCUPADO').length;
+    } catch (error) {
+      // Silencioso
+    } finally {
+      this.refreshingComandas = false;
+    }
+  }
+
+  async selectComanda(comanda: any): Promise<void> {
+    if (comanda.estado === 'DISPONIBLE') {
+      // Abrir dialogo para asignar mesa/sector
+      const dialogRef = this.dialog.open(AbrirComandaDialogComponent, {
+        width: '450px',
+        data: {
+          comanda,
+          mesas: this.mesas,
+          sectores: this.sectores
+        } as AbrirComandaDialogData
+      });
+
+      const result: AbrirComandaDialogResult | null = await firstValueFrom(dialogRef.afterClosed());
+      if (!result) return;
+
+      try {
+        await firstValueFrom(this.repositoryService.abrirComanda(comanda.id, result));
+        // Recargar comanda con venta
+        const updated = await firstValueFrom(this.repositoryService.getComandaWithVenta(comanda.id));
+        if (updated) {
+          comanda.estado = updated.estado;
+          comanda.pdv_mesa = updated.pdv_mesa;
+          comanda.sector = updated.sector;
+          comanda.observacion = updated.observacion;
+          comanda.venta = updated.venta;
+        }
+      } catch (error) {
+        console.error('Error abriendo comanda:', error);
+        return;
+      }
+    }
+
+    // Seleccionar comanda (OCUPADO)
+    this.selectedComanda = comanda;
+    this.selectedMesa = null;
+    this.ventaRapidaActual = null;
+    this.deliveryActual = null;
+    this.isEditingClienteName = false;
+
+    // Cargar nombre cliente si hay venta
+    if (comanda.venta?.nombreCliente) {
+      this.clienteNameForm.get('nombre')?.setValue(comanda.venta.nombreCliente);
+    } else {
+      this.clienteNameForm.get('nombre')?.setValue('');
+    }
+
+    // Cargar items de la venta
+    if (comanda.venta?.id) {
+      await this.loadVentaItemsForVenta(comanda.venta.id);
+    } else {
+      this.ventaItemsDataSource.data = [];
+      this.calculateTotals();
+    }
+  }
+
+  private async loadVentaItemsForVenta(ventaId: number): Promise<void> {
+    try {
+      const items = await firstValueFrom(this.repositoryService.getVentaItems(ventaId));
+      for (const item of items) {
+        await this.cargarPersonalizacionesItem(item);
+      }
+      this.ventaItemsDataSource.data = items;
+      this.calculateTotals();
+    } catch (error) {
+      console.error('Error loading venta items:', error);
+      this.ventaItemsDataSource.data = [];
+      this.calculateTotals();
+    }
+  }
+
+  private async cerrarComandaActual(): Promise<void> {
+    if (!this.selectedComanda) return;
+    try {
+      await firstValueFrom(this.repositoryService.cerrarComanda(this.selectedComanda.id));
+      this.selectedComanda.estado = 'DISPONIBLE';
+      this.selectedComanda.venta = null;
+      this.selectedComanda.pdv_mesa = null;
+      this.selectedComanda.sector = null;
+      this.selectedComanda = null;
+    } catch (error) {
+      console.error('Error cerrando comanda:', error);
+    }
+  }
+
+  /**
+   * Mover comanda a otra mesa/sector (cambia ubicación, no toca la venta)
+   */
+  moverComanda(): void {
+    if (!this.selectedComanda || this.selectedComanda.estado !== 'OCUPADO') return;
+
+    const dialogRef = this.dialog.open(AbrirComandaDialogComponent, {
+      width: '450px',
+      data: {
+        comanda: this.selectedComanda,
+        mesas: this.mesas,
+        sectores: this.sectores,
+        isEditing: true
+      } as AbrirComandaDialogData
+    });
+
+    dialogRef.afterClosed().subscribe(async (result: AbrirComandaDialogResult | null) => {
+      if (!result || !this.selectedComanda) return;
+      try {
+        const updateData: any = {
+          pdv_mesa: result.mesaId ? { id: result.mesaId } : null,
+          sector: result.sectorId ? { id: result.sectorId } : null,
+          observacion: result.observacion || null,
+        };
+        await firstValueFrom(this.repositoryService.updateComanda(this.selectedComanda.id, updateData));
+
+        // Recargar comanda
+        const updated = await firstValueFrom(this.repositoryService.getComandaWithVenta(this.selectedComanda.id));
+        if (updated) {
+          this.selectedComanda.pdv_mesa = updated.pdv_mesa;
+          this.selectedComanda.sector = updated.sector;
+          this.selectedComanda.observacion = updated.observacion;
+        }
+      } catch (error) {
+        console.error('Error al mover comanda:', error);
+      }
+    });
+  }
+
+  /**
+   * Transferir venta de comanda a una mesa (libera la comanda)
+   */
+  transferirComandaAMesa(): void {
+    if (!this.selectedComanda?.venta) return;
+
+    const dialogRef = this.dialog.open(TransferirMesaDialogComponent, {
+      width: '500px',
+      data: { mesaActual: this.selectedComanda.pdv_mesa || { numero: `Comanda #${this.selectedComanda.numero}` } },
+    });
+
+    dialogRef.afterClosed().subscribe(async (mesaDestino: PdvMesa | null) => {
+      if (!mesaDestino || !this.selectedComanda?.venta) return;
+      try {
+        const ventaId = this.selectedComanda.venta.id;
+
+        if (mesaDestino.venta?.id) {
+          // Mesa destino tiene venta: mover items a esa venta
+          const items = this.ventaItemsDataSource.data.filter(i => i.estado === EstadoVentaItem.ACTIVO);
+          for (const item of items) {
+            await firstValueFrom(this.repositoryService.updateVentaItem(item.id, {
+              venta: { id: mesaDestino.venta.id } as any,
+            }));
+          }
+          // Transferir nombre cliente si destino no tiene
+          const ventaOrigen = await firstValueFrom(this.repositoryService.getVenta(ventaId));
+          if (ventaOrigen?.nombreCliente && !mesaDestino.venta.nombreCliente) {
+            await firstValueFrom(this.repositoryService.updateVenta(mesaDestino.venta.id, {
+              nombreCliente: ventaOrigen.nombreCliente,
+            }));
+          }
+          // Cancelar la venta de la comanda
+          await firstValueFrom(this.repositoryService.updateVenta(ventaId, {
+            estado: VentaEstado.CANCELADA,
+          }));
+        } else {
+          // Mesa destino libre: mover la venta completa
+          await firstValueFrom(this.repositoryService.updateVenta(ventaId, {
+            mesa: { id: mesaDestino.id } as any,
+            comanda: null as any,
+          }));
+          // Ocupar mesa destino
+          await firstValueFrom(this.repositoryService.updatePdvMesa(mesaDestino.id!, { estado: PdvMesaEstado.OCUPADO } as any));
+        }
+
+        // Cerrar comanda (liberar tarjeta)
+        await this.cerrarComandaActual();
+
+        // Limpiar UI
+        this.ventaItemsDataSource.data = [];
+        this.calculateTotals();
+        this.clienteNameForm.get('nombre')?.setValue('');
+
+        await this.loadMesas();
+      } catch (error) {
+        console.error('Error al transferir comanda a mesa:', error);
+      }
+    });
   }
 
   // --- Navegación de categorías ---
@@ -549,7 +830,7 @@ export class PdvComponent implements OnInit, OnDestroy {
     if (!this.principalMoneda) return;
 
     // Calculate grand total in principal currency if estado is ACTIVO only
-    const totalInPrincipal = this.ventaItemsDataSource.data.filter(item => item.estado === EstadoVentaItem.ACTIVO).reduce((sum, item) => sum + (item.precioVentaUnitario - item.descuentoUnitario) * item.cantidad, 0);
+    const totalInPrincipal = this.ventaItemsDataSource.data.filter(item => item.estado === EstadoVentaItem.ACTIVO).reduce((sum, item) => sum + (item.precioVentaUnitario + (item.precioAdicionales || 0) - item.descuentoUnitario) * item.cantidad, 0);
 
     // Clear previous calculations
     this.monedasWithTotals = [];
@@ -618,6 +899,96 @@ export class PdvComponent implements OnInit, OnDestroy {
   }
 
   // Edit item from cart
+  async personalizarItem(item: VentaItem): Promise<void> {
+    const recetaId = (item.producto as any)?.receta?.id;
+    if (!recetaId) {
+      // Si no tiene receta, buscar el producto completo con relación receta
+      const producto = await firstValueFrom(this.repositoryService.getProducto(item.producto?.id));
+      if (!producto?.receta?.id) return; // No tiene receta, no se puede personalizar
+      (item.producto as any).receta = producto.receta;
+    }
+
+    // Cargar personalizaciones existentes para pasarlas al diálogo
+    const [existingAdicionales, existingModificaciones, existingObs] = await Promise.all([
+      firstValueFrom(this.repositoryService.getVentaItemAdicionales(item.id)),
+      firstValueFrom(this.repositoryService.getVentaItemIngredienteModificaciones(item.id)),
+      firstValueFrom(this.repositoryService.getObservacionesByVentaItem(item.id)),
+    ]);
+
+    const ingredientesRemovidos = (existingModificaciones || [])
+      .filter((m: any) => m.tipoModificacion === 'REMOVIDO')
+      .map((m: any) => m.recetaIngrediente?.id);
+    const ingredientesIntercambiados = (existingModificaciones || [])
+      .filter((m: any) => m.tipoModificacion === 'INTERCAMBIADO')
+      .map((m: any) => ({
+        recetaIngredienteId: m.recetaIngrediente?.id,
+        reemplazoProductoId: m.ingredienteReemplazo?.id,
+      }));
+    const adicionalesSeleccionados = (existingAdicionales || []).map((a: any) => a.adicional?.id);
+    const observacionIds = (existingObs || [])
+      .filter((o: any) => o.observacion?.id)
+      .map((o: any) => o.observacion.id);
+    const observacionLibre = (existingObs || []).find((o: any) => o.observacionLibre)?.observacionLibre || '';
+
+    const dialogRef = this.dialog.open(PersonalizarProductoDialogComponent, {
+      width: '750px',
+      maxHeight: '90vh',
+      data: {
+        producto: item.producto,
+        presentacion: item.presentacion,
+        precioVenta: item.precioVentaPresentacion,
+        cantidad: item.cantidad,
+        modoEdicion: true,
+        ingredientesRemovidos,
+        ingredientesIntercambiados,
+        adicionalesSeleccionados,
+        observacionIds,
+        observacionLibre,
+      },
+      disableClose: true,
+    });
+
+    const result = await firstValueFrom(dialogRef.afterClosed());
+    if (!result) return;
+
+    try {
+      // Limpiar personalizaciones anteriores
+      const oldAdicionales = existingAdicionales;
+      const oldModificaciones = existingModificaciones;
+      const oldObs = existingObs;
+
+      const deletePromises: Promise<any>[] = [];
+      for (const a of (oldAdicionales || [])) {
+        deletePromises.push(firstValueFrom(this.repositoryService.deleteVentaItemAdicional(a.id)));
+      }
+      for (const m of (oldModificaciones || [])) {
+        deletePromises.push(firstValueFrom(this.repositoryService.deleteVentaItemIngredienteModificacion(m.id)));
+      }
+      for (const o of (oldObs || [])) {
+        deletePromises.push(firstValueFrom(this.repositoryService.deleteVentaItemObservacion(o.id)));
+      }
+      await Promise.all(deletePromises);
+
+      // Actualizar cantidad y precioAdicionales en el item
+      item.cantidad = result.cantidad;
+      item.precioAdicionales = result.precioAdicionalTotal;
+      await firstValueFrom(this.repositoryService.updateVentaItem(item.id!, {
+        cantidad: result.cantidad,
+        precioAdicionales: result.precioAdicionalTotal,
+      }));
+
+      // Persistir nuevas personalizaciones
+      await this.persistirPersonalizacion(item.id, result);
+
+      // Recargar datos para la vista
+      await this.cargarPersonalizacionesItem(item);
+      this.ventaItemsDataSource.data = [...this.ventaItemsDataSource.data];
+      this.calculateTotals();
+    } catch (error) {
+      console.error('Error al personalizar item:', error);
+    }
+  }
+
   editItem(item: VentaItem): void {
     const dialogRef = this.dialog.open(EditVentaItemDialogComponent, {
       width: '400px',
@@ -677,9 +1048,8 @@ export class PdvComponent implements OnInit, OnDestroy {
             }
           }
 
-          // Recargar observaciones del item
-          const obs = await firstValueFrom(this.repositoryService.getObservacionesByVentaItem(item.id));
-          (item as any).observacionesVinculadas = obs;
+          // Recargar personalizaciones del item
+          await this.cargarPersonalizacionesItem(item);
 
           // Refrescar tabla
           this.ventaItemsDataSource.data = [...this.ventaItemsDataSource.data];
@@ -714,12 +1084,24 @@ export class PdvComponent implements OnInit, OnDestroy {
     }
 
     try {
-      // Check if mesa is selected or venta rápida active
-      if (!this.selectedMesa && !this.ventaRapidaActual) {
-        // No mesa selected and no venta rápida, show dialog to select one
-        await this.showMesaSelectionDialog();
+      // Si el producto tiene receta, abrir diálogo de personalización
+      let personalizacion: PersonalizarProductoDialogResult | null = null;
+      const recetaId = (producto as any).receta?.id;
+      if (recetaId && precioVenta) {
+        const dialogRef = this.dialog.open(PersonalizarProductoDialogComponent, {
+          width: '750px',
+          maxHeight: '90vh',
+          data: { producto, presentacion, precioVenta, cantidad },
+          disableClose: true,
+        });
+        personalizacion = await firstValueFrom(dialogRef.afterClosed());
+        if (!personalizacion) return; // Usuario canceló
+        cantidad = personalizacion.cantidad;
+      }
 
-        // If still no mesa selected after dialog, return without adding product
+      // Check if mesa, comanda, or venta rápida is selected
+      if (!this.selectedMesa && !this.ventaRapidaActual && !this.selectedComanda) {
+        await this.showMesaSelectionDialog();
         if (!this.selectedMesa) {
           console.log('No se seleccionó ninguna mesa');
           return;
@@ -729,25 +1111,12 @@ export class PdvComponent implements OnInit, OnDestroy {
       // Get the venta first
       const venta = await this.getVenta();
 
-      const existingItem = this.ventaItemsDataSource.data.find(item => item.presentacion?.id != null && item.presentacion.id === presentacion?.id);
-      let ventaItem: VentaItem;
-
-      // if (existingItem) {
-      //   existingItem.cantidad += cantidad;
-      //   existingItem.precioVentaUnitario = existingItem.cantidad * (existingItem.precioVentaUnitario - existingItem.descuentoUnitario);
-      //   // log updating item, and the list
-      //   console.log('updating item', existingItem, this.ventaItemsDataSource.data);
-      //   this.ventaItemsDataSource.data = [...this.ventaItemsDataSource.data];
-      //   ventaItem = existingItem;
-      // } else {
-      // use precioVenta or get preciosVenta from database where principal is true and presentacion.id is the same as precioVenta.presentacionId
       const precioVentaToUse = precioVenta;
-
       if (!precioVentaToUse) {
         throw new Error('No se encontró un precio de venta válido');
       }
 
-      // Create a new VentaItem (only use properties that exist on the VentaItem type)
+      // Create a new VentaItem
       const newVentaItem = new VentaItem();
       newVentaItem.presentacion = presentacion;
       newVentaItem.cantidad = cantidad;
@@ -756,24 +1125,30 @@ export class PdvComponent implements OnInit, OnDestroy {
       newVentaItem.venta = venta;
       newVentaItem.precioVentaPresentacion = precioVentaToUse;
       newVentaItem.producto = producto;
+      newVentaItem.precioAdicionales = personalizacion?.precioAdicionalTotal || 0;
 
       // Save the new item
       try {
         const savedItem = await firstValueFrom(this.repositoryService.createVentaItem(newVentaItem));
-        // Preservar relaciones que el backend no retorna
         savedItem.producto = producto;
         savedItem.presentacion = presentacion;
         savedItem.precioVentaPresentacion = precioVentaToUse;
+        savedItem.precioAdicionales = newVentaItem.precioAdicionales;
+
+        // Persistir personalizaciones
+        if (personalizacion) {
+          await this.persistirPersonalizacion(savedItem.id, personalizacion);
+          // Cargar personalizaciones guardadas para mostrar en la tabla expandible
+          await this.cargarPersonalizacionesItem(savedItem);
+        }
+
         const auxList = this.ventaItemsDataSource.data;
         auxList.push(savedItem);
-        // log adding new item, and the list
         console.log('adding new item', savedItem, auxList);
         this.ventaItemsDataSource.data = auxList;
-        ventaItem = savedItem;
       } catch (error) {
         console.error('Error al guardar el item de venta:', error);
       }
-      // }
 
       // Recalculate totals after adding item
       this.calculateTotals();
@@ -782,28 +1157,67 @@ export class PdvComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Genera o actualiza la comanda para la venta actual con items nuevos.
-   */
-  async generarComanda(venta: Venta, ventaItems: VentaItem[]): Promise<void> {
-    try {
-      const itemsData = ventaItems.map(vi => ({
-        ventaItem: { id: vi.id },
-        observacion: null,
-      }));
+  private async persistirPersonalizacion(ventaItemId: number, result: PersonalizarProductoDialogResult): Promise<void> {
+    const promises: Promise<any>[] = [];
 
-      await firstValueFrom(this.repositoryService.createComandaWithItems({
-        comanda: {
-          venta: { id: venta.id },
-          pdv_mesa: this.selectedMesa ? { id: this.selectedMesa.id } : null,
-          estado: 'PENDIENTE',
-        },
-        items: itemsData,
-      }));
-    } catch (error) {
-      console.error('Error al generar comanda:', error);
+    // Ingredientes removidos
+    for (const ingId of result.ingredientesRemovidos) {
+      promises.push(firstValueFrom(this.repositoryService.createVentaItemIngredienteModificacion({
+        ventaItem: { id: ventaItemId },
+        recetaIngrediente: { id: ingId },
+        tipoModificacion: 'REMOVIDO',
+      })));
     }
+
+    // Ingredientes intercambiados
+    for (const swap of result.ingredientesIntercambiados) {
+      promises.push(firstValueFrom(this.repositoryService.createVentaItemIngredienteModificacion({
+        ventaItem: { id: ventaItemId },
+        recetaIngrediente: { id: swap.recetaIngredienteId },
+        tipoModificacion: 'INTERCAMBIADO',
+        ingredienteReemplazo: { id: swap.reemplazoProductoId },
+      })));
+    }
+
+    // Adicionales
+    for (const adic of result.adicionalesSeleccionados) {
+      promises.push(firstValueFrom(this.repositoryService.createVentaItemAdicional({
+        ventaItem: { id: ventaItemId },
+        adicional: { id: adic.adicionalId },
+        precioCobrado: adic.precio,
+        cantidad: adic.cantidad,
+      })));
+    }
+
+    // Observaciones
+    for (const obsId of result.observacionIds) {
+      promises.push(firstValueFrom(this.repositoryService.createVentaItemObservacion({
+        ventaItem: { id: ventaItemId },
+        observacion: { id: obsId },
+      })));
+    }
+    if (result.observacionLibre) {
+      promises.push(firstValueFrom(this.repositoryService.createVentaItemObservacion({
+        ventaItem: { id: ventaItemId },
+        observacion: result.observacionIds.length > 0 ? { id: result.observacionIds[0] } : null,
+        observacionLibre: result.observacionLibre,
+      })));
+    }
+
+    await Promise.all(promises);
   }
+
+  private async cargarPersonalizacionesItem(item: VentaItem): Promise<void> {
+    const [obs, adicionales, modificaciones] = await Promise.all([
+      firstValueFrom(this.repositoryService.getObservacionesByVentaItem(item.id)),
+      firstValueFrom(this.repositoryService.getVentaItemAdicionales(item.id)),
+      firstValueFrom(this.repositoryService.getVentaItemIngredienteModificaciones(item.id)),
+    ]);
+    (item as any).observacionesVinculadas = obs || [];
+    (item as any).adicionalesVinculados = adicionales || [];
+    (item as any).ingredientesModificados = modificaciones || [];
+  }
+
 
   // Add new method to show mesa selection dialog
   private async showMesaSelectionDialog(): Promise<void> {
@@ -836,6 +1250,30 @@ export class PdvComponent implements OnInit, OnDestroy {
     if (this.ventaRapidaActual) {
       return Promise.resolve(this.ventaRapidaActual);
     }
+
+    // Comanda (tarjeta de cuenta individual)
+    if (this.selectedComanda) {
+      if (this.selectedComanda.venta && this.selectedComanda.venta.estado === VentaEstado.ABIERTA) {
+        return Promise.resolve(this.selectedComanda.venta);
+      }
+      const venta = new Venta();
+      venta.estado = VentaEstado.ABIERTA;
+      venta.caja = this.caja!;
+      venta.comanda = this.selectedComanda;
+      if (this.selectedComanda.pdv_mesa) {
+        venta.mesa = this.selectedComanda.pdv_mesa;
+      }
+      return firstValueFrom(this.repositoryService.createVenta(venta).pipe(
+        map(createdVenta => {
+          createdVenta.estado = VentaEstado.ABIERTA;
+          if (this.selectedComanda) {
+            this.selectedComanda.venta = createdVenta;
+          }
+          return createdVenta;
+        })
+      ));
+    }
+
     if (this.selectedMesa == null) {
       return Promise.reject('Mesa no seleccionada');
     } else {
@@ -934,7 +1372,7 @@ export class PdvComponent implements OnInit, OnDestroy {
   // --- Acciones del PdV ---
 
   get hasActiveVenta(): boolean {
-    return this.selectedMesa?.venta != null || this.ventaRapidaActual != null;
+    return this.selectedMesa?.venta != null || this.ventaRapidaActual != null || this.selectedComanda?.venta != null;
   }
 
   get hasActiveItems(): boolean {
@@ -944,7 +1382,7 @@ export class PdvComponent implements OnInit, OnDestroy {
   cobrarVenta(): void {
     if (!this.hasActiveVenta || !this.hasActiveItems) return;
 
-    const venta = this.ventaRapidaActual || this.selectedMesa?.venta;
+    const venta = this.ventaRapidaActual || this.selectedComanda?.venta || this.selectedMesa?.venta;
     if (!venta) return;
 
     const dialogData: CobrarVentaDialogData = {
@@ -966,6 +1404,10 @@ export class PdvComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe(async result => {
       if (result?.success) {
+        // Cerrar comanda si estaba vinculada
+        if (this.selectedComanda) {
+          await this.cerrarComandaActual();
+        }
         // Liberar mesa y limpiar estado completamente
         if (this.selectedMesa) {
           // Cerrar cualquier venta huérfana abierta en esta mesa
@@ -989,7 +1431,7 @@ export class PdvComponent implements OnInit, OnDestroy {
   cancelarVenta(): void {
     if (!this.hasActiveVenta) return;
 
-    const venta = this.ventaRapidaActual || this.selectedMesa?.venta;
+    const venta = this.ventaRapidaActual || this.selectedComanda?.venta || this.selectedMesa?.venta;
     if (!venta) return;
 
     const dialogRef = this.dialog.open(CancelarVentaDialogComponent, {
@@ -1014,6 +1456,11 @@ export class PdvComponent implements OnInit, OnDestroy {
           await firstValueFrom(this.repositoryService.updateVenta(venta.id, {
             estado: VentaEstado.CANCELADA,
           }));
+
+          // Cerrar comanda si estaba vinculada
+          if (this.selectedComanda) {
+            await this.cerrarComandaActual();
+          }
 
           // Liberar mesa y limpiar estado completamente
           if (this.selectedMesa) {
@@ -1064,11 +1511,11 @@ export class PdvComponent implements OnInit, OnDestroy {
   async cobroRapido(): Promise<void> {
     if (!this.hasActiveVenta || !this.hasActiveItems) return;
 
-    const venta = this.ventaRapidaActual || this.selectedMesa?.venta;
+    const venta = this.ventaRapidaActual || this.selectedComanda?.venta || this.selectedMesa?.venta;
     if (!venta) return;
 
     const items = this.ventaItemsDataSource.data.filter(i => i.estado === EstadoVentaItem.ACTIVO);
-    const total = items.reduce((sum, i) => sum + (i.precioVentaUnitario - (i.descuentoUnitario || 0)) * i.cantidad, 0);
+    const total = items.reduce((sum, i) => sum + (i.precioVentaUnitario + (i.precioAdicionales || 0) - (i.descuentoUnitario || 0)) * i.cantidad, 0);
     if (total <= 0) return;
 
     try {
@@ -1099,6 +1546,16 @@ export class PdvComponent implements OnInit, OnDestroy {
         fechaCierre: new Date(),
       }));
 
+      // Procesar stock (fire-and-forget)
+      this.repositoryService.procesarStockVenta(venta.id).subscribe({
+        next: (r) => console.log('Stock procesado:', r),
+        error: (e) => console.error('Error procesando stock (no-blocking):', e),
+      });
+
+      // Cerrar comanda si estaba vinculada
+      if (this.selectedComanda) {
+        await this.cerrarComandaActual();
+      }
       if (this.selectedMesa) {
         // Cerrar cualquier venta huérfana abierta en esta mesa
         await firstValueFrom(this.repositoryService.cerrarVentasAbiertasMesa(this.selectedMesa.id!, VentaEstado.CONCLUIDA));
@@ -1157,11 +1614,51 @@ export class PdvComponent implements OnInit, OnDestroy {
   }
 
   openDelivery(): void {
-    // TODO: Abrir diálogo de gestión de delivery
-    this.dialog.open(ConfirmationDialogComponent, {
-      width: '400px',
-      data: { title: 'DELIVERY', message: 'Gestión de delivery será implementada próximamente.', confirmText: 'CERRAR', showCancel: false },
+    if (!this.caja) return;
+
+    const dialogData: DeliveryDialogData = {
+      caja: this.caja,
+      monedas: this.monedas,
+      principalMoneda: this.principalMoneda!,
+      exchangeRates: this.exchangeRates,
+      filteredMonedas: this.filteredMonedas,
+    };
+
+    const dialogRef = this.dialog.open(DeliveryDialogComponent, {
+      width: '90vw',
+      height: '85vh',
+      maxWidth: '95vw',
+      disableClose: false,
+      data: dialogData,
     });
+
+    dialogRef.afterClosed().subscribe(async (result) => {
+      if (result?.action === 'editItems' && result.delivery && result.venta) {
+        // Cargar delivery en PdV para editar items
+        this.deliveryActual = result.delivery;
+        this.selectedMesa = null;
+        this.ventaRapidaActual = result.venta;
+
+        // Cargar items de la venta
+        try {
+          const items = await firstValueFrom(this.repositoryService.getVentaItems(result.venta.id));
+          for (const item of items) {
+            await this.cargarPersonalizacionesItem(item);
+          }
+          this.ventaItemsDataSource.data = items;
+          this.calculateTotals();
+        } catch (e) {
+          this.ventaItemsDataSource.data = [];
+        }
+      }
+    });
+  }
+
+  cerrarModoDelivery(): void {
+    this.deliveryActual = null;
+    this.ventaRapidaActual = null;
+    this.ventaItemsDataSource.data = [];
+    this.calculateTotals();
   }
 
   openUtilitarios(): void {
@@ -1175,13 +1672,13 @@ export class PdvComponent implements OnInit, OnDestroy {
   aplicarDescuentoVenta(): void {
     if (!this.hasActiveVenta) return;
 
-    const venta = this.ventaRapidaActual || this.selectedMesa?.venta;
+    const venta = this.ventaRapidaActual || this.selectedComanda?.venta || this.selectedMesa?.venta;
     if (!venta) return;
 
     // Calcular subtotal de items activos
     const subtotal = this.ventaItemsDataSource.data
       .filter(i => i.estado === EstadoVentaItem.ACTIVO)
-      .reduce((sum, i) => sum + (i.precioVentaUnitario * i.cantidad), 0);
+      .reduce((sum, i) => sum + ((i.precioVentaUnitario + (i.precioAdicionales || 0)) * i.cantidad), 0);
 
     const dialogRef = this.dialog.open(DescuentoDialogComponent, {
       width: '450px',
@@ -1278,16 +1775,16 @@ export class PdvComponent implements OnInit, OnDestroy {
 
   imprimirPreCuenta(): void {
     if (!this.hasActiveVenta) return;
-    const venta = this.ventaRapidaActual || this.selectedMesa?.venta;
+    const venta = this.ventaRapidaActual || this.selectedComanda?.venta || this.selectedMesa?.venta;
     if (!venta) return;
 
     const items = this.ventaItemsDataSource.data.filter(i => i.estado === EstadoVentaItem.ACTIVO);
-    const total = items.reduce((sum, i) => sum + (i.precioVentaUnitario - (i.descuentoUnitario || 0)) * i.cantidad, 0);
+    const total = items.reduce((sum, i) => sum + (i.precioVentaUnitario + (i.precioAdicionales || 0) - (i.descuentoUnitario || 0)) * i.cantidad, 0);
     const mesaNum = this.selectedMesa?.numero || 'V. RÁPIDA';
 
     // Por ahora mostrar en diálogo (futuro: enviar a impresora)
     const lineas = items.map(i =>
-      `${i.producto?.nombre || 'PRODUCTO'} x${i.cantidad} - ${((i.precioVentaUnitario - (i.descuentoUnitario || 0)) * i.cantidad).toLocaleString('es-PY')}`
+      `${i.producto?.nombre || 'PRODUCTO'} x${i.cantidad} - ${((i.precioVentaUnitario + (i.precioAdicionales || 0) - (i.descuentoUnitario || 0)) * i.cantidad).toLocaleString('es-PY')}`
     );
 
     const contenido = [
@@ -1453,11 +1950,11 @@ export class PdvComponent implements OnInit, OnDestroy {
   dividirCuenta(): void {
     if (!this.hasActiveVenta || !this.hasActiveItems) return;
 
-    const venta = this.ventaRapidaActual || this.selectedMesa?.venta;
+    const venta = this.ventaRapidaActual || this.selectedComanda?.venta || this.selectedMesa?.venta;
     if (!venta) return;
 
     const activeItems = this.ventaItemsDataSource.data.filter(i => i.estado === EstadoVentaItem.ACTIVO);
-    const total = activeItems.reduce((sum, i) => sum + (i.precioVentaUnitario - (i.descuentoUnitario || 0)) * i.cantidad, 0);
+    const total = activeItems.reduce((sum, i) => sum + (i.precioVentaUnitario + (i.precioAdicionales || 0) - (i.descuentoUnitario || 0)) * i.cantidad, 0);
 
     const dialogRef = this.dialog.open(DividirCuentaDialogComponent, {
       width: '500px',
@@ -1476,7 +1973,7 @@ export class PdvComponent implements OnInit, OnDestroy {
   asociarCliente(): void {
     if (!this.hasActiveVenta) return;
 
-    const venta = this.ventaRapidaActual || this.selectedMesa?.venta;
+    const venta = this.ventaRapidaActual || this.selectedComanda?.venta || this.selectedMesa?.venta;
     if (!venta) return;
 
     const dialogRef = this.dialog.open(BuscarClienteDialogComponent, {
@@ -1528,8 +2025,14 @@ export class PdvComponent implements OnInit, OnDestroy {
         break;
       case 'Escape':
         event.preventDefault();
-        if (this.ventaRapidaActual) {
+        if (this.deliveryActual) {
+          this.cerrarModoDelivery();
+        } else if (this.ventaRapidaActual) {
           // No deseleccionar — mantener venta rápida
+        } else if (this.selectedComanda) {
+          this.selectedComanda = null;
+          this.ventaItemsDataSource.data = [];
+          this.calculateTotals();
         } else {
           this.selectedMesa = null;
           this.ventaItemsDataSource.data = [];
@@ -1585,6 +2088,7 @@ export class PdvComponent implements OnInit, OnDestroy {
 
   selectMesa(mesa: PdvMesa): void {
     this.selectedMesa = mesa;
+    this.selectedComanda = null;
 
     // Reset cliente name form when selecting a new mesa
     this.isEditingClienteName = false;
@@ -1611,10 +2115,9 @@ export class PdvComponent implements OnInit, OnDestroy {
       try {
         // Load venta items for this venta
         const items = await firstValueFrom(this.repositoryService.getVentaItems(mesa.venta.id));
-        // Cargar observaciones de cada item
+        // Cargar personalizaciones de cada item
         for (const item of items) {
-          const obs = await firstValueFrom(this.repositoryService.getObservacionesByVentaItem(item.id));
-          (item as any).observacionesVinculadas = obs;
+          await this.cargarPersonalizacionesItem(item);
         }
         this.ventaItemsDataSource.data = items;
         console.log(this.ventaItemsDataSource.data);
@@ -1640,8 +2143,9 @@ export class PdvComponent implements OnInit, OnDestroy {
     this.isEditingClienteName = true;
 
     // Set initial value if available
-    if (this.selectedMesa?.venta?.nombreCliente) {
-      this.clienteNameForm.get('nombre')?.setValue(this.selectedMesa.venta.nombreCliente);
+    const ventaActual = this.selectedComanda?.venta || this.selectedMesa?.venta;
+    if (ventaActual?.nombreCliente) {
+      this.clienteNameForm.get('nombre')?.setValue(ventaActual.nombreCliente);
     } else {
       this.clienteNameForm.get('nombre')?.setValue('');
     }
@@ -1659,14 +2163,14 @@ export class PdvComponent implements OnInit, OnDestroy {
    * Save cliente name
    */
   async saveClienteName(): Promise<void> {
-    if (!this.selectedMesa) return;
+    if (!this.selectedMesa && !this.selectedComanda) return;
 
     const raw = this.clienteNameForm.get('nombre')?.value || '';
     const nombreCliente = raw.replace(/\b\w/g, (c: string) => c.toUpperCase());
     this.clienteNameForm.get('nombre')?.setValue(nombreCliente, { emitEvent: false });
 
     try {
-      let venta = this.selectedMesa.venta;
+      let venta = this.selectedComanda?.venta || this.selectedMesa?.venta;
 
       if (!venta) {
         // Create a new venta if none exists
@@ -1680,7 +2184,9 @@ export class PdvComponent implements OnInit, OnDestroy {
       const updatedVenta = await firstValueFrom(this.repositoryService.updateVenta(venta.id!, venta));
 
       // Update the local reference
-      if (this.selectedMesa) {
+      if (this.selectedComanda) {
+        this.selectedComanda.venta = updatedVenta;
+      } else if (this.selectedMesa) {
         this.selectedMesa.venta = updatedVenta;
 
         // Update mesa estado to OCUPADO

@@ -139,7 +139,7 @@ export class CreateEditUsuarioComponent implements OnInit {
             const lowerQuery = query.toLowerCase();
             filteredPersonas = allPersonas.filter(p =>
               p.nombre.toLowerCase().includes(lowerQuery) ||
-              p.documento.toLowerCase().includes(lowerQuery)
+              p.documento?.toLowerCase().includes(lowerQuery)
             );
           }
 

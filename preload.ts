@@ -777,14 +777,20 @@ interface PdvMesa {
   venta?: Venta;
 }
 
-// New Comanda interface
+// Comanda interface (tarjeta de cuenta individual)
 interface Comanda {
   id?: number;
   codigo: string;
-  pdv_mesa: PdvMesa;
+  numero: number;
+  estado: string;
+  descripcion?: string;
+  observacion?: string;
+  pdv_mesa?: PdvMesa;
+  sector?: Sector;
   activo: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  venta?: Venta;
 }
 
 // New Sector interface
@@ -1409,6 +1415,18 @@ contextBridge.exposeInMainWorld('api', {
   deleteDelivery: async (deliveryId: number): Promise<any> => {
     return await ipcRenderer.invoke('deleteDelivery', deliveryId);
   },
+  getDeliveriesByCaja: async (cajaId: number, filtros?: any): Promise<{ data: any[], total: number }> => {
+    return await ipcRenderer.invoke('getDeliveriesByCaja', cajaId, filtros);
+  },
+  buscarClientePorTelefono: async (telefono: string): Promise<any> => {
+    return await ipcRenderer.invoke('buscar-cliente-por-telefono', telefono);
+  },
+  buscarClientesPorTelefono: async (telefono: string): Promise<any[]> => {
+    return await ipcRenderer.invoke('buscar-clientes-por-telefono', telefono);
+  },
+  crearClienteRapido: async (data: { telefono: string; nombre?: string; direccion?: string }): Promise<any> => {
+    return await ipcRenderer.invoke('crear-cliente-rapido', data);
+  },
 
   // Cerrar ventas abiertas de una mesa
   cerrarVentasAbiertasMesa: async (mesaId: number, estado: string): Promise<number> => {
@@ -1473,6 +1491,28 @@ contextBridge.exposeInMainWorld('api', {
   },
   deleteVentaItemObservacion: async (id: number): Promise<boolean> => {
     return await ipcRenderer.invoke('deleteVentaItemObservacion', id);
+  },
+
+  // VentaItemAdicional methods
+  getVentaItemAdicionales: async (ventaItemId: number): Promise<any[]> => {
+    return await ipcRenderer.invoke('getVentaItemAdicionales', ventaItemId);
+  },
+  createVentaItemAdicional: async (data: any): Promise<any> => {
+    return await ipcRenderer.invoke('createVentaItemAdicional', data);
+  },
+  deleteVentaItemAdicional: async (id: number): Promise<boolean> => {
+    return await ipcRenderer.invoke('deleteVentaItemAdicional', id);
+  },
+
+  // VentaItemIngredienteModificacion methods
+  getVentaItemIngredienteModificaciones: async (ventaItemId: number): Promise<any[]> => {
+    return await ipcRenderer.invoke('getVentaItemIngredienteModificaciones', ventaItemId);
+  },
+  createVentaItemIngredienteModificacion: async (data: any): Promise<any> => {
+    return await ipcRenderer.invoke('createVentaItemIngredienteModificacion', data);
+  },
+  deleteVentaItemIngredienteModificacion: async (id: number): Promise<boolean> => {
+    return await ipcRenderer.invoke('deleteVentaItemIngredienteModificacion', id);
   },
 
   // PdvGrupoCategoria methods
@@ -1623,7 +1663,7 @@ contextBridge.exposeInMainWorld('api', {
     return await ipcRenderer.invoke('deleteSector', id);
   },
 
-  // Comanda methods
+  // Comanda methods (tarjetas de cuenta individual)
   getComandas: async (): Promise<Comanda[]> => {
     return await ipcRenderer.invoke('getComandas');
   },
@@ -1645,17 +1685,26 @@ contextBridge.exposeInMainWorld('api', {
   deleteComanda: async (id: number): Promise<boolean> => {
     return await ipcRenderer.invoke('deleteComanda', id);
   },
-  getComandasPendientes: async (): Promise<Comanda[]> => {
-    return await ipcRenderer.invoke('getComandasPendientes');
+  getComandasDisponibles: async (): Promise<Comanda[]> => {
+    return await ipcRenderer.invoke('getComandasDisponibles');
   },
-  getComandaByVenta: async (ventaId: number): Promise<Comanda | null> => {
-    return await ipcRenderer.invoke('getComandaByVenta', ventaId);
+  getComandasOcupadas: async (): Promise<Comanda[]> => {
+    return await ipcRenderer.invoke('getComandasOcupadas');
   },
-  createComandaWithItems: async (data: any): Promise<Comanda> => {
-    return await ipcRenderer.invoke('createComandaWithItems', data);
+  getComandasBySector: async (sectorId: number): Promise<Comanda[]> => {
+    return await ipcRenderer.invoke('getComandasBySector', sectorId);
   },
-  updateComandaItemEstado: async (id: number, estado: string): Promise<any> => {
-    return await ipcRenderer.invoke('updateComandaItemEstado', id, estado);
+  abrirComanda: async (comandaId: number, data: { mesaId?: number, sectorId?: number, observacion?: string }): Promise<Comanda> => {
+    return await ipcRenderer.invoke('abrirComanda', comandaId, data);
+  },
+  cerrarComanda: async (comandaId: number): Promise<Comanda> => {
+    return await ipcRenderer.invoke('cerrarComanda', comandaId);
+  },
+  createBatchComandas: async (batchData: any[]): Promise<Comanda[]> => {
+    return await ipcRenderer.invoke('createBatchComandas', batchData);
+  },
+  getComandaWithVenta: async (comandaId: number): Promise<Comanda | null> => {
+    return await ipcRenderer.invoke('getComandaWithVenta', comandaId);
   },
 
   // New search methods
@@ -2037,6 +2086,12 @@ contextBridge.exposeInMainWorld('api', {
   },
   deleteStockMovimiento: async (stockMovimientoId: number): Promise<any> => {
     return await ipcRenderer.invoke('delete-stock-movimiento', stockMovimientoId);
+  },
+  procesarStockVenta: async (ventaId: number): Promise<any> => {
+    return await ipcRenderer.invoke('procesarStockVenta', ventaId);
+  },
+  revertirStockVenta: async (ventaId: number): Promise<any> => {
+    return await ipcRenderer.invoke('revertirStockVenta', ventaId);
   },
 
   // Additional helper methods

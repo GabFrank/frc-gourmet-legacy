@@ -68,7 +68,7 @@ export class DetalleVentaDialogComponent implements OnInit {
     this.itemRows = items.map(item => ({
       item,
       mozo: (item as any).createdBy?.persona?.nombre || '-',
-      totalItem: item.estado === 'CANCELADO' ? 0 : (item.precioVentaUnitario - (item.descuentoUnitario || 0)) * item.cantidad,
+      totalItem: item.estado === 'CANCELADO' ? 0 : (item.precioVentaUnitario + (item.precioAdicionales || 0) - (item.descuentoUnitario || 0)) * item.cantidad,
       cancelInfo: this.getCancelInfo(item),
     }));
 

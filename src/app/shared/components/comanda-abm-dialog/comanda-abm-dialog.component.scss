@@ -1,0 +1,119 @@
+:host {
+  display: block;
+}
+
+h2[mat-dialog-title] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  mat-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+mat-dialog-content {
+  min-height: 400px;
+  max-height: 70vh;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.form-section {
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  margin-bottom: 16px;
+
+  h3 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+  }
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+
+  mat-form-field {
+    flex: 1;
+    min-width: 150px;
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-top: 4px;
+}
+
+.loading-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 0;
+}
+
+.table-section {
+  .empty-state {
+    text-align: center;
+    padding: 40px 0;
+    opacity: 0.6;
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+    }
+
+    .hint {
+      font-size: 12px;
+    }
+  }
+}
+
+.comandas-table {
+  width: 100%;
+}
+
+.status-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+
+  &.status-disponible {
+    background-color: rgba(76, 175, 80, 0.2);
+    color: #4caf50;
+  }
+
+  &.status-ocupado {
+    background-color: rgba(255, 152, 0, 0.2);
+    color: #ff9800;
+  }
+
+  &.status-activo {
+    background-color: rgba(76, 175, 80, 0.2);
+    color: #4caf50;
+  }
+
+  &.status-inactivo {
+    background-color: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+  }
+}
+
+.row-inactive {
+  opacity: 0.5;
+}

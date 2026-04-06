@@ -22,4 +22,18 @@ export class PdvConfig extends BaseModel {
 
   @Column({ name: 'umbral_diferencia_alta', type: 'decimal', precision: 10, scale: 2, default: 15 })
   umbralDiferenciaAlta!: number;
+
+  // Umbrales de tiempo de espera delivery (minutos)
+  @Column({ name: 'delivery_tiempo_amarillo', type: 'int', default: 30 })
+  deliveryTiempoAmarillo!: number;
+
+  @Column({ name: 'delivery_tiempo_rojo', type: 'int', default: 60 })
+  deliveryTiempoRojo!: number;
+
+  // Comandas
+  @Column({ name: 'pdv_tab_default', type: 'varchar', default: 'MESAS' })
+  pdvTabDefault!: string;
+
+  @Column({ name: 'comandas_habilitadas', default: false })
+  comandasHabilitadas!: boolean;
 } 

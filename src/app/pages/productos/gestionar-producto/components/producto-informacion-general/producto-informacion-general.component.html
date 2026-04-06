@@ -95,6 +95,7 @@
             color="primary"
             class="toggle-item">
             Controla Stock
+            <mat-icon *ngIf="stockTooltip" class="stock-info-icon" [matTooltip]="stockTooltip" matTooltipPosition="above">info_outline</mat-icon>
           </mat-slide-toggle>
           <mat-slide-toggle 
             formControlName="esIngrediente" 

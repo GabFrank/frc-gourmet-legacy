@@ -80,7 +80,7 @@ export class DividirCuentaDialogComponent implements OnInit {
       const grupoIdx = this.itemAssignment.get(item.id) || 0;
       if (this.grupos[grupoIdx]) {
         this.grupos[grupoIdx].items.push(item);
-        this.grupos[grupoIdx].total += (item.precioVentaUnitario - (item.descuentoUnitario || 0)) * item.cantidad;
+        this.grupos[grupoIdx].total += (item.precioVentaUnitario + (item.precioAdicionales || 0) - (item.descuentoUnitario || 0)) * item.cantidad;
       }
     }
   }

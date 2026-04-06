@@ -5,6 +5,8 @@ import { Delivery, DeliveryEstado } from '../../src/app/database/entities/ventas
 import { Venta, VentaEstado } from '../../src/app/database/entities/ventas/venta.entity';
 import { VentaItem } from '../../src/app/database/entities/ventas/venta-item.entity';
 import { VentaItemObservacion } from '../../src/app/database/entities/ventas/venta-item-observacion.entity';
+import { VentaItemAdicional } from '../../src/app/database/entities/ventas/venta-item-adicional.entity';
+import { VentaItemIngredienteModificacion } from '../../src/app/database/entities/ventas/venta-item-ingrediente-modificacion.entity';
 import { PdvGrupoCategoria } from '../../src/app/database/entities/ventas/pdv-grupo-categoria.entity';
 import { PdvCategoria } from '../../src/app/database/entities/ventas/pdv-categoria.entity';
 import { PdvCategoriaItem } from '../../src/app/database/entities/ventas/pdv-categoria-item.entity';
@@ -17,10 +19,22 @@ import { DeepPartial } from 'typeorm';
 import { Reserva } from '../../src/app/database/entities/ventas/reserva.entity';
 import { PdvMesa, PdvMesaEstado } from '../../src/app/database/entities/ventas/pdv-mesa.entity';
 import { Comanda, ComandaEstado } from '../../src/app/database/entities/ventas/comanda.entity';
-import { ComandaItem } from '../../src/app/database/entities/ventas/comanda-item.entity';
+// ComandaItem kept for future kitchen integration
+// import { ComandaItem } from '../../src/app/database/entities/ventas/comanda-item.entity';
 import { Sector } from '../../src/app/database/entities/ventas/sector.entity';
 import { PagoDetalle } from '../../src/app/database/entities/compras/pago-detalle.entity';
 import { Caja } from '../../src/app/database/entities/financiero/caja.entity';
+import { Producto } from '../../src/app/database/entities/productos/producto.entity';
+import { ProductoTipo } from '../../src/app/database/entities/productos/producto-tipo.enum';
+import { Receta } from '../../src/app/database/entities/productos/receta.entity';
+import { RecetaIngrediente } from '../../src/app/database/entities/productos/receta-ingrediente.entity';
+import { RecetaPresentacion } from '../../src/app/database/entities/productos/receta-presentacion.entity';
+import { StockMovimiento, StockMovimientoTipo, StockMovimientoTipoReferencia } from '../../src/app/database/entities/productos/stock-movimiento.entity';
+import { Combo } from '../../src/app/database/entities/productos/combo.entity';
+import { ComboProducto } from '../../src/app/database/entities/productos/combo-producto.entity';
+import { Adicional } from '../../src/app/database/entities/productos/adicional.entity';
+import { TipoModificacionIngrediente } from '../../src/app/database/entities/ventas/venta-item-ingrediente-modificacion.entity';
+import { EstadoVentaItem } from '../../src/app/database/entities/ventas/venta-item.entity';
 
 export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: () => Usuario | null) {
   // Remove this line - get the current user in each handler instead
@@ -182,6 +196,47 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
       return await repo.remove(entity);
     } catch (error) {
       console.error(`Error deleting delivery ID ${id}:`, error);
+      throw error;
+    }
+  });
+
+  // Get deliveries by caja with pagination and filters
+  ipcMain.handle('getDeliveriesByCaja', async (_event: any, cajaId: number, filtros?: any) => {
+    try {
+      const ventaRepo = dataSource.getRepository(Venta);
+      const qb = ventaRepo.createQueryBuilder('venta')
+        .leftJoinAndSelect('venta.delivery', 'delivery')
+        .leftJoinAndSelect('delivery.precioDelivery', 'precioDelivery')
+        .leftJoinAndSelect('delivery.cliente', 'cliente')
+        .leftJoinAndSelect('cliente.persona', 'persona')
+        .leftJoinAndSelect('delivery.entregadoPor', 'entregadoPor')
+        .leftJoinAndSelect('entregadoPor.persona', 'entregadoPorPersona')
+        .leftJoinAndSelect('venta.items', 'items')
+        .leftJoinAndSelect('venta.pago', 'pago')
+        .where('venta.caja_id = :cajaId', { cajaId })
+        .andWhere('delivery.id IS NOT NULL');
+
+      if (filtros?.estado) {
+        qb.andWhere('delivery.estado = :estado', { estado: filtros.estado });
+      }
+
+      qb.orderBy('delivery.fechaAbierto', 'DESC');
+
+      // Pagination
+      const page = filtros?.page || 1;
+      const pageSize = filtros?.pageSize || 20;
+      qb.skip((page - 1) * pageSize).take(pageSize);
+
+      const [ventas, total] = await qb.getManyAndCount();
+
+      const data = ventas.map(venta => ({
+        ...venta.delivery,
+        venta: { id: venta.id, estado: venta.estado, items: venta.items, pago: venta.pago },
+      }));
+
+      return { data, total };
+    } catch (error) {
+      console.error(`Error getting deliveries for caja ${cajaId}:`, error);
       throw error;
     }
   });
@@ -727,6 +782,82 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
     }
   });
 
+  // --- VentaItemAdicional Handlers ---
+  ipcMain.handle('getVentaItemAdicionales', async (_event: any, ventaItemId: number) => {
+    try {
+      const repo = dataSource.getRepository(VentaItemAdicional);
+      return await repo.find({
+        where: { ventaItem: { id: ventaItemId } },
+        relations: ['adicional'],
+      });
+    } catch (error) {
+      console.error(`Error getting adicionales for venta item ${ventaItemId}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('createVentaItemAdicional', async (_event: any, data: any) => {
+    try {
+      const repo = dataSource.getRepository(VentaItemAdicional);
+      const entity = repo.create(data);
+      return await repo.save(entity);
+    } catch (error) {
+      console.error('Error creating venta item adicional:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('deleteVentaItemAdicional', async (_event: any, id: number) => {
+    try {
+      const repo = dataSource.getRepository(VentaItemAdicional);
+      const entity = await repo.findOneBy({ id });
+      if (!entity) throw new Error(`VentaItemAdicional ID ${id} not found`);
+      await repo.remove(entity);
+      return true;
+    } catch (error) {
+      console.error(`Error deleting venta item adicional ${id}:`, error);
+      return false;
+    }
+  });
+
+  // --- VentaItemIngredienteModificacion Handlers ---
+  ipcMain.handle('getVentaItemIngredienteModificaciones', async (_event: any, ventaItemId: number) => {
+    try {
+      const repo = dataSource.getRepository(VentaItemIngredienteModificacion);
+      return await repo.find({
+        where: { ventaItem: { id: ventaItemId } },
+        relations: ['recetaIngrediente', 'recetaIngrediente.ingrediente', 'ingredienteReemplazo'],
+      });
+    } catch (error) {
+      console.error(`Error getting ingrediente modificaciones for venta item ${ventaItemId}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('createVentaItemIngredienteModificacion', async (_event: any, data: any) => {
+    try {
+      const repo = dataSource.getRepository(VentaItemIngredienteModificacion);
+      const entity = repo.create(data);
+      return await repo.save(entity);
+    } catch (error) {
+      console.error('Error creating venta item ingrediente modificacion:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('deleteVentaItemIngredienteModificacion', async (_event: any, id: number) => {
+    try {
+      const repo = dataSource.getRepository(VentaItemIngredienteModificacion);
+      const entity = await repo.findOneBy({ id });
+      if (!entity) throw new Error(`VentaItemIngredienteModificacion ID ${id} not found`);
+      await repo.remove(entity);
+      return true;
+    } catch (error) {
+      console.error(`Error deleting venta item ingrediente modificacion ${id}:`, error);
+      return false;
+    }
+  });
+
   // --- PdvGrupoCategoria Handlers ---
   ipcMain.handle('getPdvGrupoCategorias', async () => {
     try {
@@ -1225,12 +1356,13 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
   });
 
   // --- PdvMesa Handlers ---
-  // Helper: query mesas with only the ABIERTA venta joined
+  // Helper: query mesas with only the ABIERTA venta joined + comandas OCUPADO vinculadas
   const queryMesasWithVentaAbierta = (repo: any) => {
     return repo.createQueryBuilder('mesa')
       .leftJoinAndSelect('mesa.reserva', 'reserva')
       .leftJoinAndSelect('mesa.sector', 'sector')
       .leftJoinAndMapOne('mesa.venta', Venta, 'venta', 'venta.mesa_id = mesa.id AND venta.estado = :ventaEstado', { ventaEstado: VentaEstado.ABIERTA })
+      .leftJoinAndSelect('mesa.comandas', 'comanda', 'comanda.estado = :comandaEstado AND comanda.activo = :comandaActivo', { comandaEstado: ComandaEstado.OCUPADO, comandaActivo: true })
       .orderBy('mesa.numero', 'ASC');
   };
 
@@ -1361,13 +1493,13 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
     }
   });
 
-  // --- Comanda Handlers ---
+  // --- Comanda Handlers (tarjetas de cuenta individual) ---
   ipcMain.handle('getComandas', async () => {
     try {
       const repo = dataSource.getRepository(Comanda);
       return await repo.find({
-        relations: ['pdv_mesa'],
-        order: { createdAt: 'DESC' }
+        relations: ['pdv_mesa', 'sector'],
+        order: { numero: 'ASC' }
       });
     } catch (error) {
       console.error('Error getting Comandas:', error);
@@ -1380,8 +1512,8 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
       const repo = dataSource.getRepository(Comanda);
       return await repo.find({
         where: { activo: true },
-        relations: ['pdv_mesa', 'venta', 'items', 'items.ventaItem', 'items.ventaItem.producto'],
-        order: { createdAt: 'DESC' }
+        relations: ['pdv_mesa', 'sector'],
+        order: { numero: 'ASC' }
       });
     } catch (error) {
       console.error('Error getting Comandas activas:', error);
@@ -1393,9 +1525,9 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
     try {
       const repo = dataSource.getRepository(Comanda);
       return await repo.find({
-        where: { pdv_mesa: { id: mesaId } },
-        relations: ['pdv_mesa'],
-        order: { createdAt: 'DESC' }
+        where: { pdv_mesa: { id: mesaId }, activo: true },
+        relations: ['pdv_mesa', 'sector'],
+        order: { numero: 'ASC' }
       });
     } catch (error) {
       console.error(`Error getting Comandas for Mesa ID ${mesaId}:`, error);
@@ -1408,7 +1540,7 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
       const repo = dataSource.getRepository(Comanda);
       return await repo.findOne({
         where: { id },
-        relations: ['pdv_mesa']
+        relations: ['pdv_mesa', 'sector']
       });
     } catch (error) {
       console.error(`Error getting Comanda ID ${id}:`, error);
@@ -1419,7 +1551,7 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
   ipcMain.handle('createComanda', async (_event: any, data: any) => {
     try {
       const repo = dataSource.getRepository(Comanda);
-      const entity = repo.create(data);
+      const entity = repo.create({ ...data, estado: ComandaEstado.DISPONIBLE });
       await setEntityUserTracking(dataSource, entity, getCurrentUser()?.id, false);
       return await repo.save(entity);
     } catch (error) {
@@ -1433,6 +1565,21 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
       const repo = dataSource.getRepository(Comanda);
       const entity = await repo.findOneBy({ id });
       if (!entity) throw new Error(`Comanda ID ${id} not found`);
+
+      // Si se cambia la mesa, sincronizar sector con el de la mesa
+      if ('pdv_mesa' in data) {
+        if (data.pdv_mesa?.id) {
+          const mesaRepo = dataSource.getRepository(PdvMesa);
+          const mesa = await mesaRepo.findOne({ where: { id: data.pdv_mesa.id }, relations: ['sector'] });
+          if (mesa) {
+            data.sector = mesa.sector || null;
+          }
+        } else {
+          // Sin mesa → limpiar sector también
+          data.sector = null;
+        }
+      }
+
       repo.merge(entity, data);
       await setEntityUserTracking(dataSource, entity, getCurrentUser()?.id, true);
       return await repo.save(entity);
@@ -1454,75 +1601,129 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
     }
   });
 
-  // --- ComandaItem Handlers ---
-  ipcMain.handle('getComandasPendientes', async () => {
+  ipcMain.handle('getComandasDisponibles', async () => {
     try {
       const repo = dataSource.getRepository(Comanda);
       return await repo.find({
-        where: [
-          { estado: ComandaEstado.PENDIENTE },
-          { estado: ComandaEstado.EN_PREPARACION },
-        ],
-        relations: ['pdv_mesa', 'venta', 'items', 'items.ventaItem', 'items.ventaItem.producto'],
-        order: { createdAt: 'ASC' }
+        where: { estado: ComandaEstado.DISPONIBLE, activo: true },
+        relations: ['pdv_mesa', 'sector'],
+        order: { numero: 'ASC' }
       });
     } catch (error) {
-      console.error('Error getting comandas pendientes:', error);
+      console.error('Error getting Comandas disponibles:', error);
       throw error;
     }
   });
 
-  ipcMain.handle('getComandaByVenta', async (_event: any, ventaId: number) => {
+  // getComandasOcupadas: carga comandas ocupadas con su venta abierta via query builder
+  ipcMain.handle('getComandasOcupadas', async () => {
     try {
       const repo = dataSource.getRepository(Comanda);
-      return await repo.findOne({
-        where: { venta: { id: ventaId }, activo: true },
-        relations: ['items', 'items.ventaItem'],
-        order: { createdAt: 'DESC' }
+      return await repo.createQueryBuilder('comanda')
+        .leftJoinAndSelect('comanda.pdv_mesa', 'pdv_mesa')
+        .leftJoinAndSelect('comanda.sector', 'sector')
+        .leftJoinAndMapOne('comanda.venta', Venta, 'venta', 'venta.comanda_id = comanda.id AND venta.estado = :ventaEstado', { ventaEstado: VentaEstado.ABIERTA })
+        .where('comanda.estado = :estado AND comanda.activo = :activo', { estado: ComandaEstado.OCUPADO, activo: true })
+        .orderBy('comanda.numero', 'ASC')
+        .getMany();
+    } catch (error) {
+      console.error('Error getting Comandas ocupadas:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('getComandasBySector', async (_event: any, sectorId: number) => {
+    try {
+      const repo = dataSource.getRepository(Comanda);
+      return await repo.find({
+        where: { sector: { id: sectorId }, estado: ComandaEstado.OCUPADO, activo: true },
+        relations: ['pdv_mesa', 'sector'],
+        order: { numero: 'ASC' }
       });
     } catch (error) {
-      console.error(`Error getting comanda for venta ${ventaId}:`, error);
+      console.error(`Error getting Comandas for Sector ID ${sectorId}:`, error);
       throw error;
     }
   });
 
-  ipcMain.handle('createComandaWithItems', async (_event: any, data: { comanda: any, items: any[] }) => {
+  ipcMain.handle('abrirComanda', async (_event: any, comandaId: number, data: { mesaId?: number, sectorId?: number, observacion?: string }) => {
     try {
-      const comandaRepo = dataSource.getRepository(Comanda);
-      const itemRepo = dataSource.getRepository(ComandaItem);
+      const repo = dataSource.getRepository(Comanda);
+      const entity = await repo.findOneBy({ id: comandaId });
+      if (!entity) throw new Error(`Comanda ID ${comandaId} not found`);
+      if (entity.estado !== ComandaEstado.DISPONIBLE) throw new Error(`Comanda ${comandaId} no está disponible`);
 
-      // Generar número secuencial
-      const lastComanda = await comandaRepo.findOne({ order: { numero: 'DESC' } });
-      const numero = (lastComanda?.numero || 0) + 1;
-
-      const comanda = comandaRepo.create({ ...data.comanda, numero, codigo: `CMD-${numero}` });
-      await setEntityUserTracking(dataSource, comanda, getCurrentUser()?.id, false);
-      const savedComanda = await comandaRepo.save(comanda);
-
-      for (const itemData of data.items) {
-        const item = itemRepo.create({ ...itemData, comanda: savedComanda });
-        await itemRepo.save(item);
+      entity.estado = ComandaEstado.OCUPADO;
+      if (data.mesaId) {
+        const mesaRepo = dataSource.getRepository(PdvMesa);
+        const mesa = await mesaRepo.findOne({ where: { id: data.mesaId }, relations: ['sector'] });
+        entity.pdv_mesa = mesa || undefined;
+        // Sincronizar sector con el de la mesa (a menos que se haya indicado uno explícitamente)
+        if (!data.sectorId && mesa?.sector) {
+          entity.sector = mesa.sector;
+        }
       }
-
-      return savedComanda;
-    } catch (error) {
-      console.error('Error creating comanda with items:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('updateComandaItemEstado', async (_event: any, id: number, estado: string) => {
-    try {
-      const repo = dataSource.getRepository(ComandaItem);
-      const entity = await repo.findOneBy({ id });
-      if (!entity) throw new Error(`ComandaItem ID ${id} not found`);
-      entity.estado = estado as any;
-      if (estado === 'LISTO') {
-        entity.fechaListo = new Date();
+      if (data.sectorId) {
+        const sectorRepo = dataSource.getRepository(Sector);
+        entity.sector = await sectorRepo.findOneBy({ id: data.sectorId }) || undefined;
       }
+      if (data.observacion !== undefined) {
+        entity.observacion = data.observacion;
+      }
+      await setEntityUserTracking(dataSource, entity, getCurrentUser()?.id, true);
       return await repo.save(entity);
     } catch (error) {
-      console.error(`Error updating comanda item ${id}:`, error);
+      console.error(`Error abriendo Comanda ID ${comandaId}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('cerrarComanda', async (_event: any, comandaId: number) => {
+    try {
+      const repo = dataSource.getRepository(Comanda);
+      const entity = await repo.findOneBy({ id: comandaId });
+      if (!entity) throw new Error(`Comanda ID ${comandaId} not found`);
+
+      entity.estado = ComandaEstado.DISPONIBLE;
+      entity.pdv_mesa = undefined as any;
+      entity.sector = undefined as any;
+      entity.observacion = undefined as any;
+      await setEntityUserTracking(dataSource, entity, getCurrentUser()?.id, true);
+      return await repo.save(entity);
+    } catch (error) {
+      console.error(`Error cerrando Comanda ID ${comandaId}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('createBatchComandas', async (_event: any, batchData: any[]) => {
+    try {
+      const repo = dataSource.getRepository(Comanda);
+      const results: any[] = [];
+      for (const data of batchData) {
+        const entity = repo.create({ ...data, estado: ComandaEstado.DISPONIBLE });
+        await setEntityUserTracking(dataSource, entity, getCurrentUser()?.id, false);
+        const saved = await repo.save(entity);
+        results.push(saved);
+      }
+      return results;
+    } catch (error) {
+      console.error('Error creating batch Comandas:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('getComandaWithVenta', async (_event: any, comandaId: number) => {
+    try {
+      const repo = dataSource.getRepository(Comanda);
+      return await repo.createQueryBuilder('comanda')
+        .leftJoinAndSelect('comanda.pdv_mesa', 'pdv_mesa')
+        .leftJoinAndSelect('comanda.sector', 'sector')
+        .leftJoinAndMapOne('comanda.venta', Venta, 'venta', 'venta.comanda_id = comanda.id AND venta.estado = :ventaEstado', { ventaEstado: VentaEstado.ABIERTA })
+        .where('comanda.id = :id', { id: comandaId })
+        .getOne();
+    } catch (error) {
+      console.error(`Error getting Comanda with venta ID ${comandaId}:`, error);
       throw error;
     }
   });
@@ -1612,6 +1813,360 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
     } catch (error) {
       console.error(`Error deleting Sector ID ${id}:`, error);
       throw error;
+    }
+  });
+
+  // --- Stock: Procesar movimientos de stock al finalizar venta ---
+  ipcMain.handle('procesarStockVenta', async (_event: any, ventaId: number) => {
+    const stockRepo = dataSource.getRepository(StockMovimiento);
+    const ventaItemRepo = dataSource.getRepository(VentaItem);
+    const recetaIngRepo = dataSource.getRepository(RecetaIngrediente);
+    const recetaPresRepo = dataSource.getRepository(RecetaPresentacion);
+    const modRepo = dataSource.getRepository(VentaItemIngredienteModificacion);
+    const adicRepo = dataSource.getRepository(VentaItemAdicional);
+    const comboRepo = dataSource.getRepository(Combo);
+    const productoRepo = dataSource.getRepository(Producto);
+    const recetaRepo = dataSource.getRepository(Receta);
+
+    try {
+      // 1. Idempotencia: verificar si ya se procesó
+      const existing = await stockRepo.count({
+        where: { referencia: ventaId, tipoReferencia: StockMovimientoTipoReferencia.VENTA, activo: true },
+      });
+      if (existing > 0) {
+        return { success: true, message: 'Ya procesado', movimientosCreados: 0 };
+      }
+
+      // 2. Verificar venta
+      const ventaRepo = dataSource.getRepository(Venta);
+      const venta = await ventaRepo.findOne({ where: { id: ventaId } });
+      if (!venta || venta.estado !== VentaEstado.CONCLUIDA) {
+        return { success: false, message: 'Venta no encontrada o no CONCLUIDA' };
+      }
+
+      // 3. Cargar items activos con relaciones
+      const items = await ventaItemRepo.find({
+        where: { venta: { id: ventaId }, estado: EstadoVentaItem.ACTIVO },
+        relations: ['producto', 'presentacion'],
+      });
+
+      if (items.length === 0) {
+        return { success: true, message: 'Sin items activos', movimientosCreados: 0 };
+      }
+
+      // 4. Recolectar movimientos pendientes
+      interface PendingMovement {
+        productoId: number;
+        cantidad: number;
+        ventaItemId: number;
+      }
+      const pending: PendingMovement[] = [];
+
+      for (const item of items) {
+        if (!item.producto) continue;
+        const tipo = item.producto.tipo as ProductoTipo;
+
+        switch (tipo) {
+          case ProductoTipo.RETAIL:
+          case ProductoTipo.RETAIL_INGREDIENTE:
+            await processRetail(item, pending);
+            break;
+          case ProductoTipo.ELABORADO_SIN_VARIACION:
+            await processElaboradoSinVariacion(item, pending);
+            break;
+          case ProductoTipo.ELABORADO_CON_VARIACION:
+            await processElaboradoConVariacion(item, pending);
+            break;
+          case ProductoTipo.COMBO:
+            await processCombo(item, pending, 0);
+            break;
+        }
+      }
+
+      if (pending.length === 0) {
+        return { success: true, message: 'Nada que descontar', movimientosCreados: 0 };
+      }
+
+      // 5. Crear movimientos en transacción
+      const queryRunner = dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      try {
+        const currentUser = getCurrentUser();
+        for (const mov of pending) {
+          const stockMov = new StockMovimiento();
+          stockMov.cantidad = Math.round(mov.cantidad * 1000) / 1000; // precision 3 decimales
+          stockMov.tipo = StockMovimientoTipo.VENTA;
+          stockMov.referencia = ventaId;
+          stockMov.tipoReferencia = StockMovimientoTipoReferencia.VENTA;
+          stockMov.fecha = new Date();
+          stockMov.activo = true;
+          stockMov.producto = { id: mov.productoId } as any;
+          stockMov.observaciones = `VENTA #${ventaId} - ITEM #${mov.ventaItemId}`;
+          if (currentUser) {
+            (stockMov as any).createdBy = currentUser;
+            (stockMov as any).updatedBy = currentUser;
+          }
+          await queryRunner.manager.save(StockMovimiento, stockMov);
+        }
+
+        await queryRunner.commitTransaction();
+        console.log(`Stock procesado para venta #${ventaId}: ${pending.length} movimientos`);
+        return { success: true, movimientosCreados: pending.length };
+      } catch (err) {
+        await queryRunner.rollbackTransaction();
+        throw err;
+      } finally {
+        await queryRunner.release();
+      }
+
+      // --- Funciones auxiliares ---
+
+      async function processRetail(item: VentaItem, out: PendingMovement[]): Promise<void> {
+        if (!item.producto.controlaStock) return;
+        let cantidad = Number(item.cantidad);
+        // Multiplicar por cantidad de la presentación (ej: caja de 12)
+        if (item.presentacion && Number(item.presentacion.cantidad) > 1) {
+          cantidad *= Number(item.presentacion.cantidad);
+        }
+        out.push({ productoId: item.producto.id, cantidad, ventaItemId: item.id });
+      }
+
+      async function processElaboradoSinVariacion(item: VentaItem, out: PendingMovement[]): Promise<void> {
+        // Buscar receta del producto
+        const producto = await productoRepo.findOne({
+          where: { id: item.producto.id },
+          relations: ['receta'],
+        });
+        const recetaId = producto?.receta?.id;
+        if (!recetaId) return;
+
+        const receta = await recetaRepo.findOne({ where: { id: recetaId } });
+        if (!receta) return;
+
+        await processReceta(receta, item, out);
+      }
+
+      async function processElaboradoConVariacion(item: VentaItem, out: PendingMovement[]): Promise<void> {
+        if (!item.presentacion?.id) return;
+
+        // Buscar RecetaPresentacion que coincida con la presentación vendida y el producto
+        const recetaPres = await recetaPresRepo.createQueryBuilder('rp')
+          .innerJoinAndSelect('rp.receta', 'receta')
+          .innerJoin('rp.sabor', 'sabor')
+          .where('rp.presentacion_id = :presId', { presId: item.presentacion.id })
+          .andWhere('sabor.producto_id = :prodId', { prodId: item.producto.id })
+          .andWhere('rp.activo = :activo', { activo: true })
+          .getOne();
+
+        if (!recetaPres?.receta) return;
+        await processReceta(recetaPres.receta, item, out);
+      }
+
+      async function processCombo(item: VentaItem, out: PendingMovement[], depth: number): Promise<void> {
+        if (depth >= 2) return; // Prevenir anidamiento infinito
+
+        const combo = await comboRepo.findOne({
+          where: { producto: { id: item.producto.id }, activo: true },
+          relations: ['productos', 'productos.producto', 'productos.presentacion'],
+        });
+        if (!combo?.productos) return;
+
+        for (const cp of combo.productos) {
+          if (!cp.activo || !cp.producto) continue;
+          const cantidadEfectiva = Number(cp.cantidad) * Number(item.cantidad);
+
+          // Crear un item virtual para reusar la lógica
+          const virtualItem = {
+            id: item.id,
+            producto: cp.producto,
+            presentacion: cp.presentacion || null,
+            cantidad: cantidadEfectiva,
+          } as VentaItem;
+
+          const cpTipo = cp.producto.tipo as ProductoTipo;
+          switch (cpTipo) {
+            case ProductoTipo.RETAIL:
+            case ProductoTipo.RETAIL_INGREDIENTE:
+              await processRetail(virtualItem, out);
+              break;
+            case ProductoTipo.ELABORADO_SIN_VARIACION:
+              await processElaboradoSinVariacion(virtualItem, out);
+              break;
+            case ProductoTipo.ELABORADO_CON_VARIACION:
+              await processElaboradoConVariacion(virtualItem, out);
+              break;
+            case ProductoTipo.COMBO:
+              await processCombo(virtualItem, out, depth + 1);
+              break;
+          }
+        }
+      }
+
+      // Procesa ingredientes de una receta recursivamente (sin modificaciones ni adicionales)
+      async function processRecetaIngredientes(receta: Receta, item: { id: number; cantidad: number }, out: PendingMovement[], depth = 0): Promise<void> {
+        if (depth >= 3) return; // Límite de recursión
+        const rendimiento = Number(receta.rendimiento) || 1;
+        const cantidadVendida = Number(item.cantidad);
+
+        const ingredientes = await recetaIngRepo.find({
+          where: { receta: { id: receta.id }, activo: true },
+          relations: ['ingrediente'],
+        });
+
+        for (const ing of ingredientes) {
+          if (!ing.ingrediente) continue;
+
+          const aprovechamiento = Number(ing.porcentajeAprovechamiento) || 100;
+          const rawCantidad = (Number(ing.cantidad) * cantidadVendida) / rendimiento;
+          const actualCantidad = rawCantidad / (aprovechamiento / 100);
+
+          if (ing.ingrediente.controlaStock) {
+            out.push({ productoId: ing.ingrediente.id, cantidad: actualCantidad, ventaItemId: item.id });
+          } else {
+            // Recursar: entrar a la receta del ingrediente
+            const ingProd = await productoRepo.findOne({ where: { id: ing.ingrediente.id }, relations: ['receta'] });
+            if (ingProd?.receta?.id) {
+              const subReceta = await recetaRepo.findOne({ where: { id: ingProd.receta.id } });
+              if (subReceta) {
+                await processRecetaIngredientes(subReceta, { id: item.id, cantidad: actualCantidad }, out, depth + 1);
+              }
+            }
+          }
+        }
+      }
+
+      // Procesa receta completa: con modificaciones del VentaItem + adicionales
+      async function processReceta(receta: Receta, item: VentaItem, out: PendingMovement[]): Promise<void> {
+        const rendimiento = Number(receta.rendimiento) || 1;
+        const cantidadVendida = Number(item.cantidad);
+
+        const ingredientes = await recetaIngRepo.find({
+          where: { receta: { id: receta.id }, activo: true },
+          relations: ['ingrediente'],
+        });
+
+        // Cargar modificaciones del item (removidos/intercambiados)
+        const modificaciones = await modRepo.find({
+          where: { ventaItem: { id: item.id } },
+          relations: ['recetaIngrediente', 'ingredienteReemplazo'],
+        });
+
+        const removidos = new Set(
+          modificaciones
+            .filter(m => m.tipoModificacion === TipoModificacionIngrediente.REMOVIDO)
+            .map(m => m.recetaIngrediente?.id)
+            .filter(Boolean)
+        );
+
+        const intercambios = new Map<number, number>();
+        for (const m of modificaciones) {
+          if (m.tipoModificacion === TipoModificacionIngrediente.INTERCAMBIADO && m.recetaIngrediente?.id && m.ingredienteReemplazo?.id) {
+            intercambios.set(m.recetaIngrediente.id, m.ingredienteReemplazo.id);
+          }
+        }
+
+        for (const ing of ingredientes) {
+          if (!ing.ingrediente) continue;
+          if (removidos.has(ing.id)) continue;
+
+          let targetProductoId = ing.ingrediente.id;
+          let targetControlaStock = ing.ingrediente.controlaStock;
+
+          if (intercambios.has(ing.id)) {
+            targetProductoId = intercambios.get(ing.id)!;
+            const reemplazo = await productoRepo.findOne({ where: { id: targetProductoId } });
+            if (!reemplazo) continue;
+            targetControlaStock = reemplazo.controlaStock;
+          }
+
+          const aprovechamiento = Number(ing.porcentajeAprovechamiento) || 100;
+          const rawCantidad = (Number(ing.cantidad) * cantidadVendida) / rendimiento;
+          const actualCantidad = rawCantidad / (aprovechamiento / 100);
+
+          if (targetControlaStock) {
+            out.push({ productoId: targetProductoId, cantidad: actualCantidad, ventaItemId: item.id });
+          } else {
+            // Ingrediente no controla stock: recursar a su receta
+            const ingProd = await productoRepo.findOne({ where: { id: targetProductoId }, relations: ['receta'] });
+            if (ingProd?.receta?.id) {
+              const subReceta = await recetaRepo.findOne({ where: { id: ingProd.receta.id } });
+              if (subReceta) {
+                await processRecetaIngredientes(subReceta, { id: item.id, cantidad: actualCantidad }, out);
+              }
+            }
+          }
+        }
+
+        // Procesar adicionales del item
+        const adicionales = await adicRepo.find({
+          where: { ventaItem: { id: item.id }, activo: true },
+          relations: ['adicional'],
+        });
+
+        for (const va of adicionales) {
+          if (!va.adicional) continue;
+          // Buscar si el adicional tiene receta
+          const adicional = await dataSource.getRepository(Adicional).findOne({
+            where: { id: (va.adicional as any).id || va.adicional },
+            relations: ['receta'],
+          });
+          if (!adicional?.receta?.id) continue;
+
+          const adicReceta = await recetaRepo.findOne({ where: { id: adicional.receta.id } });
+          if (!adicReceta) continue;
+
+          const adicIngredientes = await recetaIngRepo.find({
+            where: { receta: { id: adicReceta.id }, activo: true },
+            relations: ['ingrediente'],
+          });
+
+          const adicRendimiento = Number(adicReceta.rendimiento) || 1;
+          const adicCantidad = Number(va.cantidad) * cantidadVendida;
+
+          for (const adicIng of adicIngredientes) {
+            if (!adicIng.ingrediente?.controlaStock) continue;
+            const aprov = Number(adicIng.porcentajeAprovechamiento) || 100;
+            const raw = (Number(adicIng.cantidad) * adicCantidad) / adicRendimiento;
+            const actual = raw / (aprov / 100);
+            out.push({ productoId: adicIng.ingrediente.id, cantidad: actual, ventaItemId: item.id });
+          }
+        }
+      }
+
+    } catch (error) {
+      console.error(`Error procesando stock para venta #${ventaId}:`, error);
+      return { success: false, error: (error as any).message };
+    }
+  });
+
+  // --- Stock: Revertir movimientos de stock al cancelar venta finalizada ---
+  ipcMain.handle('revertirStockVenta', async (_event: any, ventaId: number) => {
+    const stockRepo = dataSource.getRepository(StockMovimiento);
+
+    try {
+      // Buscar movimientos existentes para esta venta
+      const movimientos = await stockRepo.find({
+        where: { referencia: ventaId, tipoReferencia: StockMovimientoTipoReferencia.VENTA, activo: true },
+        relations: ['producto'],
+      });
+
+      if (movimientos.length === 0) {
+        return { success: true, message: 'Sin movimientos que revertir', movimientosRevertidos: 0 };
+      }
+
+      // Marcar movimientos como inactivos (dejan de contar en el cálculo de stock)
+      for (const mov of movimientos) {
+        mov.activo = false;
+      }
+      await stockRepo.save(movimientos);
+
+      console.log(`Stock revertido para venta #${ventaId}: ${movimientos.length} movimientos desactivados`);
+      return { success: true, movimientosRevertidos: movimientos.length };
+    } catch (error) {
+      console.error(`Error revirtiendo stock para venta #${ventaId}:`, error);
+      return { success: false, error: (error as any).message };
     }
   });
 } 

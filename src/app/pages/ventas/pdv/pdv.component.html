@@ -112,8 +112,46 @@
       </div>
     </div>
 
+    <!-- Delivery indicator -->
+    <mat-card *ngIf="deliveryActual" class="mesa-data-card delivery-card">
+      <mat-card-content>
+        <div class="mesa-info-row">
+          <div class="mesa-info-item">
+            <mat-icon>delivery_dining</mat-icon>
+            <div class="mesa-info-content">
+              <span class="info-label">Modo</span>
+              <span class="info-value delivery-mode-label">DELIVERY</span>
+            </div>
+          </div>
+          <div class="mesa-info-item">
+            <mat-icon>phone</mat-icon>
+            <div class="mesa-info-content">
+              <span class="info-label">Tel.</span>
+              <span class="info-value">{{ deliveryActual.telefono || '-' }}</span>
+            </div>
+          </div>
+          <div class="mesa-info-item">
+            <mat-icon>person</mat-icon>
+            <div class="mesa-info-content">
+              <span class="info-label">Cliente</span>
+              <span class="info-value">{{ deliveryActual.nombre || deliveryActual.cliente?.persona?.nombre || '-' }}</span>
+            </div>
+          </div>
+          <div class="mesa-info-item delivery-close-item">
+            <button mat-icon-button (click)="cerrarModoDelivery()" class="delivery-close-btn" matTooltip="Cerrar modo delivery (ESC)">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        </div>
+        <div class="delivery-address-row" *ngIf="deliveryActual.direccion">
+          <mat-icon>location_on</mat-icon>
+          <span>{{ deliveryActual.direccion }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
     <!-- Venta Rápida indicator -->
-    <mat-card *ngIf="ventaRapidaActual" class="mesa-data-card" data-testid="pdv-venta-rapida-indicator">
+    <mat-card *ngIf="ventaRapidaActual && !deliveryActual" class="mesa-data-card" data-testid="pdv-venta-rapida-indicator">
       <mat-card-content>
         <div class="mesa-info-row">
           <div class="mesa-info-item">
@@ -135,130 +173,132 @@
     </mat-card>
 
     <!-- Selected Mesa information -->
-    <mat-card *ngIf="selectedMesa && !ventaRapidaActual" class="mesa-data-card">
+    <mat-card *ngIf="selectedMesa && !ventaRapidaActual" class="mesa-data-card mesa-compact">
       <mat-card-content>
-        <div class="mesa-info-row">
-          <div class="mesa-info-item">
+        <!-- Fila 1: Info de mesa -->
+        <div class="mesa-row-1">
+          <span class="mesa-tag">
             <mat-icon>table_restaurant</mat-icon>
-            <div class="mesa-info-content">
-              <span class="info-label">Mesa seleccionada</span>
-              <span class="info-value">{{ selectedMesa.numero }}</span>
-            </div>
-          </div>
-          <!-- Show regular info when not editing client name -->
-          <ng-container *ngIf="!isEditingClienteName">
-            <div class="mesa-info-item">
-              <mat-icon>people</mat-icon>
-              <div class="mesa-info-content">
-                <span class="info-label">Capacidad</span>
-                <span class="info-value">{{
-                  selectedMesa.cantidad_personas || "N/A"
-                }}</span>
-              </div>
-            </div>
-            <div class="mesa-info-item">
-              <mat-icon>place</mat-icon>
-              <div class="mesa-info-content">
-                <span class="info-label">Sector</span>
-                <span class="info-value">{{
-                  selectedMesa.sector?.nombre || "Sin asignar"
-                }}</span>
-              </div>
-            </div>
-            <div class="mesa-info-item">
-              <mat-icon>check_circle</mat-icon>
-              <div class="mesa-info-content">
-                <span class="info-label">Estado</span>
-                <span class="info-value" [ngClass]="selectedMesa.reservado ? 'status-reserved' : selectedMesa.estado === 'DISPONIBLE' ? 'status-available' : 'status-occupied'">
-                  {{selectedMesa.reservado ? 'Reservada' : selectedMesa.estado === 'DISPONIBLE' ? 'Disponible' : 'Ocupada' }}
-                </span>
-              </div>
-            </div>
-            <!-- Client name info -->
-            <div class="mesa-info-item">
-              <mat-icon>person</mat-icon>
-              <div class="mesa-info-content">
-                <span class="info-label">Nombre Cliente</span>
-                <ng-container *ngIf="selectedMesa?.venta?.nombreCliente; else noClientName">
-                  <div class="cliente-name-container">
-                    <span class="info-value">{{ selectedMesa.venta?.nombreCliente }}</span>
-                    <button
-                      mat-icon-button
-                      color="primary"
-                      (click)="startEditingClienteName()"
-                      matTooltip="Editar nombre"
-                    >
-                      <mat-icon>edit</mat-icon>
-                    </button>
-                    <button
-                      mat-icon-button
-                      color="accent"
-                      (click)="asociarCliente()"
-                      matTooltip="Buscar cliente registrado"
-                    >
-                      <mat-icon>person_search</mat-icon>
-                    </button>
-                  </div>
-                </ng-container>
-                <ng-template #noClientName>
-                  <div style="display: flex; gap: 4px">
-                    <button
-                      mat-stroked-button
-                      color="primary"
-                      (click)="startEditingClienteName()"
-                    >
-                      <mat-icon>add</mat-icon> Adicionar nombre
-                    </button>
-                    <button
-                      mat-icon-button
-                      color="accent"
-                      (click)="asociarCliente()"
-                      matTooltip="Buscar cliente registrado"
-                    >
-                      <mat-icon>person_search</mat-icon>
-                    </button>
-                  </div>
-                </ng-template>
-              </div>
-            </div>
-          </ng-container>
+            {{ selectedMesa.numero }}
+          </span>
+          <span class="mesa-detail">
+            <mat-icon>people</mat-icon>
+            {{ selectedMesa.cantidad_personas || '-' }}
+          </span>
+          <span class="mesa-detail">
+            <mat-icon>place</mat-icon>
+            {{ selectedMesa.sector?.nombre || 'Sin sector' }}
+          </span>
+          <span class="mesa-status" [ngClass]="selectedMesa.reservado ? 'status-reserved' : selectedMesa.estado === 'DISPONIBLE' ? 'status-available' : 'status-occupied'">
+            {{ selectedMesa.reservado ? 'Reservada' : selectedMesa.estado === 'DISPONIBLE' ? 'Disponible' : 'Ocupada' }}
+          </span>
+        </div>
 
-          <!-- Show client name input when editing -->
-          <ng-container *ngIf="isEditingClienteName">
-            <div class="mesa-info-item" style="flex-grow: 1">
-              <form
-                [formGroup]="clienteNameForm"
-                class="cliente-name-form"
-                style="width: 100%; display: flex"
-              >
-                <mat-form-field appearance="outline" style="flex-grow: 1">
-                  <mat-label>Nombre del cliente</mat-label>
-                  <input
-                    matInput
-                    formControlName="nombre"
-                    (keydown)="onClienteNameKeyDown($event)"
-                    placeholder="Ingrese el nombre del cliente"
-                  />
-                </mat-form-field>
-                <button
-                  mat-icon-button
-                  color="primary"
-                  (click)="saveClienteName()"
-                  matTooltip="Guardar"
-                >
-                  <mat-icon>save</mat-icon>
-                </button>
-                <button
-                  mat-icon-button
-                  color="warn"
-                  (click)="cancelEditingClienteName()"
-                  matTooltip="Cancelar"
-                >
-                  <mat-icon>cancel</mat-icon>
-                </button>
-              </form>
-            </div>
-          </ng-container>
+        <!-- Fila 2: Cliente + extras -->
+        <div class="mesa-row-2" *ngIf="!isEditingClienteName">
+          <div class="mesa-cliente">
+            <mat-icon class="cliente-icon">person</mat-icon>
+            <ng-container *ngIf="selectedMesa?.venta?.nombreCliente; else noClientName">
+              <span class="cliente-nombre">{{ selectedMesa.venta?.nombreCliente }}</span>
+              <button mat-icon-button (click)="startEditingClienteName()" matTooltip="Editar nombre" class="mesa-action-btn">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </ng-container>
+            <ng-template #noClientName>
+              <button mat-stroked-button (click)="startEditingClienteName()" class="add-cliente-btn">
+                <mat-icon>add</mat-icon> Nombre
+              </button>
+            </ng-template>
+            <button mat-icon-button (click)="asociarCliente()" matTooltip="Buscar cliente" class="mesa-action-btn">
+              <mat-icon>person_search</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Fila 2 alternativa: Edición de nombre -->
+        <div class="mesa-row-2" *ngIf="isEditingClienteName">
+          <form [formGroup]="clienteNameForm" class="cliente-edit-form">
+            <mat-form-field appearance="outline" class="cliente-edit-field">
+              <mat-label>Nombre del cliente</mat-label>
+              <input matInput formControlName="nombre" (keydown)="onClienteNameKeyDown($event)" placeholder="Nombre del cliente" />
+            </mat-form-field>
+            <button mat-icon-button color="primary" (click)="saveClienteName()" matTooltip="Guardar">
+              <mat-icon>check</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="cancelEditingClienteName()" matTooltip="Cancelar">
+              <mat-icon>close</mat-icon>
+            </button>
+          </form>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Selected Comanda information -->
+    <mat-card *ngIf="selectedComanda && !ventaRapidaActual && !deliveryActual" class="mesa-data-card mesa-compact">
+      <mat-card-content>
+        <!-- Fila 1: Info de comanda -->
+        <div class="mesa-row-1">
+          <span class="mesa-tag">
+            <mat-icon>receipt_long</mat-icon>
+            {{ selectedComanda.numero }}
+          </span>
+          <span class="mesa-detail" style="font-size: 11px; opacity: 0.7">
+            {{ selectedComanda.codigo }}
+          </span>
+          <span class="mesa-detail" *ngIf="selectedComanda.pdv_mesa">
+            <mat-icon>table_restaurant</mat-icon>
+            Mesa {{ selectedComanda.pdv_mesa.numero }}
+          </span>
+          <span class="mesa-detail">
+            <mat-icon>place</mat-icon>
+            {{ selectedComanda.sector?.nombre || 'Sin sector' }}
+          </span>
+          <span class="mesa-status status-occupied">
+            {{ selectedComanda.estado }}
+          </span>
+        </div>
+
+        <!-- Fila 2: Cliente -->
+        <div class="mesa-row-2" *ngIf="!isEditingClienteName">
+          <div class="mesa-cliente">
+            <mat-icon class="cliente-icon">person</mat-icon>
+            <ng-container *ngIf="selectedComanda?.venta?.nombreCliente; else noComandaClientName">
+              <span class="cliente-nombre">{{ selectedComanda.venta?.nombreCliente }}</span>
+              <button mat-icon-button (click)="startEditingClienteName()" matTooltip="Editar nombre" class="mesa-action-btn">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </ng-container>
+            <ng-template #noComandaClientName>
+              <button mat-stroked-button (click)="startEditingClienteName()" class="add-cliente-btn">
+                <mat-icon>add</mat-icon> Nombre
+              </button>
+            </ng-template>
+            <button mat-icon-button (click)="asociarCliente()" matTooltip="Buscar cliente" class="mesa-action-btn">
+              <mat-icon>person_search</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Fila 2 alternativa: Edición de nombre -->
+        <div class="mesa-row-2" *ngIf="isEditingClienteName">
+          <form [formGroup]="clienteNameForm" class="cliente-edit-form">
+            <mat-form-field appearance="outline" class="cliente-edit-field">
+              <mat-label>Nombre del cliente</mat-label>
+              <input matInput formControlName="nombre" (keydown)="onClienteNameKeyDown($event)" placeholder="Nombre del cliente" />
+            </mat-form-field>
+            <button mat-icon-button color="primary" (click)="saveClienteName()" matTooltip="Guardar">
+              <mat-icon>check</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="cancelEditingClienteName()" matTooltip="Cancelar">
+              <mat-icon>close</mat-icon>
+            </button>
+          </form>
+        </div>
+
+        <!-- Observación de comanda -->
+        <div class="mesa-row-2" *ngIf="selectedComanda?.observacion" style="opacity: 0.6; font-size: 11px;">
+          <mat-icon style="font-size: 14px; width: 14px; height: 14px; margin-right: 4px;">note</mat-icon>
+          {{ selectedComanda.observacion }}
         </div>
       </mat-card-content>
     </mat-card>
@@ -294,10 +334,11 @@
         <ng-container matColumnDef="productoNombre">
           <th mat-header-cell *matHeaderCellDef style="width: 40%">Producto</th>
           <td mat-cell *matCellDef="let item">
-            {{ item.producto?.nombre }}
-            <span *ngIf="item.observacionesVinculadas?.length > 0" class="obs-indicator" matTooltip="Tiene observaciones">
-              <mat-icon class="obs-icon">comment</mat-icon>
-            </span>
+            <span>{{ item.producto?.nombre }}</span>
+            <mat-icon
+              *ngIf="item.adicionalesVinculados?.length > 0 || item.ingredientesModificados?.length > 0 || item.observacionesVinculadas?.length > 0"
+              class="variacion-icon"
+              matTooltip="Tiene personalizaciones">tune</mat-icon>
           </td>
         </ng-container>
 
@@ -329,10 +370,10 @@
           <td mat-cell *matCellDef="let item" style="width: 18%" class="center">
             <span *ngIf="item.descuentoUnitario > 0" class="precio-con-descuento">
               <mat-icon class="descuento-icon">arrow_downward</mat-icon>
-              {{ (item.precioVentaUnitario - item.descuentoUnitario) | number : "1.0-2" }}
+              {{ (item.precioVentaUnitario + (item.precioAdicionales || 0) - item.descuentoUnitario) | number : "1.0-2" }}
             </span>
             <span *ngIf="!item.descuentoUnitario || item.descuentoUnitario === 0">
-              {{ item.precioVentaUnitario | number : "1.0-2" }}
+              {{ (item.precioVentaUnitario + (item.precioAdicionales || 0)) | number : "1.0-2" }}
             </span>
           </td>
         </ng-container>
@@ -348,7 +389,7 @@
             Total
           </th>
           <td mat-cell *matCellDef="let item" style="width: 18%" class="center">
-            {{ (item.precioVentaUnitario - (item.descuentoUnitario || 0)) * item.cantidad | number : "1.0-2" }}
+            {{ (item.precioVentaUnitario + (item.precioAdicionales || 0) - (item.descuentoUnitario || 0)) * item.cantidad | number : "1.0-2" }}
           </td>
         </ng-container>
 
@@ -358,12 +399,14 @@
           <td mat-cell *matCellDef="let item" style="width: 6%">
             <!-- replace the button with a matMenuButton -->
             <mat-menu #menu="matMenu">
-              <!-- add edit button -->
+              <button mat-menu-item (click)="personalizarItem(item)">
+                <mat-icon>tune</mat-icon>
+                Personalizar
+              </button>
               <button mat-menu-item (click)="editItem(item)">
                 <mat-icon>edit</mat-icon>
                 Editar
               </button>
-              <!-- add cancelar button -->
               <button mat-menu-item (click)="cancelItem(item)">
                 <mat-icon>cancel</mat-icon>
                 Cancelar
@@ -409,94 +452,94 @@
               style="font-size: smaller !important;"
             >
               <div class="expanded-detail-container">
-                <div class="expanded-detail-row">
-                  <span class="detail-label">Creado por:</span>
-                  <span class="detail-value">{{
-                    item.createdBy?.persona?.nombre || "N/A"
-                  }}</span>
-                </div>
-                <div class="expanded-detail-row">
-                  <span class="detail-label">Estado:</span>
-                  <span
-                    class="detail-value"
-                    [ngClass]="{
-                      'estado-activo': item.estado === 'ACTIVO',
-                      'estado-modificado': item.estado === 'MODIFICADO',
-                      'estado-cancelado': item.estado === 'CANCELADO'
-                    }"
-                    >{{ item.estado | titlecase }}</span
-                  >
-                </div>
-
-                <!-- show date created -->
-                <div class="expanded-detail-row">
-                  <span class="detail-label">Fecha de creación:</span>
-                  <span class="detail-value">{{
-                    (item.createdAt | date : "HH:mm:ss") || "N/A"
-                  }}</span>
-                </div>
-
-                <!-- Descuento info -->
-                <ng-container *ngIf="item.descuentoUnitario > 0">
-                  <div class="expanded-detail-row">
-                    <span class="detail-label">Precio original:</span>
-                    <span class="detail-value">{{ item.precioVentaUnitario | number : "1.0-2" }}</span>
-                  </div>
-                  <div class="expanded-detail-row">
-                    <span class="detail-label">Descuento unitario:</span>
-                    <span class="detail-value descuento-valor">-{{ item.descuentoUnitario | number : "1.0-2" }}</span>
-                  </div>
-                  <div class="expanded-detail-row">
-                    <span class="detail-label">Precio con descuento:</span>
-                    <span class="detail-value">{{ (item.precioVentaUnitario - item.descuentoUnitario) | number : "1.0-2" }}</span>
+                <!-- Ingredientes removidos -->
+                <ng-container *ngIf="item.ingredientesModificados?.length > 0">
+                  <div class="detail-section">
+                    <div class="detail-section-chips">
+                      <ng-container *ngFor="let mod of item.ingredientesModificados">
+                        <span class="mod-chip removido" *ngIf="mod.tipoModificacion === 'REMOVIDO'">
+                          <mat-icon class="mod-chip-icon">remove_circle</mat-icon>
+                          SIN {{ mod.recetaIngrediente?.ingrediente?.nombre }}
+                        </span>
+                        <span class="mod-chip intercambiado" *ngIf="mod.tipoModificacion === 'INTERCAMBIADO'">
+                          <mat-icon class="mod-chip-icon">swap_horiz</mat-icon>
+                          {{ mod.recetaIngrediente?.ingrediente?.nombre }} → {{ mod.ingredienteReemplazo?.nombre }}
+                        </span>
+                      </ng-container>
+                    </div>
                   </div>
                 </ng-container>
 
-                <!-- Show cancelado information when aplicable -->
-                <ng-container *ngIf="item.estado === 'CANCELADO'">
-                  <div class="expanded-detail-row">
-                    <span class="detail-label">Cancelado por:</span>
-                    <span class="detail-value">{{
-                      item.canceladoPor?.persona?.nombre || "N/A"
-                    }}</span>
-                  </div>
-                  <div class="expanded-detail-row">
-                    <span class="detail-label">Hora de cancelación:</span>
-                    <span class="detail-value">{{
-                      (item.horaCancelado | date : "dd/MM/yyyy HH:mm:ss") ||
-                        "N/A"
-                    }}</span>
-                  </div>
-                </ng-container>
-
-                <!-- Show modificado information when aplicable -->
-                <ng-container *ngIf="item.estado === 'MODIFICADO'">
-                  <div class="expanded-detail-row">
-                    <span class="detail-label">Modificado por:</span>
-                    <span class="detail-value">{{
-                      item.modificadoPor?.persona?.nombre || "N/A"
-                    }}</span>
-                  </div>
-                  <div class="expanded-detail-row">
-                    <span class="detail-label">Hora de modificación:</span>
-                    <span class="detail-value">{{
-                      (item.horaModificacion | date : "dd/MM/yyyy HH:mm:ss") ||
-                        "N/A"
-                    }}</span>
+                <!-- Adicionales -->
+                <ng-container *ngIf="item.adicionalesVinculados?.length > 0">
+                  <div class="detail-section">
+                    <div class="detail-section-chips">
+                      <span class="mod-chip adicional" *ngFor="let adic of item.adicionalesVinculados">
+                        <mat-icon class="mod-chip-icon">add_circle</mat-icon>
+                        {{ adic.adicional?.nombre }}
+                        <span class="mod-chip-precio">+{{ adic.precioCobrado | number:'1.0-0' }}</span>
+                      </span>
+                    </div>
                   </div>
                 </ng-container>
 
                 <!-- Observaciones -->
                 <ng-container *ngIf="item.observacionesVinculadas?.length > 0">
-                  <div class="expanded-detail-row">
-                    <span class="detail-label">Observaciones:</span>
-                    <span class="detail-value obs-list">
-                      <span *ngFor="let ov of item.observacionesVinculadas" class="obs-chip">
+                  <div class="detail-section">
+                    <div class="detail-section-chips">
+                      <span *ngFor="let ov of item.observacionesVinculadas" class="mod-chip observacion">
+                        <mat-icon class="mod-chip-icon">comment</mat-icon>
                         {{ ov.observacion?.descripcion || ov.observacionLibre }}
                       </span>
-                    </span>
+                    </div>
                   </div>
                 </ng-container>
+
+                <!-- Descuento info -->
+                <ng-container *ngIf="item.descuentoUnitario > 0">
+                  <div class="detail-section">
+                    <div class="detail-section-chips">
+                      <span class="mod-chip descuento">
+                        <mat-icon class="mod-chip-icon">arrow_downward</mat-icon>
+                        Descuento: -{{ item.descuentoUnitario | number:'1.0-0' }}
+                        ({{ item.precioVentaUnitario | number:'1.0-0' }} → {{ (item.precioVentaUnitario + (item.precioAdicionales || 0) - item.descuentoUnitario) | number:'1.0-0' }})
+                      </span>
+                    </div>
+                  </div>
+                </ng-container>
+
+                <!-- Metadata compacta -->
+                <div class="detail-metadata">
+                  <span class="meta-item">
+                    {{ item.createdBy?.persona?.nombre || 'N/A' }}
+                  </span>
+                  <span class="meta-separator">·</span>
+                  <span class="meta-item" [ngClass]="{
+                    'estado-activo': item.estado === 'ACTIVO',
+                    'estado-modificado': item.estado === 'MODIFICADO',
+                    'estado-cancelado': item.estado === 'CANCELADO'
+                  }">{{ item.estado | titlecase }}</span>
+                  <span class="meta-separator">·</span>
+                  <span class="meta-item">{{ (item.createdAt | date:'HH:mm:ss') || 'N/A' }}</span>
+
+                  <!-- Cancelado info inline -->
+                  <ng-container *ngIf="item.estado === 'CANCELADO'">
+                    <span class="meta-separator">·</span>
+                    <span class="meta-item estado-cancelado">
+                      Cancelado por {{ item.canceladoPor?.persona?.nombre || 'N/A' }}
+                      a las {{ (item.horaCancelado | date:'HH:mm:ss') || 'N/A' }}
+                    </span>
+                  </ng-container>
+
+                  <!-- Modificado info inline -->
+                  <ng-container *ngIf="item.estado === 'MODIFICADO'">
+                    <span class="meta-separator">·</span>
+                    <span class="meta-item estado-modificado">
+                      Modificado por {{ item.modificadoPor?.persona?.nombre || 'N/A' }}
+                      a las {{ (item.horaModificacion | date:'HH:mm:ss') || 'N/A' }}
+                    </span>
+                  </ng-container>
+                </div>
               </div>
             </div>
           </td>
@@ -509,6 +552,7 @@
           class="example-element-row"
           [class.example-expanded-row]="expandedElement === row"
           [class.item-cancelado]="row.estado === 'CANCELADO'"
+          [class.item-personalizado]="row.adicionalesVinculados?.length > 0 || row.ingredientesModificados?.length > 0 || row.observacionesVinculadas?.length > 0"
           (click)="expandedElement = expandedElement === row ? null : row"
         ></tr>
         <tr
@@ -763,11 +807,40 @@
       </mat-card-content>
     </mat-card>
 
-    <!-- Table number buttons -->
-    <mat-card class="tables-card mesas-card">
+    <!-- Table/Comanda tabs -->
+    <mat-card class="tables-card mesas-card" [class.disabled-section]="deliveryActual">
       <mat-card-content
         style="display: flex; flex-direction: column; gap: 10px"
       >
+        <!-- Tab selector -->
+        <div class="tab-selector">
+          <button
+            mat-flat-button
+            [class.tab-active]="activeTab === 'MESAS'"
+            (click)="activeTab = 'MESAS'"
+            [matBadge]="mesasOcupadasCount"
+            matBadgeColor="warn"
+            [matBadgeHidden]="mesasOcupadasCount === 0"
+            matBadgeSize="small"
+          >
+            <mat-icon>table_restaurant</mat-icon>
+            MESAS
+          </button>
+          <button
+            mat-flat-button
+            [class.tab-active]="activeTab === 'COMANDAS'"
+            (click)="activeTab = 'COMANDAS'"
+            [matBadge]="comandasOcupadasCount"
+            matBadgeColor="accent"
+            [matBadgeHidden]="comandasOcupadasCount === 0"
+            matBadgeSize="small"
+          >
+            <mat-icon>receipt_long</mat-icon>
+            COMANDAS
+          </button>
+        </div>
+
+        <!-- Sector filters (shared) -->
         <div class="bottom-buttons" data-testid="pdv-sector-filters">
           <button
             mat-raised-button
@@ -789,16 +862,14 @@
             <span>{{ sector.nombre }}</span>
           </button>
         </div>
-        <div class="tables-grid" data-testid="pdv-mesas-panel">
-          <!-- Show loading spinner while mesas are loading -->
+
+        <!-- MESAS tab -->
+        <div class="tables-grid" *ngIf="activeTab === 'MESAS'" data-testid="pdv-mesas-panel">
           <div *ngIf="loadingMesas" class="loading-mesas">
             <mat-spinner diameter="40"></mat-spinner>
             <span>Cargando mesas...</span>
           </div>
-
-          <!-- Use actual mesa data when available -->
           <ng-container *ngIf="!loadingMesas">
-            <!-- If we have mesas data, show real mesas -->
             <ng-container *ngIf="mesas.length > 0">
               <button
                 mat-raised-button
@@ -816,6 +887,11 @@
                     ? 'Mesa disponible'
                     : 'Mesa ocupada'
                 "
+                [matBadge]="mesa.comandas?.length"
+                [matBadgeHidden]="!mesa.comandas?.length"
+                matBadgeColor="accent"
+                matBadgeSize="small"
+                matBadgePosition="below after"
                 class="table-button"
               >
                 {{ mesa.numero }}
@@ -826,33 +902,96 @@
             </ng-container>
           </ng-container>
         </div>
+
+        <!-- COMANDAS tab -->
+        <div class="tables-grid" *ngIf="activeTab === 'COMANDAS'" data-testid="pdv-comandas-panel">
+          <div *ngIf="loadingComandas" class="loading-mesas">
+            <mat-spinner diameter="40"></mat-spinner>
+            <span>Cargando comandas...</span>
+          </div>
+          <ng-container *ngIf="!loadingComandas">
+            <ng-container *ngIf="comandas.length > 0">
+              <button
+                mat-raised-button
+                style="height: 60px !important; width: 60px !important"
+                *ngFor="let comanda of comandas"
+                (click)="selectComanda(comanda)"
+                [class.table-active]="comanda.estado === 'DISPONIBLE'"
+                [class.table-inactive]="comanda.estado === 'OCUPADO'"
+                [class.table-selected]="selectedComanda?.id === comanda.id"
+                [matTooltip]="
+                  comanda.estado === 'DISPONIBLE'
+                    ? 'Comanda disponible'
+                    : comanda.pdv_mesa
+                    ? 'Mesa ' + comanda.pdv_mesa.numero
+                    : comanda.sector?.nombre || 'Sin sector'
+                "
+                class="table-button"
+              >
+                {{ comanda.numero }}
+              </button>
+            </ng-container>
+            <div *ngIf="comandas.length === 0" class="empty-comandas">
+              <span>Sin comandas registradas</span>
+            </div>
+          </ng-container>
+        </div>
       </mat-card-content>
     </mat-card>
 
     <!-- Bottom action buttons -->
     <div class="bottom-buttons" *ngIf="!moverItemsMode">
-      <button
-        mat-raised-button
-        color="primary"
-        class="bottom-button"
-        [disabled]="!hasActiveVenta"
-        (click)="transferirMesa()"
-        data-testid="pdv-btn-transferir"
-      >
-        <mat-icon>swap_horiz</mat-icon>
-        <span>TRANSFERIR</span>
-      </button>
-      <button
-        mat-raised-button
-        color="primary"
-        class="bottom-button"
-        [disabled]="!hasActiveVenta || !hasActiveItems"
-        (click)="moverItems()"
-        data-testid="pdv-btn-mover"
-      >
-        <mat-icon>drive_file_move</mat-icon>
-        <span>MOVER ITEMS</span>
-      </button>
+      <!-- Botones para MESA seleccionada -->
+      <ng-container *ngIf="!selectedComanda">
+        <button
+          mat-raised-button
+          color="primary"
+          class="bottom-button"
+          [disabled]="!hasActiveVenta || deliveryActual"
+          (click)="transferirMesa()"
+          data-testid="pdv-btn-transferir"
+        >
+          <mat-icon>swap_horiz</mat-icon>
+          <span>TRANSFERIR</span>
+        </button>
+        <button
+          mat-raised-button
+          color="primary"
+          class="bottom-button"
+          [disabled]="!hasActiveVenta || !hasActiveItems || deliveryActual"
+          (click)="moverItems()"
+          data-testid="pdv-btn-mover"
+        >
+          <mat-icon>drive_file_move</mat-icon>
+          <span>MOVER ITEMS</span>
+        </button>
+      </ng-container>
+
+      <!-- Botones para COMANDA seleccionada -->
+      <ng-container *ngIf="selectedComanda">
+        <button
+          mat-raised-button
+          color="primary"
+          class="bottom-button"
+          [disabled]="selectedComanda?.estado !== 'OCUPADO'"
+          (click)="moverComanda()"
+        >
+          <mat-icon>edit</mat-icon>
+          <span>EDITAR</span>
+        </button>
+        <button
+          mat-raised-button
+          color="primary"
+          class="bottom-button"
+          [disabled]="!selectedComanda?.venta"
+          (click)="transferirComandaAMesa()"
+        >
+          <mat-icon>table_restaurant</mat-icon>
+          <span>A MESA</span>
+        </button>
+      </ng-container>
+
+      <!-- Botones comunes -->
       <button
         mat-raised-button
         color="primary"

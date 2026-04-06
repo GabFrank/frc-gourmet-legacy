@@ -1,13 +1,11 @@
-import { Column, Entity, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseModel } from '../base.entity';
 import { PdvMesa } from './pdv-mesa.entity';
+import { Sector } from './sector.entity';
 
 export enum ComandaEstado {
-  PENDIENTE = 'PENDIENTE',
-  EN_PREPARACION = 'EN_PREPARACION',
-  LISTA = 'LISTA',
-  ENTREGADA = 'ENTREGADA',
-  CANCELADA = 'CANCELADA',
+  DISPONIBLE = 'DISPONIBLE',
+  OCUPADO = 'OCUPADO',
 }
 
 @Entity('comandas')
@@ -21,20 +19,23 @@ export class Comanda extends BaseModel {
   @Column({
     type: 'varchar',
     enum: ComandaEstado,
-    default: ComandaEstado.PENDIENTE,
+    default: ComandaEstado.DISPONIBLE,
   })
   estado!: ComandaEstado;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  descripcion?: string;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  observacion?: string;
 
   @ManyToOne(() => PdvMesa, { nullable: true })
   @JoinColumn({ name: 'pdv_mesa_id' })
   pdv_mesa?: PdvMesa;
 
-  @ManyToOne('Venta', { nullable: true })
-  @JoinColumn({ name: 'venta_id' })
-  venta?: any;
-
-  @OneToMany('ComandaItem', 'comanda', { cascade: true })
-  items?: any[];
+  @ManyToOne(() => Sector, { nullable: true })
+  @JoinColumn({ name: 'sector_id' })
+  sector?: Sector;
 
   @Column({ default: true })
   activo!: boolean;

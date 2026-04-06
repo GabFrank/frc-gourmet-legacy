@@ -1,4 +1,5 @@
 import { Column, Entity, ManyToOne, JoinColumn, OneToMany, OneToOne } from 'typeorm';
+import type { Comanda } from './comanda.entity';
 import { BaseModel } from '../base.entity';
 import { Reserva } from './reserva.entity';
 import { Sector } from './sector.entity';
@@ -46,4 +47,7 @@ export class PdvMesa extends BaseModel {
   
   @OneToOne('Venta', 'mesa', { nullable: true })
   venta?: Venta;
+
+  @OneToMany('Comanda', 'pdv_mesa')
+  comandas?: any[];
 } 

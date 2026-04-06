@@ -76,6 +76,11 @@ export class Venta extends BaseModel {
   @Column({ name: 'fecha_cierre', type: 'datetime', nullable: true })
   fechaCierre?: Date;
 
+  // Comanda (tarjeta de cuenta individual)
+  @ManyToOne('Comanda', { nullable: true })
+  @JoinColumn({ name: 'comanda_id' })
+  comanda?: any;
+
   // División de cuenta
   @ManyToOne('Venta', { nullable: true })
   @JoinColumn({ name: 'venta_padre_id' })

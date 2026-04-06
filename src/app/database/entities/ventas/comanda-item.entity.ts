@@ -12,7 +12,7 @@ export enum ComandaItemEstado {
 
 @Entity('comanda_items')
 export class ComandaItem extends BaseModel {
-  @ManyToOne(() => Comanda, comanda => comanda.items, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Comanda, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'comanda_id' })
   comanda!: Comanda;
 

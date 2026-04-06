@@ -243,6 +243,10 @@ interface ElectronAPI {
   createDelivery: (deliveryData: Partial<Delivery>) => Promise<Delivery>;
   updateDelivery: (deliveryId: number, deliveryData: Partial<Delivery>) => Promise<any>;
   deleteDelivery: (deliveryId: number) => Promise<any>;
+  getDeliveriesByCaja: (cajaId: number, filtros?: any) => Promise<{ data: any[], total: number }>;
+  buscarClientePorTelefono: (telefono: string) => Promise<any>;
+  buscarClientesPorTelefono: (telefono: string) => Promise<any[]>;
+  crearClienteRapido: (data: { telefono: string; nombre?: string; direccion?: string }) => Promise<any>;
   cerrarVentasAbiertasMesa: (mesaId: number, estado: string) => Promise<number>;
   // Venta operations
   getVentas: () => Promise<Venta[]>;
@@ -265,13 +269,29 @@ interface ElectronAPI {
   getObservacionesByVentaItem: (ventaItemId: number) => Promise<any[]>;
   createVentaItemObservacion: (data: any) => Promise<any>;
   deleteVentaItemObservacion: (id: number) => Promise<boolean>;
-  // Comanda
-  getComandasPendientes: () => Promise<any[]>;
-  getComandaByVenta: (ventaId: number) => Promise<any>;
-  createComandaWithItems: (data: any) => Promise<any>;
-  updateComandaItemEstado: (id: number, estado: string) => Promise<any>;
+  // VentaItemAdicional
+  getVentaItemAdicionales: (ventaItemId: number) => Promise<any[]>;
+  createVentaItemAdicional: (data: any) => Promise<any>;
+  deleteVentaItemAdicional: (id: number) => Promise<boolean>;
+  // VentaItemIngredienteModificacion
+  getVentaItemIngredienteModificaciones: (ventaItemId: number) => Promise<any[]>;
+  createVentaItemIngredienteModificacion: (data: any) => Promise<any>;
+  deleteVentaItemIngredienteModificacion: (id: number) => Promise<boolean>;
+  // Comanda (tarjetas de cuenta individual)
+  getComandas: () => Promise<any[]>;
+  getComandasActivas: () => Promise<any[]>;
+  getComandasByMesa: (mesaId: number) => Promise<any[]>;
+  getComanda: (id: number) => Promise<any>;
   createComanda: (data: any) => Promise<any>;
   updateComanda: (id: number, data: any) => Promise<any>;
+  deleteComanda: (id: number) => Promise<boolean>;
+  getComandasDisponibles: () => Promise<any[]>;
+  getComandasOcupadas: () => Promise<any[]>;
+  getComandasBySector: (sectorId: number) => Promise<any[]>;
+  abrirComanda: (comandaId: number, data: { mesaId?: number, sectorId?: number, observacion?: string }) => Promise<any>;
+  cerrarComanda: (comandaId: number) => Promise<any>;
+  createBatchComandas: (batchData: any[]) => Promise<any[]>;
+  getComandaWithVenta: (comandaId: number) => Promise<any>;
   // PDV Grupo Categoria
   getPdvGrupoCategorias: () => Promise<PdvGrupoCategoria[]>;
   getPdvGrupoCategoria: (id: number) => Promise<PdvGrupoCategoria>;
@@ -527,6 +547,8 @@ interface ElectronAPI {
   createStockMovimiento: (stockMovimientoData: any) => Promise<StockMovimiento>;
   updateStockMovimiento: (stockMovimientoId: number, stockMovimientoData: any) => Promise<any>;
   deleteStockMovimiento: (stockMovimientoId: number) => Promise<any>;
+  procesarStockVenta: (ventaId: number) => Promise<any>;
+  revertirStockVenta: (ventaId: number) => Promise<any>;
   // Additional helper methods
   searchProductosByNombre: (nombre: string) => Promise<Producto[]>;
   getProductosByTipo: (tipo: string) => Promise<Producto[]>;
@@ -1278,6 +1300,22 @@ export class RepositoryService {
     return from(this.api.deleteDelivery(deliveryId));
   }
 
+  getDeliveriesByCaja(cajaId: number, filtros?: any): Observable<{ data: any[], total: number }> {
+    return from(this.api.getDeliveriesByCaja(cajaId, filtros));
+  }
+
+  buscarClientePorTelefono(telefono: string): Observable<any> {
+    return from(this.api.buscarClientePorTelefono(telefono));
+  }
+
+  buscarClientesPorTelefono(telefono: string): Observable<any[]> {
+    return from(this.api.buscarClientesPorTelefono(telefono));
+  }
+
+  crearClienteRapido(data: { telefono: string; nombre?: string; direccion?: string }): Observable<any> {
+    return from(this.api.crearClienteRapido(data));
+  }
+
   cerrarVentasAbiertasMesa(mesaId: number, estado: string): Observable<number> {
     return from(this.api.cerrarVentasAbiertasMesa(mesaId, estado));
   }
@@ -1357,21 +1395,47 @@ export class RepositoryService {
     return from(this.api.deleteVentaItemObservacion(id));
   }
 
-  // Comanda
-  getComandasPendientes(): Observable<any[]> {
-    return from(this.api.getComandasPendientes());
+  // VentaItemAdicional
+  getVentaItemAdicionales(ventaItemId: number): Observable<any[]> {
+    return from(this.api.getVentaItemAdicionales(ventaItemId));
   }
 
-  getComandaByVenta(ventaId: number): Observable<any> {
-    return from(this.api.getComandaByVenta(ventaId));
+  createVentaItemAdicional(data: any): Observable<any> {
+    return from(this.api.createVentaItemAdicional(data));
   }
 
-  createComandaWithItems(data: any): Observable<any> {
-    return from(this.api.createComandaWithItems(data));
+  deleteVentaItemAdicional(id: number): Observable<boolean> {
+    return from(this.api.deleteVentaItemAdicional(id));
   }
 
-  updateComandaItemEstado(id: number, estado: string): Observable<any> {
-    return from(this.api.updateComandaItemEstado(id, estado));
+  // VentaItemIngredienteModificacion
+  getVentaItemIngredienteModificaciones(ventaItemId: number): Observable<any[]> {
+    return from(this.api.getVentaItemIngredienteModificaciones(ventaItemId));
+  }
+
+  createVentaItemIngredienteModificacion(data: any): Observable<any> {
+    return from(this.api.createVentaItemIngredienteModificacion(data));
+  }
+
+  deleteVentaItemIngredienteModificacion(id: number): Observable<boolean> {
+    return from(this.api.deleteVentaItemIngredienteModificacion(id));
+  }
+
+  // Comanda (tarjetas de cuenta individual)
+  getComandas(): Observable<any[]> {
+    return from(this.api.getComandas());
+  }
+
+  getComandasActivas(): Observable<any[]> {
+    return from(this.api.getComandasActivas());
+  }
+
+  getComandasByMesa(mesaId: number): Observable<any[]> {
+    return from(this.api.getComandasByMesa(mesaId));
+  }
+
+  getComanda(id: number): Observable<any> {
+    return from(this.api.getComanda(id));
   }
 
   createComanda(data: any): Observable<any> {
@@ -1380,6 +1444,38 @@ export class RepositoryService {
 
   updateComanda(id: number, data: any): Observable<any> {
     return from(this.api.updateComanda(id, data));
+  }
+
+  deleteComanda(id: number): Observable<boolean> {
+    return from(this.api.deleteComanda(id));
+  }
+
+  getComandasDisponibles(): Observable<any[]> {
+    return from(this.api.getComandasDisponibles());
+  }
+
+  getComandasOcupadas(): Observable<any[]> {
+    return from(this.api.getComandasOcupadas());
+  }
+
+  getComandasBySector(sectorId: number): Observable<any[]> {
+    return from(this.api.getComandasBySector(sectorId));
+  }
+
+  abrirComanda(comandaId: number, data: { mesaId?: number, sectorId?: number, observacion?: string }): Observable<any> {
+    return from(this.api.abrirComanda(comandaId, data));
+  }
+
+  cerrarComanda(comandaId: number): Observable<any> {
+    return from(this.api.cerrarComanda(comandaId));
+  }
+
+  createBatchComandas(batchData: any[]): Observable<any[]> {
+    return from(this.api.createBatchComandas(batchData));
+  }
+
+  getComandaWithVenta(comandaId: number): Observable<any> {
+    return from(this.api.getComandaWithVenta(comandaId));
   }
 
   // PDV Grupo Categoria
@@ -2100,6 +2196,14 @@ export class RepositoryService {
 
   deleteStockMovimiento(stockMovimientoId: number): Observable<any> {
     return from(this.api.deleteStockMovimiento(stockMovimientoId));
+  }
+
+  procesarStockVenta(ventaId: number): Observable<any> {
+    return from(this.api.procesarStockVenta(ventaId));
+  }
+
+  revertirStockVenta(ventaId: number): Observable<any> {
+    return from(this.api.revertirStockVenta(ventaId));
   }
 
   // Additional helper methods

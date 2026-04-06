@@ -1,0 +1,140 @@
+<h2 mat-dialog-title>
+  <span class="titulo-producto">{{ data.producto?.nombre }}</span>
+  <span class="titulo-presentacion">{{ data.presentacion?.nombre }}</span>
+</h2>
+
+<mat-dialog-content>
+  <div class="loading-container" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <div class="dialog-body" *ngIf="!loading">
+    <div class="columns-layout">
+
+      <!-- COLUMNA IZQUIERDA: Ingredientes -->
+      <div class="column col-ingredientes" *ngIf="tieneIngredientes">
+        <h3 class="col-title">INGREDIENTES</h3>
+
+        <!-- Opcionales: chip verde=incluido, rojo=removido -->
+        <div class="chips-group" *ngIf="ingredientesOpcionales.length > 0">
+          <span class="subsection-title">OPCIONALES</span>
+          <div class="chips-wrap">
+            <span *ngFor="let ing of ingredientesOpcionales"
+              class="ing-chip"
+              [class.included]="!isIngredienteRemovido(ing)"
+              [class.removed]="isIngredienteRemovido(ing)"
+              (click)="toggleIngrediente(ing)">
+              <mat-icon class="chip-icon" *ngIf="!isIngredienteRemovido(ing)">check</mat-icon>
+              <mat-icon class="chip-icon" *ngIf="isIngredienteRemovido(ing)">close</mat-icon>
+              {{ ing.ingrediente?.nombre }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Intercambiables: chip naranja cuando intercambiado, con select -->
+        <div class="chips-group" *ngIf="ingredientesCambiables.length > 0">
+          <span class="subsection-title">INTERCAMBIABLES</span>
+          <div class="cambiables-list">
+            <div class="cambiable-row" *ngFor="let ing of ingredientesCambiables">
+              <span class="ing-chip intercambiable"
+                [class.swapped]="isIngredienteIntercambiado(ing)">
+                <mat-icon class="chip-icon">swap_horiz</mat-icon>
+                {{ ing.ingrediente?.nombre }}
+                <span class="swap-label" *ngIf="isIngredienteIntercambiado(ing)">→ {{ getSwapLabel(ing) }}</span>
+              </span>
+              <mat-form-field appearance="outline" class="swap-select" *ngIf="intercambiablesMap.get(ing.id)?.length">
+                <mat-select [value]="getSelectedSwap(ing)" (selectionChange)="selectSwap(ing, $event.value)">
+                  <mat-option [value]="null">ORIGINAL</mat-option>
+                  <mat-option *ngFor="let swap of intercambiablesMap.get(ing.id)" [value]="swap">
+                    {{ swap.ingredienteOpcion?.nombre }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ingredientes fijos: texto compacto -->
+        <div class="ingredientes-fijos" *ngIf="textoIngredientesFijos">
+          <span class="fijos-label">Ingredientes fijos:</span>
+          <span class="fijos-texto">{{ textoIngredientesFijos }}</span>
+        </div>
+      </div>
+
+      <!-- COLUMNA DERECHA: Adicionales + Observaciones -->
+      <div class="column col-extras">
+        <!-- Adicionales: chips verde=seleccionado -->
+        <div *ngIf="tieneAdicionales">
+          <h3 class="col-title">ADICIONALES</h3>
+          <div *ngFor="let grupo of adicionalesPorCategoria" class="adicional-grupo">
+            <span class="subsection-title" *ngIf="adicionalesPorCategoria.length > 1">{{ grupo.categoria }}</span>
+            <div class="chips-wrap">
+              <span *ngFor="let vinc of grupo.items"
+                class="adicional-chip"
+                [class.selected]="isAdicionalSelected(vinc)"
+                (click)="toggleAdicional(vinc)">
+                <mat-icon class="chip-icon" *ngIf="isAdicionalSelected(vinc)">check</mat-icon>
+                <mat-icon class="chip-icon" *ngIf="!isAdicionalSelected(vinc)">add</mat-icon>
+                {{ vinc.adicional?.nombre }}
+                <span class="chip-precio">+{{ vinc.precioAdicional | number:'1.0-0' }}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Observaciones: chips -->
+        <div *ngIf="tieneObservaciones" class="obs-section">
+          <h3 class="col-title">OBSERVACIONES</h3>
+          <div class="chips-wrap">
+            <span *ngFor="let obs of observaciones"
+              class="obs-chip"
+              [class.selected]="isObservacionSelected(obs)"
+              (click)="toggleObservacion(obs)">
+              <mat-icon class="chip-icon" *ngIf="isObservacionSelected(obs)">check</mat-icon>
+              {{ obs.descripcion }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Observación libre -->
+        <mat-form-field appearance="outline" class="obs-libre-field">
+          <mat-label>OBSERVACION LIBRE</mat-label>
+          <input matInput [(ngModel)]="observacionLibre" placeholder="Ej: sin sal, bien cocido..." />
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- FOOTER: Cantidad + Total -->
+    <div class="footer-bar">
+      <div class="cantidad-controls">
+        <button mat-mini-fab color="primary" (click)="decrementarCantidad()" [disabled]="cantidad <= 1">
+          <mat-icon>remove</mat-icon>
+        </button>
+        <span class="cantidad-value">{{ cantidad }}</span>
+        <button mat-mini-fab color="primary" (click)="incrementarCantidad()">
+          <mat-icon>add</mat-icon>
+        </button>
+      </div>
+
+      <div class="precio-info">
+        <span class="precio-desglose" *ngIf="totalAdicionales > 0">
+          {{ precioBase | number:'1.0-0' }} + {{ totalAdicionales | number:'1.0-0' }}
+        </span>
+        <span class="precio-multiplicador" *ngIf="cantidad > 1">x {{ cantidad }}</span>
+      </div>
+
+      <div class="total-display">
+        <span class="total-label">TOTAL</span>
+        <span class="total-value">{{ precioFinal | number:'1.0-0' }}</span>
+      </div>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancelar()">CANCELAR</button>
+  <button mat-raised-button color="primary" (click)="confirmar()" [disabled]="loading" class="btn-confirmar">
+    <mat-icon>{{ modoEdicion ? 'save' : 'add_shopping_cart' }}</mat-icon>
+    {{ modoEdicion ? 'GUARDAR' : 'AGREGAR' }}
+  </button>
+</mat-dialog-actions>

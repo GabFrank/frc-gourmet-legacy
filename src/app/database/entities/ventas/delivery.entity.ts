@@ -20,9 +20,16 @@ export enum DeliveryEstado {
  */
 @Entity('deliveries')
 export class Delivery extends BaseModel {
-  @ManyToOne(() => PrecioDelivery)
+  @ManyToOne(() => PrecioDelivery, { nullable: true })
   @JoinColumn({ name: 'precio_delivery_id' })
-  precioDelivery!: PrecioDelivery;
+  precioDelivery?: PrecioDelivery;
+
+  @ManyToOne(() => Cliente, { nullable: true })
+  @JoinColumn({ name: 'cliente_id' })
+  cliente?: Cliente;
+
+  @Column({ nullable: true })
+  nombre?: string;
 
   @Column({ nullable: true })
   telefono?: string;
@@ -30,9 +37,8 @@ export class Delivery extends BaseModel {
   @Column({ nullable: true })
   direccion?: string;
 
-  @ManyToOne(() => Cliente)
-  @JoinColumn({ name: 'cliente_id' })
-  cliente!: Cliente;
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  observacion?: string;
 
   @Column({
     type: 'varchar',
@@ -52,6 +58,15 @@ export class Delivery extends BaseModel {
 
   @Column({ name: 'fecha_entregado', type: 'datetime', nullable: true })
   fechaEntregado?: Date;
+
+  @Column({ name: 'fecha_cancelacion', type: 'datetime', nullable: true })
+  fechaCancelacion?: Date;
+
+  @Column({ name: 'motivo_cancelacion', type: 'varchar', length: 500, nullable: true })
+  motivoCancelacion?: string;
+
+  @Column({ name: 'cobro_anticipado', default: false })
+  cobroAnticipado!: boolean;
 
   @ManyToOne(() => Usuario, { nullable: true })
   @JoinColumn({ name: 'entregado_por' })

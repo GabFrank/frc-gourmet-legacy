@@ -24,8 +24,8 @@ export class Persona extends BaseModel {
   })
   tipoDocumento!: DocumentoTipo;
 
-  @Column()
-  documento!: string;
+  @Column({ nullable: true })
+  documento?: string;
 
   @Column({
     type: 'text',

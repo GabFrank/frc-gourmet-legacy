@@ -18,6 +18,7 @@ import { ListPreciosDeliveryComponent } from '../precios-delivery/list-precios-d
 import { ListVentasComponent } from '../historial/list-ventas.component';
 import { PdvConfigDialogComponent } from 'src/app/shared/components/pdv-config-dialog/pdv-config-dialog.component';
 import { PdvMesaDialogComponent } from 'src/app/shared/components/pdv-mesa-dialog/pdv-mesa-dialog.component';
+import { ComandaAbmDialogComponent } from 'src/app/shared/components/comanda-abm-dialog/comanda-abm-dialog.component';
 
 interface CajaAbierta {
   id: number;
@@ -78,6 +79,12 @@ export class VentasDashboardComponent implements OnInit {
       icon: 'table_restaurant',
       action: 'mesas',
       color: '#ff9800'
+    },
+    {
+      title: 'Gestionar Comandas',
+      icon: 'receipt_long',
+      action: 'comandas',
+      color: '#00bcd4'
     },
     {
       title: 'Configurar PdV',
@@ -233,6 +240,12 @@ export class VentasDashboardComponent implements OnInit {
         this.dialog.open(PdvMesaDialogComponent, {
           width: '80%',
           height: '80%'
+        });
+        break;
+      case 'comandas':
+        this.dialog.open(ComandaAbmDialogComponent, {
+          width: '70%',
+          height: '70%'
         });
         break;
       case 'pdv-config':

@@ -1,0 +1,262 @@
+.loading-container {
+  display: flex;
+  justify-content: center;
+  padding: 32px;
+}
+
+// Título
+.titulo-producto {
+  display: block;
+  font-size: 18px;
+}
+
+.titulo-presentacion {
+  display: block;
+  font-size: 13px;
+  opacity: 0.5;
+  font-weight: 400;
+}
+
+// Layout 2 columnas
+.columns-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.col-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  opacity: 0.6;
+  margin: 0;
+}
+
+.subsection-title {
+  display: block;
+  font-size: 10px;
+  opacity: 0.4;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+// Chips group
+.chips-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+// Chip base
+%chip-base {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  border: 1px solid rgba(128, 128, 128, 0.25);
+}
+
+.chip-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+// Ingrediente chip: verde=incluido, rojo=removido
+.ing-chip {
+  @extend %chip-base;
+
+  &.included {
+    background-color: rgba(76, 175, 80, 0.15);
+    border-color: rgba(76, 175, 80, 0.4);
+    color: #66bb6a;
+  }
+
+  &.removed {
+    background-color: rgba(244, 67, 54, 0.15);
+    border-color: rgba(244, 67, 54, 0.4);
+    color: #ef5350;
+    text-decoration: line-through;
+  }
+
+  &.intercambiable {
+    background-color: rgba(128, 128, 128, 0.1);
+    color: inherit;
+    cursor: default;
+
+    &.swapped {
+      background-color: rgba(255, 152, 0, 0.15);
+      border-color: rgba(255, 152, 0, 0.4);
+      color: #ffa726;
+    }
+  }
+}
+
+.swap-label {
+  font-weight: 500;
+}
+
+// Cambiables
+.cambiables-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cambiable-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.swap-select {
+  flex: 1;
+  min-width: 140px;
+
+  ::ng-deep .mat-mdc-form-field-infix {
+    min-height: 32px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+// Ingredientes fijos
+.ingredientes-fijos {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(128, 128, 128, 0.12);
+}
+
+.fijos-label {
+  display: block;
+  font-size: 10px;
+  opacity: 0.35;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.fijos-texto {
+  font-size: 11px;
+  opacity: 0.4;
+  line-height: 1.4;
+}
+
+// Adicional chip
+.adicional-chip {
+  @extend %chip-base;
+  background-color: rgba(128, 128, 128, 0.08);
+
+  &.selected {
+    background-color: rgba(76, 175, 80, 0.15);
+    border-color: rgba(76, 175, 80, 0.4);
+    color: #66bb6a;
+  }
+}
+
+.chip-precio {
+  font-size: 10px;
+  opacity: 0.65;
+}
+
+// Adicional grupo
+.adicional-grupo {
+  margin-bottom: 4px;
+}
+
+// Observaciones
+.obs-section {
+  margin-top: 4px;
+}
+
+.obs-chip {
+  @extend %chip-base;
+  background-color: rgba(128, 128, 128, 0.08);
+
+  &.selected {
+    background-color: rgba(100, 181, 246, 0.15);
+    border-color: rgba(100, 181, 246, 0.4);
+    color: #64b5f6;
+  }
+}
+
+.obs-libre-field {
+  width: 100%;
+  margin-top: 8px;
+}
+
+// Footer bar
+.footer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(128, 128, 128, 0.2);
+  gap: 16px;
+}
+
+.cantidad-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cantidad-value {
+  font-size: 20px;
+  font-weight: bold;
+  min-width: 32px;
+  text-align: center;
+}
+
+.precio-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  opacity: 0.5;
+}
+
+.total-display {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.total-label {
+  font-size: 13px;
+  opacity: 0.5;
+}
+
+.total-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--mdc-chip-elevated-selected-container-color, #4caf50);
+}
+
+.btn-confirmar {
+  min-height: 44px;
+  font-size: 15px;
+}

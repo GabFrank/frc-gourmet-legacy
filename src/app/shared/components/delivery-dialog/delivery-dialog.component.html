@@ -1,0 +1,233 @@
+<div class="delivery-container">
+  <!-- Header -->
+  <div class="delivery-header">
+    <div class="header-left">
+      <h2>LISTA DE DELIVERY</h2>
+    </div>
+    <div class="header-right">
+      <button mat-icon-button (click)="cerrar()" matTooltip="Cerrar">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Sub-header con filtro y nuevo -->
+  <div class="delivery-subheader">
+    <mat-form-field appearance="outline" class="filtro-estado">
+      <mat-label>ESTADO</mat-label>
+      <mat-select [(value)]="estadoFiltro" (selectionChange)="onFiltroChange()">
+        <mat-option value="">TODOS</mat-option>
+        <mat-option *ngFor="let e of estados" [value]="e">{{ e }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <button mat-raised-button color="primary" (click)="nuevoDelivery()">
+      <mat-icon>add</mat-icon> NUEVO DELIVERY
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="delivery-content">
+    <!-- Lista (70%) -->
+    <div class="delivery-lista">
+      <div class="tabla-wrapper">
+        <table mat-table [dataSource]="deliveryRows" class="deliveries-table" *ngIf="deliveryRows.length > 0">
+          <ng-container matColumnDef="telefono">
+            <th mat-header-cell *matHeaderCellDef>TEL.</th>
+            <td mat-cell *matCellDef="let row">{{ row.telefono }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="nombre">
+            <th mat-header-cell *matHeaderCellDef>NOMBRE</th>
+            <td mat-cell *matCellDef="let row">{{ row.nombre }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="estado">
+            <th mat-header-cell *matHeaderCellDef>ESTADO</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="estado-chip" [class]="'estado-' + row.estadoColor">{{ row.estadoLabel }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="espera">
+            <th mat-header-cell *matHeaderCellDef>ESPERA</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="espera-chip" [class]="row.tiempoColor">{{ row.espera }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="valorDelivery">
+            <th mat-header-cell *matHeaderCellDef>DELIVERY</th>
+            <td mat-cell *matCellDef="let row">{{ row.valorDelivery | number:'1.0-0' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="total">
+            <th mat-header-cell *matHeaderCellDef>TOTAL</th>
+            <td mat-cell *matCellDef="let row">{{ row.totalVenta | number:'1.0-0' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="entregador">
+            <th mat-header-cell *matHeaderCellDef>ENTREGADOR</th>
+            <td mat-cell *matCellDef="let row">{{ row.entregador }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="observacion">
+            <th mat-header-cell *matHeaderCellDef>OBS.</th>
+            <td mat-cell *matCellDef="let row">
+              <mat-icon *ngIf="row.observacion" [matTooltip]="row.observacion" class="obs-icon">comment</mat-icon>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"
+            (click)="selectDelivery(row)"
+            [class.selected-row]="selectedDelivery?.id === row.delivery.id"></tr>
+        </table>
+
+        <div *ngIf="deliveryRows.length === 0" class="empty-state">
+          <mat-icon>delivery_dining</mat-icon>
+          <span>No hay deliveries para esta caja.</span>
+        </div>
+      </div>
+
+      <mat-paginator
+        [length]="totalDeliveries"
+        [pageSize]="pageSize"
+        [pageIndex]="pageIndex"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="onPageChange($event)"
+        showFirstLastButtons>
+      </mat-paginator>
+    </div>
+
+    <!-- Detalle ticket (30%) -->
+    <div class="delivery-detalle" *ngIf="selectedDelivery">
+      <!-- Card Cliente -->
+      <div class="detalle-card">
+        <div class="detalle-card-header">
+          <mat-icon>person</mat-icon>
+          <span>CLIENTE</span>
+        </div>
+        <div class="detalle-card-body">
+          <div class="detalle-row">
+            <span class="detalle-label">NOMBRE:</span>
+            <span>{{ selectedDelivery.nombre || selectedDelivery.cliente?.persona?.nombre || '-' }}</span>
+          </div>
+          <div class="detalle-row">
+            <span class="detalle-label">TEL:</span>
+            <span>{{ selectedDelivery.telefono || '-' }}</span>
+          </div>
+          <div class="detalle-row">
+            <span class="detalle-label">DIR:</span>
+            <span>{{ selectedDelivery.direccion || '-' }}</span>
+          </div>
+          <div class="detalle-row" *ngIf="selectedDelivery.observacion">
+            <span class="detalle-label">OBS:</span>
+            <span>{{ selectedDelivery.observacion }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Items -->
+      <div class="detalle-card">
+        <div class="detalle-card-header">
+          <mat-icon>receipt</mat-icon>
+          <span>ITEMS</span>
+        </div>
+        <div class="detalle-card-body">
+          <div *ngFor="let item of selectedItems" class="item-row" [class.item-cancelado]="item.estado === 'CANCELADO'">
+            <div class="item-main">
+              <span>{{ item.cantidad }}x {{ item.producto?.nombre || '-' }}</span>
+              <span>{{ (item.precioVentaUnitario * item.cantidad) | number:'1.0-0' }}</span>
+            </div>
+            <div *ngIf="item.descuentoUnitario > 0" class="item-sub">DESC: -{{ (item.descuentoUnitario * item.cantidad) | number:'1.0-0' }}</div>
+          </div>
+          <div *ngIf="selectedItems.length === 0" class="empty-items">SIN ITEMS</div>
+        </div>
+      </div>
+
+      <!-- Card Totales -->
+      <div class="detalle-card detalle-card-total">
+        <div class="detalle-card-body">
+          <div class="detalle-row" *ngIf="selectedDelivery.precioDelivery">
+            <span>DELIVERY:</span>
+            <span>{{ selectedDelivery.precioDelivery.valor | number:'1.0-0' }}</span>
+          </div>
+          <div class="detalle-row total-row">
+            <span>TOTAL:</span>
+            <span>{{ (calcTotalItems() + (selectedDelivery.precioDelivery?.valor || 0)) | number:'1.0-0' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Cobro -->
+      <div class="detalle-card" *ngIf="selectedPagoDetalles.length > 0">
+        <div class="detalle-card-header">
+          <mat-icon>payments</mat-icon>
+          <span>COBRO</span>
+        </div>
+        <div class="detalle-card-body">
+          <div *ngFor="let pd of selectedPagoDetalles" class="detalle-row">
+            <span>{{ pd.moneda?.simbolo }} {{ pd.formaPago?.nombre }}</span>
+            <span>{{ pd.valor | number:'1.0-0' }} ({{ pd.tipo }})</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="delivery-detalle empty-detalle" *ngIf="!selectedDelivery">
+      <mat-icon>receipt_long</mat-icon>
+      <span>SELECCIONE UN DELIVERY</span>
+    </div>
+  </div>
+
+  <!-- Footer acciones (siempre visible, deshabilitado sin selección) -->
+  <div class="delivery-footer">
+    <div class="footer-actions">
+      <!-- Botón avance de etapa (solo uno visible según estado) -->
+      <button mat-raised-button color="primary" (click)="marcarListoParaEntrega()" *ngIf="isAbierto">
+        <mat-icon>check</mat-icon> LISTO
+      </button>
+      <button mat-raised-button color="primary" (click)="enviar()" *ngIf="isParaEntrega">
+        <mat-icon>delivery_dining</mat-icon> ENVIAR
+      </button>
+      <button mat-raised-button color="primary" (click)="finalizar()" *ngIf="isEnCamino">
+        <mat-icon>done_all</mat-icon> FINALIZAR
+      </button>
+
+      <!-- Retroceder estado -->
+      <button mat-stroked-button [matMenuTriggerFor]="menuEstado" [disabled]="!selectedDelivery || isAbierto">
+        <mat-icon>undo</mat-icon> ESTADO
+      </button>
+      <mat-menu #menuEstado="matMenu">
+        <button mat-menu-item (click)="cambiarEstado('ABIERTO')" *ngIf="selectedDelivery && !isAbierto">
+          <mat-icon>lock_open</mat-icon> ABIERTO
+        </button>
+        <button mat-menu-item (click)="cambiarEstado('PARA_ENTREGA')" *ngIf="selectedDelivery && !isAbierto && !isParaEntrega">
+          <mat-icon>check</mat-icon> PARA ENTREGA
+        </button>
+        <button mat-menu-item (click)="cambiarEstado('EN_CAMINO')" *ngIf="selectedDelivery && (isEntregado || isCancelado)">
+          <mat-icon>delivery_dining</mat-icon> EN CAMINO
+        </button>
+      </mat-menu>
+
+      <div class="footer-separator"></div>
+
+      <!-- Acciones -->
+      <button mat-stroked-button (click)="editarDatos()" [disabled]="!selectedDelivery || isTerminal">
+        <mat-icon>edit_note</mat-icon> DATOS
+      </button>
+      <button mat-stroked-button (click)="editarItems()" [disabled]="!selectedDelivery || isTerminal">
+        <mat-icon>edit</mat-icon> ITEMS
+      </button>
+      <button mat-stroked-button (click)="editarPago()" [disabled]="!selectedDelivery || isTerminal">
+        <mat-icon>payments</mat-icon> PAGO
+      </button>
+      <button mat-stroked-button (click)="imprimir()" [disabled]="!selectedDelivery">
+        <mat-icon>print</mat-icon> IMPRIMIR
+      </button>
+      <button mat-stroked-button color="warn" (click)="cancelarDelivery()" [disabled]="!selectedDelivery || isTerminal">
+        <mat-icon>cancel</mat-icon> CANCELAR
+      </button>
+    </div>
+  </div>
+</div>

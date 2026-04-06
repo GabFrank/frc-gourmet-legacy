@@ -73,6 +73,8 @@ import { Delivery } from './entities/ventas/delivery.entity';
 import { Venta } from './entities/ventas/venta.entity';
 import { VentaItem } from './entities/ventas/venta-item.entity';
 import { VentaItemObservacion } from './entities/ventas/venta-item-observacion.entity';
+import { VentaItemAdicional } from './entities/ventas/venta-item-adicional.entity';
+import { VentaItemIngredienteModificacion } from './entities/ventas/venta-item-ingrediente-modificacion.entity';
 import { PdvGrupoCategoria } from './entities/ventas/pdv-grupo-categoria.entity';
 import { PdvCategoria } from './entities/ventas/pdv-categoria.entity';
 import { PdvCategoriaItem } from './entities/ventas/pdv-categoria-item.entity';
@@ -159,6 +161,8 @@ export function getDataSourceOptions(userDataPath: string): DataSourceOptions {
       Venta,
       VentaItem,
       VentaItemObservacion,
+      VentaItemAdicional,
+      VentaItemIngredienteModificacion,
       // PDV entities
       PdvGrupoCategoria,
       PdvCategoria,

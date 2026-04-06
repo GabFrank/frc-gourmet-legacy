@@ -147,7 +147,7 @@ export class ListVentasComponent implements OnInit {
     if (!venta.items) return 0;
     return venta.items.reduce((sum: number, i: any) => {
       if (i.estado === 'ACTIVO') {
-        return sum + (i.precioVentaUnitario - (i.descuentoUnitario || 0)) * i.cantidad;
+        return sum + (i.precioVentaUnitario + (i.precioAdicionales || 0) - (i.descuentoUnitario || 0)) * i.cantidad;
       }
       return sum;
     }, 0);
@@ -258,9 +258,17 @@ export class ListVentasComponent implements OnInit {
     dialogRef.afterClosed().subscribe(async (result) => {
       if (result) {
         // TODO: validar credenciales admin via validate-credentials
+        const estadoAnterior = venta.estado;
         await firstValueFrom(this.repositoryService.updateVenta(venta.id, {
           estado: VentaEstado.CANCELADA,
         }));
+        // Revertir stock si la venta estaba CONCLUIDA
+        if (estadoAnterior === VentaEstado.CONCLUIDA) {
+          this.repositoryService.revertirStockVenta(venta.id).subscribe({
+            next: (r) => console.log('Stock revertido:', r),
+            error: (e) => console.error('Error revirtiendo stock:', e),
+          });
+        }
         this.filtrar();
       }
     });
@@ -280,6 +288,11 @@ export class ListVentasComponent implements OnInit {
         await firstValueFrom(this.repositoryService.updateVenta(venta.id, {
           estado: VentaEstado.CONCLUIDA,
         }));
+        // Re-procesar stock al rehabilitar a CONCLUIDA
+        this.repositoryService.procesarStockVenta(venta.id).subscribe({
+          next: (r) => console.log('Stock re-procesado:', r),
+          error: (e) => console.error('Error re-procesando stock:', e),
+        });
         this.filtrar();
       }
     });
