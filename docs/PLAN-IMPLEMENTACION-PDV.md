@@ -376,13 +376,17 @@ Ampliar entidad `PdvConfig`:
 |-------|--------|---------------------|------------|
 | **1 - PdV Operativo** | ✅ COMPLETA | 8/8 | - |
 | **2 - Operaciones Avanzadas** | 🟡 PARCIAL | 7/10 | 2.2 Kitchen Display, 2.3 Impresion, 2.5 Delivery |
-| **3 - Reportes y Optimizacion** | 🟡 PARCIAL | 2/9 | 3.1 Reportes, 3.2 Dashboard real, 3.3 Reservas, 3.5 Promociones, 3.7 Alertas, 3.8 Config, 3.9 Auditoria |
+| **3 - Reportes y Optimizacion** | 🟡 PARCIAL | 3/9 | 3.1 Reportes, 3.2 Dashboard real, 3.3 Reservas, 3.5 Promociones, 3.7 Alertas, 3.9 Auditoria |
 
 ### Entidades creadas:
 - `ComandaItem` — vincula items de venta con comandas
 - `VentaItemObservacion` — vincula observaciones con items de venta
+- `VentaItemSabor` — vincula items de venta con sabores/variaciones multi-sabor
 - Columnas nuevas en `Venta`: descuentoPorcentaje, descuentoMonto, descuentoMotivo, descuentoAutorizadoPor, ventaPadre
 - Columnas nuevas en `Comanda`: venta, numero, estado, items
+- Columnas nuevas en `VentaItem`: recetaPresentacion, ensambladoDescripcion, cantidadSabores
+- Columnas nuevas en `PdvConfig`: pizzaMaxSabores, pizzaEstrategiaPrecio
+- FK opcional `ventaItemSabor` en VentaItemAdicional, VentaItemIngredienteModificacion, VentaItemObservacion
 
 ### Componentes creados:
 - `cobrar-venta-dialog` — cobro de venta con multi-moneda
@@ -396,14 +400,17 @@ Ampliar entidad `PdvConfig`:
 - `detalle-venta-dialog` — vista detalle de venta
 - `list-precios-delivery` — ABM de precios de delivery
 - `list-ventas` — historial de ventas con filtros
+- `seleccionar-variacion-dialog` — seleccion de tamanho + sabores para ELABORADO_CON_VARIACION (3 pasos)
+- `pdv-config-dialog` — rediseñado: configuracion real del PdV (general, variaciones, caja, delivery)
 
 ---
 
 ## PROXIMOS PASOS
 
 ### Mejoras PdV pendientes
+- **Probar flujo completo de pizza con datos reales** — Verificar seleccion de tamanho, sabores, personalizacion por sabor, precios, y display en tabla
+- **Limpieza de entidades viejas** — Eliminar PdvGrupoCategoria, PdvCategoria, PdvCategoriaItem, PdvItemProducto (reemplazadas por atajos)
 - **Division de cuenta por items** — En el dialogo de cobro, permitir asignar items especificos a cada persona/cuenta para que el valor por persona sea exacto segun lo que consumio. Complementa la division en partes iguales ya implementada.
-- **Accesos directos a productos** — Reemplazar la navegacion por categorias actual con un modulo de accesos directos configurables. El usuario podra crear grupos (ej: "BEBIDAS", "HAMBURGUESAS") y seleccionar los productos que quiere mostrar en cada grupo. En el PdV se mostraran como botones rapidos agrupados por categoria, permitiendo agregar productos con un solo click sin pasar por el dialogo de busqueda.
 
 ### Fase futura — Experiencia del cliente
 - **Propina digital** — Al cobrar, ofrecer opciones de propina (10%, 15%, 20%) que se registra como linea de pago tipo PROPINA
@@ -440,5 +447,5 @@ Ampliar entidad `PdvConfig`:
 
 ### Fase 6 — Configuracion y seguridad
 - **3.7 Notificaciones y Alertas** — Alertas por tiempo en ventas/comandas
-- **3.8 Configuracion Avanzada del PdV** — UI completa para PdvConfig
+- **3.8 Configuracion Avanzada del PdV** — ✅ PARCIAL: dialogo pdv-config-dialog rediseñado con secciones (general, variaciones, caja, delivery). Pendiente: mas opciones configurables
 - **3.9 Auditoria y Seguridad** — Entity AuditLog, log de acciones criticas, restricciones por rol
