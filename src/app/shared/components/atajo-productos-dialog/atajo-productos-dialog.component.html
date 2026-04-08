@@ -1,0 +1,45 @@
+<h2 mat-dialog-title>{{ data.atajoItemNombre }}</h2>
+
+<mat-dialog-content class="dialog-content">
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <div class="productos-grid" [ngClass]="'grid-size-' + gridSize" *ngIf="!isLoading && productos.length > 0">
+    <div
+      class="producto-card"
+      *ngFor="let item of productos"
+      (click)="selectProducto(item)">
+      <div class="producto-image">
+        <mat-icon>restaurant</mat-icon>
+      </div>
+      <div class="producto-info">
+        <span class="producto-nombre">{{ getDisplayName(item) }}</span>
+        <span class="producto-precio">{{ getPrice(item) | number:'1.0-0' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading && productos.length === 0">
+    <mat-icon>inventory_2</mat-icon>
+    <p>Sin productos asignados</p>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions class="dialog-footer">
+  <div class="cantidad-row">
+    <div class="cantidad-field-wrapper">
+      <mat-form-field appearance="outline" class="cantidad-field">
+        <mat-label>CANTIDAD</mat-label>
+        <input matInput [formControl]="cantidadFormControl" style="text-align: center;" />
+      </mat-form-field>
+    </div>
+    <div class="cantidad-buttons">
+      <button mat-raised-button color="primary" *ngFor="let d of [1,2,3,4,5,6,7,8,9,0]" (click)="onCantidadPress(d)">{{ d }}</button>
+      <button mat-icon-button color="primary" (click)="onClearPress()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+  <button mat-button mat-dialog-close>CERRAR</button>
+</mat-dialog-actions>

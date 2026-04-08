@@ -573,6 +573,30 @@ interface ElectronAPI {
 
   // ✅ NUEVO: Endpoint para el asistente de ingredientes
   getRecetasIdsPorVariacionIds: (variacionIds: number[]) => Promise<{ [variacionId: number]: number }>;
+
+  // PdvAtajoGrupo
+  getPdvAtajoGrupos: () => Promise<any[]>;
+  getPdvAtajoGrupo: (id: number) => Promise<any>;
+  createPdvAtajoGrupo: (data: any) => Promise<any>;
+  updatePdvAtajoGrupo: (id: number, data: any) => Promise<any>;
+  deletePdvAtajoGrupo: (id: number) => Promise<any>;
+  reorderPdvAtajoGrupos: (orderedIds: number[]) => Promise<any>;
+  // PdvAtajoItem
+  getPdvAtajoItems: () => Promise<any[]>;
+  getPdvAtajoItem: (id: number) => Promise<any>;
+  getPdvAtajoItemsByGrupo: (grupoId: number) => Promise<any[]>;
+  createPdvAtajoItem: (data: any) => Promise<any>;
+  updatePdvAtajoItem: (id: number, data: any) => Promise<any>;
+  deletePdvAtajoItem: (id: number) => Promise<any>;
+  // PdvAtajoGrupoItem (join)
+  assignAtajoItemToGrupo: (grupoId: number, itemId: number, posicion: number) => Promise<any>;
+  removeAtajoItemFromGrupo: (grupoId: number, itemId: number) => Promise<any>;
+  reorderAtajoItemsInGrupo: (grupoId: number, orderedItemIds: number[]) => Promise<any>;
+  // PdvAtajoItemProducto (join)
+  getPdvAtajoItemProductos: (atajoItemId: number) => Promise<any[]>;
+  assignProductoToAtajoItem: (atajoItemId: number, productoId: number, data?: any) => Promise<any>;
+  removeProductoFromAtajoItem: (id: number) => Promise<any>;
+  reorderProductosInAtajoItem: (atajoItemId: number, orderedIds: number[]) => Promise<any>;
 }
 
 
@@ -2294,6 +2318,79 @@ export class RepositoryService {
   // ✅ NUEVO: Método para obtener un mapeo de variacionId -> recetaId
   getRecetasIdsPorVariacionIds(variacionIds: number[]): Observable<{ [variacionId: number]: number }> {
     return from(this.api.getRecetasIdsPorVariacionIds(variacionIds));
+  }
+
+  // =============================================
+  // PdvAtajoGrupo
+  // =============================================
+  getPdvAtajoGrupos(): Observable<any[]> {
+    return from(this.api.getPdvAtajoGrupos());
+  }
+  getPdvAtajoGrupo(id: number): Observable<any> {
+    return from(this.api.getPdvAtajoGrupo(id));
+  }
+  createPdvAtajoGrupo(data: any): Observable<any> {
+    return from(this.api.createPdvAtajoGrupo(data));
+  }
+  updatePdvAtajoGrupo(id: number, data: any): Observable<any> {
+    return from(this.api.updatePdvAtajoGrupo(id, data));
+  }
+  deletePdvAtajoGrupo(id: number): Observable<any> {
+    return from(this.api.deletePdvAtajoGrupo(id));
+  }
+  reorderPdvAtajoGrupos(orderedIds: number[]): Observable<any> {
+    return from(this.api.reorderPdvAtajoGrupos(orderedIds));
+  }
+
+  // =============================================
+  // PdvAtajoItem
+  // =============================================
+  getPdvAtajoItems(): Observable<any[]> {
+    return from(this.api.getPdvAtajoItems());
+  }
+  getPdvAtajoItem(id: number): Observable<any> {
+    return from(this.api.getPdvAtajoItem(id));
+  }
+  getPdvAtajoItemsByGrupo(grupoId: number): Observable<any[]> {
+    return from(this.api.getPdvAtajoItemsByGrupo(grupoId));
+  }
+  createPdvAtajoItem(data: any): Observable<any> {
+    return from(this.api.createPdvAtajoItem(data));
+  }
+  updatePdvAtajoItem(id: number, data: any): Observable<any> {
+    return from(this.api.updatePdvAtajoItem(id, data));
+  }
+  deletePdvAtajoItem(id: number): Observable<any> {
+    return from(this.api.deletePdvAtajoItem(id));
+  }
+
+  // =============================================
+  // PdvAtajoGrupoItem (join)
+  // =============================================
+  assignAtajoItemToGrupo(grupoId: number, itemId: number, posicion: number): Observable<any> {
+    return from(this.api.assignAtajoItemToGrupo(grupoId, itemId, posicion));
+  }
+  removeAtajoItemFromGrupo(grupoId: number, itemId: number): Observable<any> {
+    return from(this.api.removeAtajoItemFromGrupo(grupoId, itemId));
+  }
+  reorderAtajoItemsInGrupo(grupoId: number, orderedItemIds: number[]): Observable<any> {
+    return from(this.api.reorderAtajoItemsInGrupo(grupoId, orderedItemIds));
+  }
+
+  // =============================================
+  // PdvAtajoItemProducto (join)
+  // =============================================
+  getPdvAtajoItemProductos(atajoItemId: number): Observable<any[]> {
+    return from(this.api.getPdvAtajoItemProductos(atajoItemId));
+  }
+  assignProductoToAtajoItem(atajoItemId: number, productoId: number, data?: any): Observable<any> {
+    return from(this.api.assignProductoToAtajoItem(atajoItemId, productoId, data));
+  }
+  removeProductoFromAtajoItem(id: number): Observable<any> {
+    return from(this.api.removeProductoFromAtajoItem(id));
+  }
+  reorderProductosInAtajoItem(atajoItemId: number, orderedIds: number[]): Observable<any> {
+    return from(this.api.reorderProductosInAtajoItem(atajoItemId, orderedIds));
   }
 
 }

@@ -1,3 +1,38 @@
+.dialog-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.tab-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+
+  .tab-btn {
+    flex: 1;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    background-color: #333;
+    color: #aaa;
+    transition: all 0.2s;
+
+    &.active {
+      background-color: #4CAF50;
+      color: #fff;
+    }
+
+    .mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      margin-right: 4px;
+    }
+  }
+}
+
 .mesas-container {
   display: flex;
   flex-wrap: wrap;

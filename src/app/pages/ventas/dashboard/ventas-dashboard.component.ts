@@ -19,6 +19,7 @@ import { ListVentasComponent } from '../historial/list-ventas.component';
 import { PdvConfigDialogComponent } from 'src/app/shared/components/pdv-config-dialog/pdv-config-dialog.component';
 import { PdvMesaDialogComponent } from 'src/app/shared/components/pdv-mesa-dialog/pdv-mesa-dialog.component';
 import { ComandaAbmDialogComponent } from 'src/app/shared/components/comanda-abm-dialog/comanda-abm-dialog.component';
+import { AtajoConfigDialogComponent } from 'src/app/shared/components/atajo-config-dialog/atajo-config-dialog.component';
 
 interface CajaAbierta {
   id: number;
@@ -91,6 +92,12 @@ export class VentasDashboardComponent implements OnInit {
       icon: 'tune',
       action: 'pdv-config',
       color: '#9c27b0'
+    },
+    {
+      title: 'Accesos Rápidos',
+      icon: 'touch_app',
+      action: 'atajo-config',
+      color: '#ff9800'
     },
     {
       title: 'Precios Delivery',
@@ -251,6 +258,14 @@ export class VentasDashboardComponent implements OnInit {
       case 'pdv-config':
         this.dialog.open(PdvConfigDialogComponent, {
           width: '600px'
+        });
+        break;
+      case 'atajo-config':
+        this.dialog.open(AtajoConfigDialogComponent, {
+          width: '90vw',
+          maxWidth: '90vw',
+          height: '80vh',
+          panelClass: 'atajo-config-dialog-container'
         });
         break;
       case 'precios-delivery':

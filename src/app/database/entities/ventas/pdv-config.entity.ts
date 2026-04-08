@@ -36,4 +36,12 @@ export class PdvConfig extends BaseModel {
 
   @Column({ name: 'comandas_habilitadas', default: false })
   comandasHabilitadas!: boolean;
+
+  // Tamaño del grid de atajos: 1=grande, 2=mediano, 3=pequeño
+  @Column({ name: 'atajos_grid_size', type: 'int', default: 3 })
+  atajosGridSize!: number;
+
+  // Tamaño del grid de productos dentro de atajos: 1=grande, 2=mediano, 3=pequeño
+  @Column({ name: 'atajos_productos_grid_size', type: 'int', default: 3 })
+  atajosProductosGridSize!: number;
 } 

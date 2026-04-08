@@ -8,7 +8,8 @@ FRC Gourmet is a desktop restaurant management app built with **Angular 15 + Ele
 
 ## Commands
 
-- **Dev (full app):** `npm start` — runs Angular dev server on port 4201 and Electron together
+- **Dev (full app):** `npm start` — runs Angular dev server on port 4201 and Electron together. **The user runs this manually from their terminal; never run `npm start` from Claude Code.**
+- **Check compilation:** `npm run build` — use this to verify the code compiles without errors
 - **Angular only:** `npm run ng:serve` (port 4201)
 - **Compile Electron TS:** `npm run electron:serve-tsc` (uses `tsconfig.electron.json`)
 - **Build prod:** `npm run build:prod`

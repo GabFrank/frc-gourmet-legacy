@@ -1671,3 +1671,25 @@ input.mat-input-element {
   color: white !important;
   border-radius: 4px !important;
 }
+
+// Diálogos con footer fijo — flex layout
+.atajo-productos-dialog-container,
+.atajo-config-dialog-container {
+  // El host del componente debe ser flex column
+  app-atajo-productos-dialog,
+  app-atajo-config-dialog {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+  }
+
+  .mat-mdc-dialog-content {
+    flex: 1 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+  }
+
+  .mat-mdc-dialog-actions {
+    flex-shrink: 0 !important;
+  }
+}

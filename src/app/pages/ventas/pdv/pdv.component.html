@@ -723,86 +723,59 @@
         </button>
       </mat-card-content>
     </mat-card>
-    <!-- Categories -->
-    <mat-card class="categories-card" style="flex: 1" data-testid="pdv-categorias-panel">
+    <!-- Accesos Rápidos (Atajos) -->
+    <mat-card class="atajos-card" style="flex: 1" data-testid="pdv-atajos-panel">
       <mat-card-content>
-        <!-- Breadcrumb -->
-        <div class="categories-breadcrumb" data-testid="pdv-categorias-breadcrumb" *ngIf="navigationLevel !== 'grupos'">
-          <button mat-button (click)="navigateToGrupos()">
-            <mat-icon>home</mat-icon> INICIO
+        <!-- Header con botón config -->
+        <div class="atajos-header">
+          <span class="atajos-title">ACCESOS RÁPIDOS</span>
+          <div class="atajos-actions">
+            <button mat-icon-button (click)="loadAtajoGrupos()" matTooltip="Recargar atajos">
+              <mat-icon>refresh</mat-icon>
+            </button>
+            <button mat-icon-button (click)="openAtajoConfig()" matTooltip="Configurar accesos rápidos">
+              <mat-icon>settings</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabs de grupos -->
+        <div class="atajo-grupo-tabs" *ngIf="atajoGrupos.length > 0">
+          <button
+            *ngFor="let grupo of atajoGrupos"
+            mat-flat-button
+            class="atajo-grupo-btn"
+            [class.active]="selectedAtajoGrupo?.id === grupo.id"
+            (click)="selectAtajoGrupo(grupo)">
+            <mat-icon *ngIf="grupo.icono">{{ grupo.icono }}</mat-icon>
+            {{ grupo.nombre }}
           </button>
-          <mat-icon *ngIf="selectedGrupo">chevron_right</mat-icon>
-          <button mat-button *ngIf="selectedGrupo" (click)="navigateBack()" [disabled]="navigationLevel === 'categorias'">
-            {{ selectedGrupo.nombre }}
+        </div>
+
+        <!-- Grid de items -->
+        <div class="atajos-grid" [ngClass]="'grid-size-' + atajosGridSize" *ngIf="atajoItemsDelGrupo.length > 0">
+          <div
+            class="atajo-item"
+            *ngFor="let item of atajoItemsDelGrupo"
+            [style.background-color]="item.colorFondo || '#424242'"
+            [style.color]="item.colorTexto || '#FFFFFF'"
+            (click)="onAtajoItemClick(item)">
+            <mat-icon *ngIf="item.icono" class="atajo-item-icon">{{ item.icono }}</mat-icon>
+            <span class="atajo-item-nombre">{{ item.nombre }}</span>
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div class="atajos-empty" *ngIf="atajoGrupos.length === 0">
+          <mat-icon>touch_app</mat-icon>
+          <p>Sin accesos rápidos configurados</p>
+          <button mat-stroked-button (click)="openAtajoConfig()">
+            <mat-icon>add</mat-icon> CONFIGURAR
           </button>
-          <mat-icon *ngIf="selectedCategoria">chevron_right</mat-icon>
-          <span *ngIf="selectedCategoria">{{ selectedCategoria.nombre }}</span>
         </div>
-
-        <!-- Botón Volver -->
-        <button mat-icon-button *ngIf="navigationLevel !== 'grupos'" (click)="navigateBack()" style="margin-bottom: 8px">
-          <mat-icon>arrow_back</mat-icon>
-        </button>
-
-        <!-- Nivel: Grupos -->
-        <div class="products-grid" *ngIf="navigationLevel === 'grupos' && pdvGrupoCategorias.length > 0">
-          <div
-            class="product-item"
-            *ngFor="let grupo of pdvGrupoCategorias"
-            (click)="selectGrupo(grupo)"
-            style="cursor: pointer"
-          >
-            <div class="product-image">
-              <mat-icon style="font-size: 40px; width: 40px; height: 40px">category</mat-icon>
-            </div>
-            <div class="product-name">{{ grupo.nombre }}</div>
-          </div>
-        </div>
-
-        <!-- Nivel: Categorías del grupo -->
-        <div class="products-grid" *ngIf="navigationLevel === 'categorias'">
-          <div
-            class="product-item"
-            *ngFor="let categoria of categoriasDelGrupo"
-            (click)="selectCategoria(categoria)"
-            style="cursor: pointer"
-          >
-            <div class="product-image">
-              <mat-icon style="font-size: 40px; width: 40px; height: 40px">folder_open</mat-icon>
-            </div>
-            <div class="product-name">{{ categoria.nombre }}</div>
-          </div>
-        </div>
-
-        <!-- Nivel: Items de la categoría -->
-        <div class="products-grid" *ngIf="navigationLevel === 'items'">
-          <ng-container *ngFor="let catItem of categoriaItems">
-            <div
-              class="product-item"
-              *ngFor="let itemProducto of catItem.productos"
-              (click)="addProductFromItem(itemProducto)"
-              style="cursor: pointer"
-            >
-              <div class="product-image">
-                <img *ngIf="catItem.imagen" [src]="catItem.imagen" alt="Product" />
-                <mat-icon *ngIf="!catItem.imagen" style="font-size: 40px; width: 40px; height: 40px">restaurant</mat-icon>
-              </div>
-              <div class="product-name">{{ itemProducto.nombre_alternativo || itemProducto.producto?.nombre || catItem.nombre }}</div>
-            </div>
-          </ng-container>
-        </div>
-
-        <!-- Fallback: sin grupos, mostrar productos -->
-        <div class="products-grid" *ngIf="navigationLevel === 'grupos' && pdvGrupoCategorias.length === 0 && productos.length > 0">
-          <div
-            class="product-item"
-            *ngFor="let producto of productos"
-          >
-            <div class="product-image">
-              <img src="assets/product-placeholder.png" alt="Product" />
-            </div>
-            <div class="product-name">{{ producto.nombre }}</div>
-          </div>
+        <div class="atajos-empty" *ngIf="atajoGrupos.length > 0 && atajoItemsDelGrupo.length === 0">
+          <mat-icon>category</mat-icon>
+          <p>Sin items en este grupo</p>
         </div>
       </mat-card-content>
     </mat-card>

@@ -40,7 +40,7 @@ import { ConfirmationDialogComponent } from 'src/app/shared/components/confirmat
 import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTableDataSource } from '@angular/material/table';
-import { PdvGrupoCategoria } from 'src/app/database/entities/ventas/pdv-grupo-categoria.entity';
+import { PdvAtajoGrupo } from 'src/app/database/entities/ventas/pdv-atajo-grupo.entity';
 import { CobrarVentaDialogComponent, CobrarVentaDialogData } from 'src/app/shared/components/cobrar-venta-dialog/cobrar-venta-dialog.component';
 import { CancelarVentaDialogComponent } from 'src/app/shared/components/cancelar-venta-dialog/cancelar-venta-dialog.component';
 import { EditVentaItemDialogComponent } from 'src/app/shared/components/edit-venta-item-dialog/edit-venta-item-dialog.component';
@@ -48,8 +48,8 @@ import { TransferirMesaDialogComponent } from 'src/app/shared/components/transfe
 import { BuscarClienteDialogComponent } from 'src/app/shared/components/buscar-cliente-dialog/buscar-cliente-dialog.component';
 import { DescuentoDialogComponent } from 'src/app/shared/components/descuento-dialog/descuento-dialog.component';
 import { DividirCuentaDialogComponent } from 'src/app/shared/components/dividir-cuenta-dialog/dividir-cuenta-dialog.component';
-import { PdvCategoria } from 'src/app/database/entities/ventas/pdv-categoria.entity';
-import { PdvCategoriaItem } from 'src/app/database/entities/ventas/pdv-categoria-item.entity';
+import { AtajoProductosDialogComponent } from 'src/app/shared/components/atajo-productos-dialog/atajo-productos-dialog.component';
+import { AtajoConfigDialogComponent } from 'src/app/shared/components/atajo-config-dialog/atajo-config-dialog.component';
 import { Sector } from 'src/app/database/entities/ventas/sector.entity';
 import { DeliveryDialogComponent, DeliveryDialogData } from 'src/app/shared/components/delivery-dialog/delivery-dialog.component';
 import { Delivery } from 'src/app/database/entities/ventas/delivery.entity';
@@ -169,15 +169,12 @@ export class PdvComponent implements OnInit, OnDestroy {
   // Caja
   caja: Caja | null = null;
 
-  //  grupo de categorias
-  pdvGrupoCategorias: PdvGrupoCategoria[] = [];
-
-  // Navegación de categorías
-  navigationLevel: 'grupos' | 'categorias' | 'items' = 'grupos';
-  selectedGrupo: PdvGrupoCategoria | null = null;
-  selectedCategoria: PdvCategoria | null = null;
-  categoriaItems: PdvCategoriaItem[] = [];
-  categoriasDelGrupo: PdvCategoria[] = [];
+  // Atajos (accesos rápidos)
+  atajoGrupos: any[] = [];
+  selectedAtajoGrupo: any = null;
+  atajoItemsDelGrupo: any[] = [];
+  atajosGridSize = 3;
+  atajosProductosGridSize = 3;
 
   // tiempo abierto
   tiempoAbierto = '0h 0m';
@@ -317,11 +314,17 @@ export class PdvComponent implements OnInit, OnDestroy {
           if (config?.pdvTabDefault) {
             this.activeTab = config.pdvTabDefault as 'MESAS' | 'COMANDAS';
           }
+          if (config?.atajosGridSize) {
+            this.atajosGridSize = config.atajosGridSize;
+          }
+          if (config?.atajosProductosGridSize) {
+            this.atajosProductosGridSize = config.atajosProductosGridSize;
+          }
         }
       } catch (e) { /* use default */ }
 
-      // Load PdV grupo categorias
-      this.pdvGrupoCategorias = await firstValueFrom(this.repositoryService.getPdvGrupoCategorias());
+      // Load atajo grupos
+      await this.loadAtajoGrupos();
 
       // Initialize demo data
       this.initDemoData();
@@ -691,55 +694,72 @@ export class PdvComponent implements OnInit, OnDestroy {
     });
   }
 
-  // --- Navegación de categorías ---
+  // --- Atajos (accesos rápidos) ---
 
-  async selectGrupo(grupo: PdvGrupoCategoria): Promise<void> {
-    this.selectedGrupo = grupo;
-    this.categoriasDelGrupo = await firstValueFrom(this.repositoryService.getPdvCategoriasByGrupo(grupo.id));
-    this.navigationLevel = 'categorias';
-  }
-
-  async selectCategoria(categoria: PdvCategoria): Promise<void> {
-    this.selectedCategoria = categoria;
-    this.categoriaItems = await firstValueFrom(this.repositoryService.getPdvCategoriaItemsByCategoria(categoria.id));
-    this.navigationLevel = 'items';
-  }
-
-  async addProductFromItem(itemProducto: any): Promise<void> {
-    const producto = itemProducto.producto;
-    if (!producto || !producto.presentaciones || producto.presentaciones.length === 0) {
-      console.error('Producto sin presentaciones');
-      return;
-    }
-    const presentacion = producto.presentaciones[0];
-    const precioVenta = presentacion.preciosVenta?.find((p: PrecioVenta) => p.principal) || presentacion.preciosVenta?.[0];
-    if (!precioVenta) {
-      console.error('No se encontró precio de venta');
-      return;
-    }
-    const cantidad = this.searchForm.get('cantidad')?.value || 1;
-    await this.addProduct(producto, presentacion, cantidad, precioVenta);
-  }
-
-  navigateBack(): void {
-    if (this.navigationLevel === 'items') {
-      this.navigationLevel = 'categorias';
-      this.selectedCategoria = null;
-      this.categoriaItems = [];
-    } else if (this.navigationLevel === 'categorias') {
-      this.navigationLevel = 'grupos';
-      this.selectedGrupo = null;
-      this.categoriasDelGrupo = [];
+  async loadAtajoGrupos(): Promise<void> {
+    try {
+      this.atajoGrupos = await firstValueFrom(this.repositoryService.getPdvAtajoGrupos());
+      // Reload grid sizes from config
+      try {
+        const config = await firstValueFrom(this.repositoryService.getPdvConfig());
+        const cfg = Array.isArray(config) ? config[0] : config;
+        if (cfg?.atajosGridSize) this.atajosGridSize = cfg.atajosGridSize;
+        if (cfg?.atajosProductosGridSize) this.atajosProductosGridSize = cfg.atajosProductosGridSize;
+      } catch (e) { /* keep current */ }
+      // Auto-select first grupo or reload current
+      if (this.atajoGrupos.length > 0) {
+        const currentGrupo = this.selectedAtajoGrupo
+          ? this.atajoGrupos.find((g: any) => g.id === this.selectedAtajoGrupo.id) || this.atajoGrupos[0]
+          : this.atajoGrupos[0];
+        await this.selectAtajoGrupo(currentGrupo);
+      }
+    } catch (error) {
+      console.error('Error loading atajo grupos:', error);
     }
   }
 
-  navigateToGrupos(): void {
-    this.navigationLevel = 'grupos';
-    this.selectedGrupo = null;
-    this.selectedCategoria = null;
-    this.categoriasDelGrupo = [];
-    this.categoriaItems = [];
+  async selectAtajoGrupo(grupo: any): Promise<void> {
+    this.selectedAtajoGrupo = grupo;
+    try {
+      this.atajoItemsDelGrupo = await firstValueFrom(this.repositoryService.getPdvAtajoItemsByGrupo(grupo.id));
+    } catch (error) {
+      console.error('Error loading atajo items:', error);
+      this.atajoItemsDelGrupo = [];
+    }
   }
+
+  onAtajoItemClick(item: any): void {
+    const dialogRef = this.dialog.open(AtajoProductosDialogComponent, {
+      width: '55%',
+      height: '70%',
+      panelClass: 'atajo-productos-dialog-container',
+      data: { atajoItemId: item.id, atajoItemNombre: item.nombre, gridSize: this.atajosProductosGridSize }
+    });
+
+    dialogRef.afterClosed().subscribe(async (result: any) => {
+      if (result?.producto && result?.precioVenta) {
+        const producto = result.producto;
+        const presentacion = result.presentacion || producto.presentaciones?.[0] || null;
+        const precioVenta = result.precioVenta;
+        const cantidad = result.cantidad || 1;
+        await this.addProduct(producto, presentacion, cantidad, precioVenta);
+      }
+    });
+  }
+
+  openAtajoConfig(): void {
+    const dialogRef = this.dialog.open(AtajoConfigDialogComponent, {
+      width: '90vw',
+      maxWidth: '90vw',
+      height: '80vh',
+      panelClass: 'atajo-config-dialog-container'
+    });
+
+    dialogRef.afterClosed().subscribe(async () => {
+      await this.loadAtajoGrupos();
+    });
+  }
+
 
   // Get all mesas (for template)
   get availableMesas(): PdvMesa[] {
@@ -1102,8 +1122,8 @@ export class PdvComponent implements OnInit, OnDestroy {
       // Check if mesa, comanda, or venta rápida is selected
       if (!this.selectedMesa && !this.ventaRapidaActual && !this.selectedComanda) {
         await this.showMesaSelectionDialog();
-        if (!this.selectedMesa) {
-          console.log('No se seleccionó ninguna mesa');
+        if (!this.selectedMesa && !this.selectedComanda) {
+          console.log('No se seleccionó ninguna mesa ni comanda');
           return;
         }
       }
@@ -1221,14 +1241,13 @@ export class PdvComponent implements OnInit, OnDestroy {
 
   // Add new method to show mesa selection dialog
   private async showMesaSelectionDialog(): Promise<void> {
-    // Create dialog data with available mesas
     const dialogData = {
       mesas: this.mesas.filter(mesa => mesa.activo && !mesa.reservado),
-      title: 'Seleccionar Mesa',
-      message: 'Por favor seleccione una mesa para continuar'
+      comandas: this.comandas,
+      title: 'Seleccionar Mesa o Comanda',
+      message: 'Seleccione dónde agregar el producto'
     };
 
-    // Open the dialog
     const dialogRef = this.dialog.open(MesaSelectionDialogComponent, {
       width: '60%',
       height: '60%',
@@ -1236,12 +1255,14 @@ export class PdvComponent implements OnInit, OnDestroy {
       disableClose: true
     });
 
-    // Handle the result
-    dialogRef.afterClosed().subscribe(selectedMesa => {
-      if (selectedMesa) {
-        this.selectedMesa = selectedMesa;
+    const result = await firstValueFrom(dialogRef.afterClosed());
+    if (result) {
+      if (result.tipo === 'comanda') {
+        this.selectedComanda = result.comanda;
+      } else {
+        this.selectedMesa = result;
       }
-    });
+    }
   }
 
   // return a promise, if mesa is not null, get venta from mesa, if null create a new venta

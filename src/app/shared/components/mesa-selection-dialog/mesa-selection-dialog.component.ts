@@ -6,11 +6,13 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatIconModule } from '@angular/material/icon';
+import { MatBadgeModule } from '@angular/material/badge';
 import { PdvMesa } from '../../../database/entities/ventas/pdv-mesa.entity';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 export interface MesaSelectionDialogData {
   mesas: PdvMesa[];
+  comandas?: any[];
   title: string;
   message: string;
 }
@@ -26,20 +28,33 @@ export interface MesaSelectionDialogData {
     MatDividerModule,
     MatGridListModule,
     MatIconModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatBadgeModule
   ],
   templateUrl: './mesa-selection-dialog.component.html',
   styleUrls: ['./mesa-selection-dialog.component.scss']
 })
 export class MesaSelectionDialogComponent {
-  
+  activeTab: 'MESAS' | 'COMANDAS' = 'MESAS';
+  hasComandas: boolean;
+  disponiblesCount: number;
+  comandasDisponiblesCount: number;
+
   constructor(
     public dialogRef: MatDialogRef<MesaSelectionDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: MesaSelectionDialogData
-  ) { }
+  ) {
+    this.hasComandas = !!(data.comandas && data.comandas.length > 0);
+    this.disponiblesCount = data.mesas.filter(m => m.estado === 'DISPONIBLE').length;
+    this.comandasDisponiblesCount = (data.comandas || []).filter((c: any) => c.estado === 'DISPONIBLE').length;
+  }
 
   selectMesa(mesa: PdvMesa): void {
     this.dialogRef.close(mesa);
+  }
+
+  selectComanda(comanda: any): void {
+    this.dialogRef.close({ tipo: 'comanda', comanda });
   }
 
   cancel(): void {

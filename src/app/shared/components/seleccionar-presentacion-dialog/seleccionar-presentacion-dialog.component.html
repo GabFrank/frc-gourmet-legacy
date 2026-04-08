@@ -1,0 +1,29 @@
+<h2 mat-dialog-title>{{ data.producto?.nombre }}</h2>
+
+<mat-dialog-content>
+  <div class="presentaciones-list">
+    <div class="presentacion-card" *ngFor="let pres of presentaciones">
+      <div class="presentacion-nombre">{{ pres.nombre || 'ESTÁNDAR' }}</div>
+      <div class="precios-row">
+        <button
+          mat-flat-button
+          *ngFor="let precio of pres.preciosVenta"
+          class="precio-btn"
+          [class.principal]="precio.principal"
+          (click)="selectPrecio(pres, precio)">
+          <span class="precio-valor">{{ precio.valor | number:'1.0-0' }}</span>
+          <span class="precio-tipo" *ngIf="precio.tipoPrecio">{{ precio.tipoPrecio.descripcion }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="presentaciones.length === 0">
+    <mat-icon>warning</mat-icon>
+    <p>Sin presentaciones con precio disponible</p>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>CANCELAR</button>
+</mat-dialog-actions>

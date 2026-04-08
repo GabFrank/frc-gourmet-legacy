@@ -22,6 +22,11 @@ import { Comanda, ComandaEstado } from '../../src/app/database/entities/ventas/c
 // ComandaItem kept for future kitchen integration
 // import { ComandaItem } from '../../src/app/database/entities/ventas/comanda-item.entity';
 import { Sector } from '../../src/app/database/entities/ventas/sector.entity';
+import { PdvAtajoGrupo } from '../../src/app/database/entities/ventas/pdv-atajo-grupo.entity';
+import { PdvAtajoItem } from '../../src/app/database/entities/ventas/pdv-atajo-item.entity';
+import { PdvAtajoGrupoItem } from '../../src/app/database/entities/ventas/pdv-atajo-grupo-item.entity';
+import { PdvAtajoItemProducto } from '../../src/app/database/entities/ventas/pdv-atajo-item-producto.entity';
+import { PrecioVenta } from '../../src/app/database/entities/productos/precio-venta.entity';
 import { PagoDetalle } from '../../src/app/database/entities/compras/pago-detalle.entity';
 import { Caja } from '../../src/app/database/entities/financiero/caja.entity';
 import { Producto } from '../../src/app/database/entities/productos/producto.entity';
@@ -2167,6 +2172,361 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
     } catch (error) {
       console.error(`Error revirtiendo stock para venta #${ventaId}:`, error);
       return { success: false, error: (error as any).message };
+    }
+  });
+
+  // =============================================
+  // PdvAtajoGrupo handlers
+  // =============================================
+
+  ipcMain.handle('getPdvAtajoGrupos', async () => {
+    try {
+      const repo = dataSource.getRepository(PdvAtajoGrupo);
+      return await repo.find({
+        relations: ['atajoGrupoItems', 'atajoGrupoItems.atajoItem'],
+        order: { posicion: 'ASC' }
+      });
+    } catch (error) {
+      console.error('Error getting PdvAtajoGrupos:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('getPdvAtajoGrupo', async (_event: any, id: number) => {
+    try {
+      const repo = dataSource.getRepository(PdvAtajoGrupo);
+      return await repo.findOne({
+        where: { id },
+        relations: ['atajoGrupoItems', 'atajoGrupoItems.atajoItem']
+      });
+    } catch (error) {
+      console.error(`Error getting PdvAtajoGrupo ID ${id}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('createPdvAtajoGrupo', async (_event: any, data: any) => {
+    try {
+      const repo = dataSource.getRepository(PdvAtajoGrupo);
+      if (data.nombre) data.nombre = data.nombre.toUpperCase();
+      const entity = repo.create(data);
+      await setEntityUserTracking(dataSource, entity, getCurrentUser()?.id, false);
+      return await repo.save(entity);
+    } catch (error) {
+      console.error('Error creating PdvAtajoGrupo:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('updatePdvAtajoGrupo', async (_event: any, id: number, data: any) => {
+    try {
+      const repo = dataSource.getRepository(PdvAtajoGrupo);
+      const entity = await repo.findOneBy({ id });
+      if (!entity) throw new Error(`PdvAtajoGrupo ID ${id} not found`);
+      if (data.nombre) data.nombre = data.nombre.toUpperCase();
+      repo.merge(entity, data);
+      await setEntityUserTracking(dataSource, entity, getCurrentUser()?.id, true);
+      return await repo.save(entity);
+    } catch (error) {
+      console.error(`Error updating PdvAtajoGrupo ID ${id}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('deletePdvAtajoGrupo', async (_event: any, id: number) => {
+    try {
+      const repo = dataSource.getRepository(PdvAtajoGrupo);
+      const entity = await repo.findOneBy({ id });
+      if (!entity) throw new Error(`PdvAtajoGrupo ID ${id} not found`);
+      // Delete join table entries first
+      const joinRepo = dataSource.getRepository(PdvAtajoGrupoItem);
+      await joinRepo.delete({ atajoGrupoId: id });
+      return await repo.remove(entity);
+    } catch (error) {
+      console.error(`Error deleting PdvAtajoGrupo ID ${id}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('reorderPdvAtajoGrupos', async (_event: any, orderedIds: number[]) => {
+    try {
+      const repo = dataSource.getRepository(PdvAtajoGrupo);
+      for (let i = 0; i < orderedIds.length; i++) {
+        await repo.update(orderedIds[i], { posicion: i });
+      }
+      return { success: true };
+    } catch (error) {
+      console.error('Error reordering PdvAtajoGrupos:', error);
+      throw error;
+    }
+  });
+
+  // =============================================
+  // PdvAtajoItem handlers
+  // =============================================
+
+  ipcMain.handle('getPdvAtajoItems', async () => {
+    try {
+      const repo = dataSource.getRepository(PdvAtajoItem);
+      return await repo.find({
+        order: { nombre: 'ASC' }
+      });
+    } catch (error) {
+      console.error('Error getting PdvAtajoItems:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('getPdvAtajoItem', async (_event: any, id: number) => {
+    try {
+      const repo = dataSource.getRepository(PdvAtajoItem);
+      return await repo.findOne({
+        where: { id },
+        relations: ['atajoGrupoItems', 'atajoGrupoItems.atajoGrupo', 'atajoItemProductos', 'atajoItemProductos.producto']
+      });
+    } catch (error) {
+      console.error(`Error getting PdvAtajoItem ID ${id}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('getPdvAtajoItemsByGrupo', async (_event: any, grupoId: number) => {
+    try {
+      const joinRepo = dataSource.getRepository(PdvAtajoGrupoItem);
+      const joinEntries = await joinRepo.find({
+        where: { atajoGrupoId: grupoId },
+        relations: ['atajoItem'],
+        order: { posicion: 'ASC' }
+      });
+      return joinEntries.map(entry => ({
+        ...entry.atajoItem,
+        posicion: entry.posicion
+      }));
+    } catch (error) {
+      console.error(`Error getting PdvAtajoItems for grupo ${grupoId}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('createPdvAtajoItem', async (_event: any, data: any) => {
+    try {
+      const repo = dataSource.getRepository(PdvAtajoItem);
+      if (data.nombre) data.nombre = data.nombre.toUpperCase();
+      const entity = repo.create(data);
+      await setEntityUserTracking(dataSource, entity, getCurrentUser()?.id, false);
+      return await repo.save(entity);
+    } catch (error) {
+      console.error('Error creating PdvAtajoItem:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('updatePdvAtajoItem', async (_event: any, id: number, data: any) => {
+    try {
+      const repo = dataSource.getRepository(PdvAtajoItem);
+      const entity = await repo.findOneBy({ id });
+      if (!entity) throw new Error(`PdvAtajoItem ID ${id} not found`);
+      if (data.nombre) data.nombre = data.nombre.toUpperCase();
+      repo.merge(entity, data);
+      await setEntityUserTracking(dataSource, entity, getCurrentUser()?.id, true);
+      return await repo.save(entity);
+    } catch (error) {
+      console.error(`Error updating PdvAtajoItem ID ${id}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('deletePdvAtajoItem', async (_event: any, id: number) => {
+    try {
+      const repo = dataSource.getRepository(PdvAtajoItem);
+      const entity = await repo.findOneBy({ id });
+      if (!entity) throw new Error(`PdvAtajoItem ID ${id} not found`);
+      // Delete join table entries first
+      const grupoItemRepo = dataSource.getRepository(PdvAtajoGrupoItem);
+      await grupoItemRepo.delete({ atajoItemId: id });
+      const itemProductoRepo = dataSource.getRepository(PdvAtajoItemProducto);
+      await itemProductoRepo.delete({ atajoItemId: id });
+      return await repo.remove(entity);
+    } catch (error) {
+      console.error(`Error deleting PdvAtajoItem ID ${id}:`, error);
+      throw error;
+    }
+  });
+
+  // =============================================
+  // PdvAtajoGrupoItem (join table) handlers
+  // =============================================
+
+  ipcMain.handle('assignAtajoItemToGrupo', async (_event: any, grupoId: number, itemId: number, posicion: number) => {
+    try {
+      const repo = dataSource.getRepository(PdvAtajoGrupoItem);
+      // Check if already exists
+      const existing = await repo.findOne({
+        where: { atajoGrupoId: grupoId, atajoItemId: itemId }
+      });
+      if (existing) {
+        existing.posicion = posicion;
+        return await repo.save(existing);
+      }
+      const entity = repo.create({ atajoGrupoId: grupoId, atajoItemId: itemId, posicion });
+      await setEntityUserTracking(dataSource, entity, getCurrentUser()?.id, false);
+      return await repo.save(entity);
+    } catch (error) {
+      console.error(`Error assigning atajo item ${itemId} to grupo ${grupoId}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('removeAtajoItemFromGrupo', async (_event: any, grupoId: number, itemId: number) => {
+    try {
+      const repo = dataSource.getRepository(PdvAtajoGrupoItem);
+      const entity = await repo.findOne({
+        where: { atajoGrupoId: grupoId, atajoItemId: itemId }
+      });
+      if (!entity) throw new Error(`Join entry not found for grupo ${grupoId} and item ${itemId}`);
+      return await repo.remove(entity);
+    } catch (error) {
+      console.error(`Error removing atajo item ${itemId} from grupo ${grupoId}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('reorderAtajoItemsInGrupo', async (_event: any, grupoId: number, orderedItemIds: number[]) => {
+    try {
+      const repo = dataSource.getRepository(PdvAtajoGrupoItem);
+      for (let i = 0; i < orderedItemIds.length; i++) {
+        await repo.update(
+          { atajoGrupoId: grupoId, atajoItemId: orderedItemIds[i] },
+          { posicion: i }
+        );
+      }
+      return { success: true };
+    } catch (error) {
+      console.error(`Error reordering atajo items in grupo ${grupoId}:`, error);
+      throw error;
+    }
+  });
+
+  // =============================================
+  // PdvAtajoItemProducto (join table) handlers
+  // =============================================
+
+  ipcMain.handle('getPdvAtajoItemProductos', async (_event: any, atajoItemId: number) => {
+    try {
+      const repo = dataSource.getRepository(PdvAtajoItemProducto);
+      const pvRepo = dataSource.getRepository(PrecioVenta);
+      const items = await repo.find({
+        where: { atajoItemId },
+        relations: [
+          'producto',
+          'producto.presentaciones',
+          'producto.presentaciones.preciosVenta',
+          'producto.presentaciones.preciosVenta.moneda',
+          'producto.presentaciones.preciosVenta.tipoPrecio',
+          'producto.receta'
+        ],
+        order: { posicion: 'ASC' }
+      });
+
+      // Resolve prices based on product type
+      const pickPrecio = (precios: any[]) =>
+        precios?.find((pv: any) => pv.activo && pv.principal)
+        || precios?.find((pv: any) => pv.activo)
+        || precios?.[0]
+        || null;
+
+      for (const item of items) {
+        const p = item.producto as any;
+        if (!p) continue;
+
+        if (p.tipo === 'ELABORADO_SIN_VARIACION') {
+          const recetaId = p.receta?.id;
+          if (recetaId) {
+            const precios = await pvRepo.find({
+              where: { receta: { id: recetaId }, activo: true },
+              relations: ['moneda'],
+              order: { principal: 'DESC' }
+            });
+            p.precioDirecto = pickPrecio(precios);
+          }
+        } else if (p.tipo === 'ELABORADO_CON_VARIACION') {
+          const precios = await pvRepo
+            .createQueryBuilder('pv')
+            .leftJoinAndSelect('pv.moneda', 'moneda')
+            .innerJoin('pv.receta', 'receta')
+            .where('receta.producto_id = :prodId', { prodId: p.id })
+            .andWhere('pv.activo = :activo', { activo: true })
+            .orderBy('pv.principal', 'DESC')
+            .getMany();
+          p.precioDirecto = pickPrecio(precios);
+        } else if (p.tipo === 'COMBO') {
+          const precios = await pvRepo.find({
+            where: { producto: { id: p.id }, activo: true },
+            relations: ['moneda'],
+            order: { principal: 'DESC' }
+          });
+          p.precioDirecto = pickPrecio(precios);
+        }
+        // RETAIL: prices already loaded via presentaciones.preciosVenta
+      }
+
+      return items;
+    } catch (error) {
+      console.error(`Error getting productos for atajo item ${atajoItemId}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('assignProductoToAtajoItem', async (_event: any, atajoItemId: number, productoId: number, data?: any) => {
+    try {
+      const repo = dataSource.getRepository(PdvAtajoItemProducto);
+      // Check if already exists
+      const existing = await repo.findOne({
+        where: { atajoItemId, productoId }
+      });
+      if (existing) return existing;
+      const maxPosResult = await repo.createQueryBuilder('aip')
+        .select('MAX(aip.posicion)', 'maxPos')
+        .where('aip.atajo_item_id = :atajoItemId', { atajoItemId })
+        .getRawOne();
+      const nextPos = (maxPosResult?.maxPos ?? -1) + 1;
+      const entity = repo.create({
+        atajoItemId,
+        productoId,
+        posicion: nextPos,
+        nombre_alternativo: data?.nombre_alternativo || null,
+        activo: true
+      });
+      await setEntityUserTracking(dataSource, entity, getCurrentUser()?.id, false);
+      return await repo.save(entity);
+    } catch (error) {
+      console.error(`Error assigning producto ${productoId} to atajo item ${atajoItemId}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('removeProductoFromAtajoItem', async (_event: any, id: number) => {
+    try {
+      const repo = dataSource.getRepository(PdvAtajoItemProducto);
+      const entity = await repo.findOneBy({ id });
+      if (!entity) throw new Error(`PdvAtajoItemProducto ID ${id} not found`);
+      return await repo.remove(entity);
+    } catch (error) {
+      console.error(`Error removing PdvAtajoItemProducto ID ${id}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('reorderProductosInAtajoItem', async (_event: any, atajoItemId: number, orderedIds: number[]) => {
+    try {
+      const repo = dataSource.getRepository(PdvAtajoItemProducto);
+      for (let i = 0; i < orderedIds.length; i++) {
+        await repo.update(orderedIds[i], { posicion: i });
+      }
+      return { success: true };
+    } catch (error) {
+      console.error(`Error reordering productos in atajo item ${atajoItemId}:`, error);
+      throw error;
     }
   });
 } 

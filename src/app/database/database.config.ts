@@ -86,6 +86,11 @@ import { Reserva } from './entities/ventas/reserva.entity';
 import { Comanda } from './entities/ventas/comanda.entity';
 import { ComandaItem } from './entities/ventas/comanda-item.entity';
 import { Sector } from './entities/ventas/sector.entity';
+// Atajo (accesos rápidos) entities
+import { PdvAtajoGrupo } from './entities/ventas/pdv-atajo-grupo.entity';
+import { PdvAtajoItem } from './entities/ventas/pdv-atajo-item.entity';
+import { PdvAtajoGrupoItem } from './entities/ventas/pdv-atajo-grupo-item.entity';
+import { PdvAtajoItemProducto } from './entities/ventas/pdv-atajo-item-producto.entity';
 
 /**
  * Get the configuration for TypeORM
@@ -174,7 +179,12 @@ export function getDataSourceOptions(userDataPath: string): DataSourceOptions {
       Reserva,
       Comanda,
       ComandaItem,
-      Sector
+      Sector,
+      // Atajo (accesos rápidos) entities
+      PdvAtajoGrupo,
+      PdvAtajoItem,
+      PdvAtajoGrupoItem,
+      PdvAtajoItemProducto
     ],
     synchronize: true, // Automatically creates tables in development
     logging: process.env['NODE_ENV'] === 'development',

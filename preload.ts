@@ -2190,4 +2190,77 @@ contextBridge.exposeInMainWorld('api', {
     return await ipcRenderer.invoke('get-recetas-ids-por-variacion-ids', variacionIds);
   },
 
+  // =============================================
+  // PdvAtajoGrupo
+  // =============================================
+  getPdvAtajoGrupos: async (): Promise<any[]> => {
+    return await ipcRenderer.invoke('getPdvAtajoGrupos');
+  },
+  getPdvAtajoGrupo: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('getPdvAtajoGrupo', id);
+  },
+  createPdvAtajoGrupo: async (data: any): Promise<any> => {
+    return await ipcRenderer.invoke('createPdvAtajoGrupo', data);
+  },
+  updatePdvAtajoGrupo: async (id: number, data: any): Promise<any> => {
+    return await ipcRenderer.invoke('updatePdvAtajoGrupo', id, data);
+  },
+  deletePdvAtajoGrupo: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('deletePdvAtajoGrupo', id);
+  },
+  reorderPdvAtajoGrupos: async (orderedIds: number[]): Promise<any> => {
+    return await ipcRenderer.invoke('reorderPdvAtajoGrupos', orderedIds);
+  },
+
+  // =============================================
+  // PdvAtajoItem
+  // =============================================
+  getPdvAtajoItems: async (): Promise<any[]> => {
+    return await ipcRenderer.invoke('getPdvAtajoItems');
+  },
+  getPdvAtajoItem: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('getPdvAtajoItem', id);
+  },
+  getPdvAtajoItemsByGrupo: async (grupoId: number): Promise<any[]> => {
+    return await ipcRenderer.invoke('getPdvAtajoItemsByGrupo', grupoId);
+  },
+  createPdvAtajoItem: async (data: any): Promise<any> => {
+    return await ipcRenderer.invoke('createPdvAtajoItem', data);
+  },
+  updatePdvAtajoItem: async (id: number, data: any): Promise<any> => {
+    return await ipcRenderer.invoke('updatePdvAtajoItem', id, data);
+  },
+  deletePdvAtajoItem: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('deletePdvAtajoItem', id);
+  },
+
+  // =============================================
+  // PdvAtajoGrupoItem (join table)
+  // =============================================
+  assignAtajoItemToGrupo: async (grupoId: number, itemId: number, posicion: number): Promise<any> => {
+    return await ipcRenderer.invoke('assignAtajoItemToGrupo', grupoId, itemId, posicion);
+  },
+  removeAtajoItemFromGrupo: async (grupoId: number, itemId: number): Promise<any> => {
+    return await ipcRenderer.invoke('removeAtajoItemFromGrupo', grupoId, itemId);
+  },
+  reorderAtajoItemsInGrupo: async (grupoId: number, orderedItemIds: number[]): Promise<any> => {
+    return await ipcRenderer.invoke('reorderAtajoItemsInGrupo', grupoId, orderedItemIds);
+  },
+
+  // =============================================
+  // PdvAtajoItemProducto (join table)
+  // =============================================
+  getPdvAtajoItemProductos: async (atajoItemId: number): Promise<any[]> => {
+    return await ipcRenderer.invoke('getPdvAtajoItemProductos', atajoItemId);
+  },
+  assignProductoToAtajoItem: async (atajoItemId: number, productoId: number, data?: any): Promise<any> => {
+    return await ipcRenderer.invoke('assignProductoToAtajoItem', atajoItemId, productoId, data);
+  },
+  removeProductoFromAtajoItem: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('removeProductoFromAtajoItem', id);
+  },
+  reorderProductosInAtajoItem: async (atajoItemId: number, orderedIds: number[]): Promise<any> => {
+    return await ipcRenderer.invoke('reorderProductosInAtajoItem', atajoItemId, orderedIds);
+  },
+
 });
