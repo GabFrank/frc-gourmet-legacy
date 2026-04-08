@@ -66,8 +66,14 @@ export class AtajoProductosDialogComponent implements OnInit {
     const cantidad = this.cantidadFormControl.value || 1;
     const tipo = producto.tipo;
 
-    // ELABORADO_SIN_VARIACION, ELABORADO_CON_VARIACION, COMBO: precio directo (no via presentación)
-    if (tipo === 'ELABORADO_SIN_VARIACION' || tipo === 'ELABORADO_CON_VARIACION' || tipo === 'COMBO') {
+    // ELABORADO_CON_VARIACION: cerrar y señalar al PdV para abrir diálogo de variaciones
+    if (tipo === 'ELABORADO_CON_VARIACION') {
+      this.dialogRef.close({ producto, cantidad, isVariacionSelection: true });
+      return;
+    }
+
+    // ELABORADO_SIN_VARIACION, COMBO: precio directo (no via presentación)
+    if (tipo === 'ELABORADO_SIN_VARIACION' || tipo === 'COMBO') {
       const precioVenta = producto.precioDirecto;
       if (!precioVenta) {
         console.error('Producto sin precio de venta configurado');

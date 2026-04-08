@@ -1655,6 +1655,44 @@ export function registerRecetasHandlers(dataSource: DataSource, getCurrentUser: 
     });
   });
 
+  // Obtener variaciones por producto y presentación (para diálogo de selección en PdV)
+  ipcMain.handle('get-variaciones-by-producto-and-presentacion', async (_e: IpcMainInvokeEvent, productoId: number, presentacionId: number) => {
+    const variaciones = await dataSource.getRepository(RecetaPresentacion)
+      .createQueryBuilder('rp')
+      .leftJoinAndSelect('rp.receta', 'receta')
+      .leftJoinAndSelect('rp.presentacion', 'presentacion')
+      .leftJoinAndSelect('rp.sabor', 'sabor')
+      .leftJoinAndSelect('receta.ingredientes', 'ingredientes')
+      .leftJoinAndSelect('ingredientes.ingrediente', 'ingredienteProducto')
+      .leftJoinAndSelect('receta.adicionalesVinculados', 'adicionalesVinculados')
+      .leftJoinAndSelect('adicionalesVinculados.adicional', 'adicional')
+      .where('sabor.producto_id = :productoId', { productoId })
+      .andWhere('rp.presentacion_id = :presentacionId', { presentacionId })
+      .andWhere('rp.activo = 1')
+      .orderBy('sabor.nombre', 'ASC')
+      .getMany();
+
+    // Cargar precios de venta para cada variación
+    const variacionesConPrecios = await Promise.all(
+      variaciones.map(async (variacion) => {
+        if (!variacion.receta?.id) return { ...variacion, preciosVenta: [] };
+
+        const preciosVenta = await dataSource.getRepository(PrecioVenta)
+          .createQueryBuilder('pv')
+          .leftJoinAndSelect('pv.moneda', 'moneda')
+          .leftJoinAndSelect('pv.tipoPrecio', 'tipoPrecio')
+          .where('pv.receta_id = :recetaId', { recetaId: variacion.receta.id })
+          .andWhere('pv.activo = :activo', { activo: true })
+          .orderBy('pv.principal', 'DESC')
+          .getMany();
+
+        return { ...variacion, preciosVenta };
+      })
+    );
+
+    return variacionesConPrecios;
+  });
+
   ipcMain.handle('create-receta-presentacion', async (_e: IpcMainInvokeEvent, variacionData: { recetaId: number; presentacionId: number; nombre_generado?: string; sku?: string; precio_ajuste?: number; }) => {
     const queryRunner = dataSource.createQueryRunner();
     await queryRunner.connect();

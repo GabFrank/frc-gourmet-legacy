@@ -44,4 +44,11 @@ export class PdvConfig extends BaseModel {
   // Tamaño del grid de productos dentro de atajos: 1=grande, 2=mediano, 3=pequeño
   @Column({ name: 'atajos_productos_grid_size', type: 'int', default: 3 })
   atajosProductosGridSize!: number;
+
+  // Configuración para productos con variaciones (pizzas, etc.)
+  @Column({ name: 'pizza_max_sabores', type: 'int', default: 2 })
+  pizzaMaxSabores!: number;
+
+  @Column({ name: 'pizza_estrategia_precio', type: 'varchar', length: 50, default: 'MAYOR_PRECIO' })
+  pizzaEstrategiaPrecio!: string; // MAYOR_PRECIO | PROMEDIO
 } 

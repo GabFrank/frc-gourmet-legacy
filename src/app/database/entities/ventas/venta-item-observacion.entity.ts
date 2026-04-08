@@ -15,6 +15,10 @@ export class VentaItemObservacion extends BaseModel {
   @Column({ type: 'varchar', length: 500, nullable: true })
   observacionLibre?: string;
 
+  @ManyToOne('VentaItemSabor', { nullable: true })
+  @JoinColumn({ name: 'venta_item_sabor_id' })
+  ventaItemSabor?: any;
+
   @Column({ default: true })
   activo!: boolean;
 }

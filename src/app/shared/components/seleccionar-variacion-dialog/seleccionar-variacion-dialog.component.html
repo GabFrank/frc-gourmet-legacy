@@ -1,0 +1,194 @@
+<h2 mat-dialog-title>
+  <mat-icon class="title-icon">restaurant_menu</mat-icon>
+  <span>{{ data.producto?.nombre }}</span>
+</h2>
+
+<mat-dialog-content>
+  <div class="loading-container" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <div class="dialog-body" *ngIf="!loading">
+
+    <!-- Stepper indicators -->
+    <div class="stepper-nav">
+      <div class="step-indicator" [class.active]="pasoActual === 0" [class.completed]="selectedPresentacion" (click)="irAPaso(0)">
+        <span class="step-number">1</span>
+        <span class="step-label">{{ labels.size }}</span>
+      </div>
+      <div class="step-connector" [class.active]="pasoActual >= 1"></div>
+      <div class="step-indicator" [class.active]="pasoActual === 1" [class.completed]="saboresSeleccionados.length > 0" (click)="selectedPresentacion ? irAPaso(1) : null">
+        <span class="step-number">2</span>
+        <span class="step-label">{{ labels.variations }}</span>
+      </div>
+      <div class="step-connector" [class.active]="pasoActual >= 2"></div>
+      <div class="step-indicator" [class.active]="pasoActual === 2" (click)="saboresSeleccionados.length > 0 ? irAPaso(2) : null">
+        <span class="step-number">3</span>
+        <span class="step-label">CONFIRMAR</span>
+      </div>
+    </div>
+
+    <!-- PASO 1: Seleccionar tamaño -->
+    <div class="step-content" *ngIf="pasoActual === 0">
+      <div class="step-title">Seleccionar {{ labels.size | lowercase }}</div>
+
+      <div class="size-grid" *ngIf="presentaciones.length > 0">
+        <button *ngFor="let pres of presentaciones"
+          class="size-card"
+          [class.selected]="selectedPresentacion?.id === pres.id"
+          (click)="selectPresentacion(pres)">
+          <mat-icon class="size-icon">straighten</mat-icon>
+          <span class="size-nombre">{{ pres.nombre }}</span>
+        </button>
+      </div>
+
+      <div class="empty-state" *ngIf="presentaciones.length === 0">
+        <mat-icon>warning</mat-icon>
+        <span>No hay presentaciones configuradas para este producto</span>
+      </div>
+    </div>
+
+    <!-- PASO 2: Seleccionar sabores -->
+    <div class="step-content" *ngIf="pasoActual === 1">
+      <div class="step-header">
+        <div class="step-title">Seleccionar {{ labels.variations | lowercase }} <span class="hint">(max {{ maxSabores }})</span></div>
+        <div class="selected-size-badge" (click)="irAPaso(0)">
+          <mat-icon>straighten</mat-icon>
+          {{ selectedPresentacion?.nombre }}
+          <mat-icon class="edit-icon">edit</mat-icon>
+        </div>
+      </div>
+
+      <div class="precio-rango" *ngIf="precioRangoMin > 0">
+        <span *ngIf="precioRangoMin === precioRangoMax">Precio: {{ precioRangoMin | number:'1.0-0' }}</span>
+        <span *ngIf="precioRangoMin !== precioRangoMax">Precios: {{ precioRangoMin | number:'1.0-0' }} - {{ precioRangoMax | number:'1.0-0' }}</span>
+      </div>
+
+      <div class="sabores-grid">
+        <button *ngFor="let v of variacionesDisponibles"
+          class="sabor-card"
+          [class.selected]="isSaborSeleccionado(v)"
+          [class.disabled]="!isSaborDisponible(v)"
+          [disabled]="!isSaborDisponible(v)"
+          [matTooltip]="!isSaborDisponible(v) ? 'Sin precio configurado' : ''"
+          (click)="toggleSabor(v)">
+          <div class="sabor-info">
+            <span class="sabor-nombre">{{ v.sabor?.nombre }}</span>
+            <span class="sabor-precio" *ngIf="isSaborDisponible(v)">{{ getPrecioVariacion(v) | number:'1.0-0' }}</span>
+            <span class="sabor-sin-precio" *ngIf="!isSaborDisponible(v)">SIN PRECIO</span>
+          </div>
+          <mat-icon class="check-icon" *ngIf="isSaborSeleccionado(v)">check_circle</mat-icon>
+        </button>
+      </div>
+
+      <!-- Sabores seleccionados con opción de personalizar -->
+      <div class="sabores-seleccionados" *ngIf="saboresSeleccionados.length > 0">
+        <mat-divider></mat-divider>
+        <div class="seleccionados-header">SELECCIONADOS</div>
+        <div class="sabor-seleccionado-row" *ngFor="let sabor of saboresSeleccionados; let i = index">
+          <div class="sabor-sel-info">
+            <span class="sabor-sel-proporcion" *ngIf="saboresSeleccionados.length > 1">
+              {{ saboresSeleccionados.length === 2 ? '1/2' : saboresSeleccionados.length === 3 ? '1/3' : '1/' + saboresSeleccionados.length }}
+            </span>
+            <span class="sabor-sel-nombre">{{ sabor.recetaPresentacion.sabor?.nombre }}</span>
+            <span class="sabor-personalizado-badge" *ngIf="tienePersonalizacion(sabor)">
+              <mat-icon>tune</mat-icon> PERSONALIZADO
+            </span>
+          </div>
+          <button mat-stroked-button class="btn-personalizar" (click)="personalizarSabor(sabor)">
+            <mat-icon>tune</mat-icon>
+            PERSONALIZAR
+          </button>
+        </div>
+      </div>
+
+      <!-- Precio calculado -->
+      <div class="precio-parcial" *ngIf="saboresSeleccionados.length > 0">
+        <span class="precio-estrategia">{{ estrategiaPrecio === 'MAYOR_PRECIO' ? 'Mayor precio' : 'Promedio' }}</span>
+        <span class="precio-valor">{{ precioCalculado | number:'1.0-0' }}</span>
+      </div>
+
+      <div class="step-actions">
+        <button mat-button (click)="irAPaso(0)">
+          <mat-icon>arrow_back</mat-icon> ATRAS
+        </button>
+        <button mat-raised-button color="primary" [disabled]="saboresSeleccionados.length === 0" (click)="irAPaso(2)">
+          CONTINUAR <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- PASO 3: Resumen y confirmación -->
+    <div class="step-content" *ngIf="pasoActual === 2">
+      <div class="step-title">Resumen</div>
+
+      <div class="resumen-card">
+        <div class="resumen-item">
+          <span class="resumen-label">{{ labels.size }}</span>
+          <span class="resumen-value">{{ selectedPresentacion?.nombre }}</span>
+        </div>
+        <div class="resumen-item">
+          <span class="resumen-label">{{ labels.variations }}</span>
+          <div class="resumen-sabores">
+            <div *ngFor="let sabor of saboresSeleccionados" class="resumen-sabor">
+              <span *ngIf="saboresSeleccionados.length > 1" class="resumen-proporcion">
+                {{ saboresSeleccionados.length === 2 ? '1/2' : '1/' + saboresSeleccionados.length }}
+              </span>
+              <span>{{ sabor.recetaPresentacion.sabor?.nombre }}</span>
+              <span class="resumen-personalizado" *ngIf="tienePersonalizacion(sabor)">
+                <mat-icon>tune</mat-icon>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="resumen-item" *ngIf="personalizacionGeneral">
+          <span class="resumen-label">EXTRAS GENERALES</span>
+          <span class="resumen-value"><mat-icon>check</mat-icon> Personalizado</span>
+        </div>
+      </div>
+
+      <!-- Botón personalización general -->
+      <button mat-stroked-button class="btn-personalizacion-general" (click)="personalizarGeneral()">
+        <mat-icon>restaurant</mat-icon>
+        {{ personalizacionGeneral ? 'EDITAR EXTRAS GENERALES' : 'AGREGAR EXTRAS GENERALES' }}
+      </button>
+
+      <!-- Footer: cantidad + total -->
+      <div class="footer-bar">
+        <div class="cantidad-controls">
+          <button mat-mini-fab color="primary" (click)="decrementarCantidad()" [disabled]="cantidad <= 1">
+            <mat-icon>remove</mat-icon>
+          </button>
+          <span class="cantidad-value">{{ cantidad }}</span>
+          <button mat-mini-fab color="primary" (click)="incrementarCantidad()">
+            <mat-icon>add</mat-icon>
+          </button>
+        </div>
+
+        <div class="precio-info" *ngIf="cantidad > 1">
+          <span>{{ precioCalculado | number:'1.0-0' }} x {{ cantidad }}</span>
+        </div>
+
+        <div class="total-display">
+          <span class="total-label">TOTAL</span>
+          <span class="total-value">{{ precioTotal | number:'1.0-0' }}</span>
+        </div>
+      </div>
+
+      <div class="step-actions">
+        <button mat-button (click)="irAPaso(1)">
+          <mat-icon>arrow_back</mat-icon> ATRAS
+        </button>
+        <button mat-raised-button color="primary" class="btn-confirmar" (click)="confirmar()">
+          <mat-icon>add_shopping_cart</mat-icon>
+          AGREGAR
+        </button>
+      </div>
+    </div>
+
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" *ngIf="pasoActual === 0">
+  <button mat-button (click)="cancelar()">CANCELAR</button>
+</mat-dialog-actions>

@@ -91,6 +91,7 @@ import { PdvAtajoGrupo } from './entities/ventas/pdv-atajo-grupo.entity';
 import { PdvAtajoItem } from './entities/ventas/pdv-atajo-item.entity';
 import { PdvAtajoGrupoItem } from './entities/ventas/pdv-atajo-grupo-item.entity';
 import { PdvAtajoItemProducto } from './entities/ventas/pdv-atajo-item-producto.entity';
+import { VentaItemSabor } from './entities/ventas/venta-item-sabor.entity';
 
 /**
  * Get the configuration for TypeORM
@@ -184,7 +185,9 @@ export function getDataSourceOptions(userDataPath: string): DataSourceOptions {
       PdvAtajoGrupo,
       PdvAtajoItem,
       PdvAtajoGrupoItem,
-      PdvAtajoItemProducto
+      PdvAtajoItemProducto,
+      // VentaItem sabores (variaciones multi-sabor)
+      VentaItemSabor
     ],
     synchronize: true, // Automatically creates tables in development
     logging: process.env['NODE_ENV'] === 'development',

@@ -277,6 +277,10 @@ interface ElectronAPI {
   getVentaItemIngredienteModificaciones: (ventaItemId: number) => Promise<any[]>;
   createVentaItemIngredienteModificacion: (data: any) => Promise<any>;
   deleteVentaItemIngredienteModificacion: (id: number) => Promise<boolean>;
+  // VentaItemSabor (multi-sabor / variaciones)
+  createVentaItemSabor: (data: any) => Promise<any>;
+  getVentaItemSabores: (ventaItemId: number) => Promise<any[]>;
+  deleteVentaItemSaboresByItem: (ventaItemId: number) => Promise<any>;
   // Comanda (tarjetas de cuenta individual)
   getComandas: () => Promise<any[]>;
   getComandasActivas: () => Promise<any[]>;
@@ -501,6 +505,7 @@ interface ElectronAPI {
 
   // RecetaPresentacion methods
   getVariacionesByProducto: (productoId: number) => Promise<any[]>;
+  getVariacionesByProductoAndPresentacion: (productoId: number, presentacionId: number) => Promise<any[]>;
   getVariacionesByReceta: (recetaId: number) => Promise<any[]>;
   createRecetaPresentacion: (variacionData: {
     recetaId: number;
@@ -1441,6 +1446,19 @@ export class RepositoryService {
     return from(this.api.createVentaItemIngredienteModificacion(data));
   }
 
+  // VentaItemSabor (multi-sabor / variaciones)
+  createVentaItemSabor(data: any): Observable<any> {
+    return from(this.api.createVentaItemSabor(data));
+  }
+
+  getVentaItemSabores(ventaItemId: number): Observable<any[]> {
+    return from(this.api.getVentaItemSabores(ventaItemId));
+  }
+
+  deleteVentaItemSaboresByItem(ventaItemId: number): Observable<any> {
+    return from(this.api.deleteVentaItemSaboresByItem(ventaItemId));
+  }
+
   deleteVentaItemIngredienteModificacion(id: number): Observable<boolean> {
     return from(this.api.deleteVentaItemIngredienteModificacion(id));
   }
@@ -2147,6 +2165,10 @@ export class RepositoryService {
   // RecetaPresentacion methods
   getVariacionesByProducto(productoId: number): Observable<any[]> {
     return from(this.api.getVariacionesByProducto(productoId));
+  }
+
+  getVariacionesByProductoAndPresentacion(productoId: number, presentacionId: number): Observable<any[]> {
+    return from(this.api.getVariacionesByProductoAndPresentacion(productoId, presentacionId));
   }
 
   getVariacionesByReceta(recetaId: number): Observable<any[]> {

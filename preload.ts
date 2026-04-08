@@ -1515,6 +1515,17 @@ contextBridge.exposeInMainWorld('api', {
     return await ipcRenderer.invoke('deleteVentaItemIngredienteModificacion', id);
   },
 
+  // VentaItemSabor methods (multi-sabor / variaciones)
+  createVentaItemSabor: async (data: any): Promise<any> => {
+    return await ipcRenderer.invoke('createVentaItemSabor', data);
+  },
+  getVentaItemSabores: async (ventaItemId: number): Promise<any[]> => {
+    return await ipcRenderer.invoke('getVentaItemSabores', ventaItemId);
+  },
+  deleteVentaItemSaboresByItem: async (ventaItemId: number): Promise<any> => {
+    return await ipcRenderer.invoke('deleteVentaItemSaboresByItem', ventaItemId);
+  },
+
   // PdvGrupoCategoria methods
   getPdvGrupoCategorias: async (): Promise<PdvGrupoCategoria[]> => {
     return await ipcRenderer.invoke('getPdvGrupoCategorias');
@@ -2162,6 +2173,9 @@ contextBridge.exposeInMainWorld('api', {
   // Variaciones (RecetaPresentacion)
   getVariacionesByProducto: async (productoId: number): Promise<any[]> => {
     return await ipcRenderer.invoke('get-variaciones-by-producto', productoId);
+  },
+  getVariacionesByProductoAndPresentacion: async (productoId: number, presentacionId: number): Promise<any[]> => {
+    return await ipcRenderer.invoke('get-variaciones-by-producto-and-presentacion', productoId, presentacionId);
   },
   getVariacionesByReceta: async (recetaId: number): Promise<any[]> => {
     return await ipcRenderer.invoke('get-variaciones-by-receta', recetaId);

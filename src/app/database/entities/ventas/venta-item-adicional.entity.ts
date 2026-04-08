@@ -18,6 +18,10 @@ export class VentaItemAdicional extends BaseModel {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 1 })
   cantidad!: number;
 
+  @ManyToOne('VentaItemSabor', { nullable: true })
+  @JoinColumn({ name: 'venta_item_sabor_id' })
+  ventaItemSabor?: any;
+
   @Column({ default: true })
   activo!: boolean;
 }

@@ -74,6 +74,11 @@ export class Receta extends BaseModel {
   @OneToMany(() => RecetaAdicionalVinculacion, vinculacion => vinculacion.receta)
   adicionalesVinculados?: RecetaAdicionalVinculacion[];
 
+  // Relación inversa: para productos ELABORADO_CON_VARIACION, cada receta pertenece a un producto vía productoVariacion
+  @ManyToOne('Producto', 'recetas')
+  @JoinColumn({ name: 'producto_variacion_id' })
+  productoVariacion?: Producto;
+
   // ✅ NUEVA RELACIÓN: Una receta puede pertenecer a una variación
   @OneToOne('RecetaPresentacion', 'receta')
   variacion?: RecetaPresentacion;

@@ -28,6 +28,7 @@ export interface PersonalizarProductoDialogData {
   presentacion: Presentacion;
   precioVenta: PrecioVenta;
   cantidad: number;
+  recetaId?: number; // Si viene, usar este en vez de producto.receta?.id (para variaciones)
   // Modo edición: datos existentes
   modoEdicion?: boolean;
   ingredientesRemovidos?: number[];
@@ -126,7 +127,7 @@ export class PersonalizarProductoDialogComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     try {
-      const recetaId = (this.data.producto as any).receta?.id;
+      const recetaId = this.data.recetaId || (this.data.producto as any).receta?.id;
       if (!recetaId) {
         this.loading = false;
         return;

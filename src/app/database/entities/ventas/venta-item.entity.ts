@@ -1,10 +1,12 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { BaseModel } from '../base.entity';
 import type { Venta } from './venta.entity';
 import { Usuario } from '../personas/usuario.entity';
 import type { Producto } from '../productos/producto.entity';
 import type { Presentacion } from '../productos/presentacion.entity';
 import type { PrecioVenta } from '../productos/precio-venta.entity';
+import type { RecetaPresentacion } from '../productos/receta-presentacion.entity';
+import type { VentaItemSabor } from './venta-item-sabor.entity';
 
 export enum EstadoVentaItem {
   ACTIVO = 'ACTIVO',
@@ -105,4 +107,18 @@ export class VentaItem extends BaseModel {
 
   @Column({ name: 'precio_adicionales', type: 'decimal', precision: 10, scale: 2, default: 0 })
   precioAdicionales!: number;
+
+  // Campos para productos ELABORADO_CON_VARIACION (pizzas, etc.)
+  @ManyToOne('RecetaPresentacion', { nullable: true })
+  @JoinColumn({ name: 'receta_presentacion_id' })
+  recetaPresentacion?: RecetaPresentacion;
+
+  @Column({ name: 'ensamblado_descripcion', type: 'varchar', length: 500, nullable: true })
+  ensambladoDescripcion?: string;
+
+  @Column({ name: 'cantidad_sabores', type: 'int', default: 0 })
+  cantidadSabores!: number;
+
+  @OneToMany('VentaItemSabor', 'ventaItem')
+  saboresVenta?: VentaItemSabor[];
 } 

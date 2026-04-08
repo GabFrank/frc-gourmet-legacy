@@ -148,6 +148,17 @@ export class ProductoSearchDialogComponent implements OnInit {
   
   selectProduct(producto: Producto, presentacion: Presentacion, precioVenta?: PrecioVenta): void {
     console.log(producto, presentacion, precioVenta);
+
+    // ELABORADO_CON_VARIACION: señalar al PdV para abrir diálogo de variaciones
+    if (producto.tipo === 'ELABORADO_CON_VARIACION') {
+      this.dialogRef.close({
+        producto,
+        cantidad: this.cantidadFormControl.value,
+        isVariacionSelection: true
+      });
+      return;
+    }
+
     this.dialogRef.close({
       producto,
       presentacion,

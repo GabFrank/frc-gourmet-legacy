@@ -29,6 +29,10 @@ export class VentaItemIngredienteModificacion extends BaseModel {
   @JoinColumn({ name: 'ingrediente_reemplazo_id' })
   ingredienteReemplazo?: Producto;
 
+  @ManyToOne('VentaItemSabor', { nullable: true })
+  @JoinColumn({ name: 'venta_item_sabor_id' })
+  ventaItemSabor?: any;
+
   @Column({ default: true })
   activo!: boolean;
 }

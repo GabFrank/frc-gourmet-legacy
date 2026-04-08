@@ -334,7 +334,7 @@
         <ng-container matColumnDef="productoNombre">
           <th mat-header-cell *matHeaderCellDef style="width: 40%">Producto</th>
           <td mat-cell *matCellDef="let item">
-            <span>{{ item.producto?.nombre }}</span>
+            <span>{{ item.ensambladoDescripcion || item.producto?.nombre }}</span>
             <mat-icon
               *ngIf="item.adicionalesVinculados?.length > 0 || item.ingredientesModificados?.length > 0 || item.observacionesVinculadas?.length > 0"
               class="variacion-icon"

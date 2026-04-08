@@ -54,6 +54,8 @@ import { Sector } from 'src/app/database/entities/ventas/sector.entity';
 import { DeliveryDialogComponent, DeliveryDialogData } from 'src/app/shared/components/delivery-dialog/delivery-dialog.component';
 import { Delivery } from 'src/app/database/entities/ventas/delivery.entity';
 import { PersonalizarProductoDialogComponent, PersonalizarProductoDialogResult } from 'src/app/shared/components/personalizar-producto-dialog/personalizar-producto-dialog.component';
+import { SeleccionarVariacionDialogComponent, SeleccionarVariacionDialogData, SeleccionarVariacionDialogResult } from 'src/app/shared/components/seleccionar-variacion-dialog/seleccionar-variacion-dialog.component';
+import { ProductoTipo } from 'src/app/database/entities/productos/producto-tipo.enum';
 import { AbrirComandaDialogComponent, AbrirComandaDialogData, AbrirComandaDialogResult } from 'src/app/shared/components/abrir-comanda-dialog/abrir-comanda-dialog.component';
 import { Comanda, ComandaEstado } from 'src/app/database/entities/ventas/comanda.entity';
 
@@ -175,6 +177,7 @@ export class PdvComponent implements OnInit, OnDestroy {
   atajoItemsDelGrupo: any[] = [];
   atajosGridSize = 3;
   atajosProductosGridSize = 3;
+  pdvConfig: any = null;
 
   // tiempo abierto
   tiempoAbierto = '0h 0m';
@@ -311,6 +314,7 @@ export class PdvComponent implements OnInit, OnDestroy {
         const pdvConfigs = await firstValueFrom(this.repositoryService.getPdvConfig());
         if (pdvConfigs) {
           const config = Array.isArray(pdvConfigs) ? pdvConfigs[0] : pdvConfigs;
+          this.pdvConfig = config;
           if (config?.pdvTabDefault) {
             this.activeTab = config.pdvTabDefault as 'MESAS' | 'COMANDAS';
           }
@@ -737,7 +741,14 @@ export class PdvComponent implements OnInit, OnDestroy {
     });
 
     dialogRef.afterClosed().subscribe(async (result: any) => {
-      if (result?.producto && result?.precioVenta) {
+      if (result?.isVariacionSelection && result?.producto) {
+        // ELABORADO_CON_VARIACION: abrir diálogo de selección de variaciones
+        const cantidad = result.cantidad || 1;
+        const variacionResult = await this.openSeleccionarVariacionDialog(result.producto, cantidad);
+        if (variacionResult) {
+          await this.addVariacionItem(result.producto, variacionResult);
+        }
+      } else if (result?.producto && result?.precioVenta) {
         const producto = result.producto;
         const presentacion = result.presentacion || producto.presentaciones?.[0] || null;
         const precioVenta = result.precioVenta;
@@ -1103,6 +1114,18 @@ export class PdvComponent implements OnInit, OnDestroy {
       cantidad = Math.max(1, Math.round(cantidad));
     }
 
+    // Si es ELABORADO_CON_VARIACION, abrir diálogo de selección de variaciones
+    if (producto.tipo === ProductoTipo.ELABORADO_CON_VARIACION) {
+      try {
+        const variacionResult = await this.openSeleccionarVariacionDialog(producto, cantidad);
+        if (!variacionResult) return; // Cancelado
+        await this.addVariacionItem(producto, variacionResult);
+      } catch (error) {
+        console.error('Error en flujo de variaciones:', error);
+      }
+      return;
+    }
+
     try {
       // Si el producto tiene receta, abrir diálogo de personalización
       let personalizacion: PersonalizarProductoDialogResult | null = null;
@@ -1175,6 +1198,175 @@ export class PdvComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Error al agregar producto:', error);
     }
+  }
+
+  private async openSeleccionarVariacionDialog(producto: Producto, cantidad: number): Promise<SeleccionarVariacionDialogResult | null> {
+    const dialogData: SeleccionarVariacionDialogData = {
+      producto,
+      cantidad,
+      pdvConfig: this.pdvConfig,
+    };
+
+    const dialogRef = this.dialog.open(SeleccionarVariacionDialogComponent, {
+      width: '650px',
+      maxHeight: '90vh',
+      data: dialogData,
+      disableClose: true,
+    });
+
+    return await firstValueFrom(dialogRef.afterClosed());
+  }
+
+  private async addVariacionItem(producto: Producto, result: SeleccionarVariacionDialogResult): Promise<void> {
+    // Verificar que haya mesa/comanda/venta rápida seleccionada
+    if (!this.selectedMesa && !this.ventaRapidaActual && !this.selectedComanda) {
+      await this.showMesaSelectionDialog();
+      if (!this.selectedMesa && !this.selectedComanda) return;
+    }
+
+    const venta = await this.getVenta();
+
+    // Calcular precio de adicionales total (por sabor + general)
+    let totalAdicionales = 0;
+    for (const sabor of result.sabores) {
+      if (sabor.personalizacion) {
+        totalAdicionales += sabor.personalizacion.precioAdicionalTotal * sabor.proporcion;
+      }
+    }
+    if (result.personalizacionGeneral) {
+      totalAdicionales += result.personalizacionGeneral.precioAdicionalTotal;
+    }
+
+    // Determinar la RecetaPresentacion principal (mayor precio o primera)
+    const recetaPresentacionPrincipal = result.sabores.length === 1
+      ? result.sabores[0].recetaPresentacion
+      : result.sabores.reduce((max, s) => {
+          const precioMax = max.recetaPresentacion.preciosVenta?.find((p: any) => p.principal)?.valor || 0;
+          const precioS = s.recetaPresentacion.preciosVenta?.find((p: any) => p.principal)?.valor || 0;
+          return Number(precioS) > Number(precioMax) ? s : max;
+        }, result.sabores[0]).recetaPresentacion;
+
+    const precioVentaPrincipal = recetaPresentacionPrincipal.preciosVenta?.find((p: any) => p.principal);
+
+    // Crear VentaItem
+    const newVentaItem = new VentaItem();
+    newVentaItem.producto = producto;
+    newVentaItem.presentacion = result.presentacion;
+    newVentaItem.cantidad = result.cantidad;
+    newVentaItem.precioVentaUnitario = result.precioCalculado - totalAdicionales; // precio base sin adicionales
+    newVentaItem.precioCostoUnitario = result.costoCalculado;
+    newVentaItem.precioAdicionales = totalAdicionales;
+    newVentaItem.venta = venta;
+    newVentaItem.precioVentaPresentacion = precioVentaPrincipal;
+    newVentaItem.ensambladoDescripcion = result.ensambladoDescripcion;
+    newVentaItem.cantidadSabores = result.sabores.length;
+    newVentaItem.recetaPresentacion = recetaPresentacionPrincipal;
+
+    try {
+      const savedItem = await firstValueFrom(this.repositoryService.createVentaItem(newVentaItem));
+      savedItem.producto = producto;
+      savedItem.presentacion = result.presentacion;
+      savedItem.ensambladoDescripcion = result.ensambladoDescripcion;
+      savedItem.cantidadSabores = result.sabores.length;
+      savedItem.precioAdicionales = totalAdicionales;
+
+      // Crear VentaItemSabor por cada sabor
+      for (const sabor of result.sabores) {
+        const precio = sabor.recetaPresentacion.preciosVenta?.find((p: any) => p.principal);
+        const savedSabor = await firstValueFrom(this.repositoryService.createVentaItemSabor({
+          ventaItemId: savedItem.id,
+          recetaPresentacionId: sabor.recetaPresentacion.id,
+          proporcion: sabor.proporcion,
+          precioReferencia: precio ? Number(precio.valor) : 0,
+          costoReferencia: Number(sabor.recetaPresentacion.costo_calculado) || 0,
+        }));
+
+        // Persistir personalizaciones por sabor (con ventaItemSabor FK)
+        if (sabor.personalizacion) {
+          await this.persistirPersonalizacionConSabor(savedItem.id, sabor.personalizacion, savedSabor.id);
+        }
+      }
+
+      // Persistir personalización general (sin ventaItemSabor FK)
+      if (result.personalizacionGeneral) {
+        await this.persistirPersonalizacion(savedItem.id, result.personalizacionGeneral);
+      }
+
+      // Cargar personalizaciones para mostrar en tabla expandible
+      await this.cargarPersonalizacionesItem(savedItem);
+
+      const auxList = this.ventaItemsDataSource.data;
+      auxList.push(savedItem);
+      this.ventaItemsDataSource.data = auxList;
+
+      this.calculateTotals();
+    } catch (error) {
+      console.error('Error al guardar item de variación:', error);
+    }
+  }
+
+  private async persistirPersonalizacionConSabor(ventaItemId: number, result: PersonalizarProductoDialogResult, ventaItemSaborId: number): Promise<void> {
+    const promises: Promise<any>[] = [];
+
+    // Ingredientes removidos
+    for (const ingId of result.ingredientesRemovidos) {
+      promises.push(firstValueFrom(this.repositoryService.createVentaItemIngredienteModificacion({
+        ventaItem: { id: ventaItemId },
+        recetaIngrediente: { id: ingId },
+        tipoModificacion: 'REMOVIDO',
+        ventaItemSabor: { id: ventaItemSaborId },
+      })));
+    }
+
+    // Ingredientes intercambiados
+    for (const swap of result.ingredientesIntercambiados) {
+      promises.push(firstValueFrom(this.repositoryService.createVentaItemIngredienteModificacion({
+        ventaItem: { id: ventaItemId },
+        recetaIngrediente: { id: swap.recetaIngredienteId },
+        tipoModificacion: 'INTERCAMBIADO',
+        ingredienteReemplazo: { id: swap.reemplazoProductoId },
+        ventaItemSabor: { id: ventaItemSaborId },
+      })));
+    }
+
+    // Adicionales
+    for (const adic of result.adicionalesSeleccionados) {
+      promises.push(firstValueFrom(this.repositoryService.createVentaItemAdicional({
+        ventaItem: { id: ventaItemId },
+        adicional: { id: adic.adicionalId },
+        precioCobrado: adic.precio,
+        cantidad: adic.cantidad,
+        ventaItemSabor: { id: ventaItemSaborId },
+      })));
+    }
+
+    // Observaciones
+    for (const obsId of result.observacionIds) {
+      promises.push(firstValueFrom(this.repositoryService.createVentaItemObservacion({
+        ventaItem: { id: ventaItemId },
+        observacion: { id: obsId },
+        ventaItemSabor: { id: ventaItemSaborId },
+      })));
+    }
+
+    // Observación libre
+    if (result.observacionLibre) {
+      const firstObs = result.observacionIds.length > 0 ? result.observacionIds[0] : null;
+      if (firstObs) {
+        // Ya se guardó arriba, agregar observación libre en una entry separada
+        promises.push(firstValueFrom(this.repositoryService.createVentaItemObservacion({
+          ventaItem: { id: ventaItemId },
+          observacion: { id: firstObs },
+          observacionLibre: result.observacionLibre,
+          ventaItemSabor: { id: ventaItemSaborId },
+        })));
+      } else {
+        // Solo observación libre sin observación predefinida — necesitamos al menos una observación
+        // Por ahora guardar como observación libre sin relación a observación predefinida
+      }
+    }
+
+    await Promise.all(promises);
   }
 
   private async persistirPersonalizacion(ventaItemId: number, result: PersonalizarProductoDialogResult): Promise<void> {
@@ -2074,8 +2266,15 @@ export class PdvComponent implements OnInit, OnDestroy {
       data: { searchTerm, cantidad: this.searchForm.get('cantidad')?.value }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
+    dialogRef.afterClosed().subscribe(async (result: any) => {
+      if (result?.isVariacionSelection && result?.producto) {
+        // ELABORADO_CON_VARIACION: abrir diálogo de selección de variaciones
+        const variacionResult = await this.openSeleccionarVariacionDialog(result.producto, result.cantidad || 1);
+        if (variacionResult) {
+          await this.addVariacionItem(result.producto, variacionResult);
+        }
+        this.searchForm.get('searchTerm')?.setValue('');
+      } else if (result) {
         this.addProduct(result.producto, result.presentacion, result.cantidad, result.precioVenta);
         // Clear search term after adding product
         this.searchForm.get('searchTerm')?.setValue('');

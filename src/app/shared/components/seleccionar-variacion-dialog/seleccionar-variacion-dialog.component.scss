@@ -1,0 +1,494 @@
+.loading-container {
+  display: flex;
+  justify-content: center;
+  padding: 32px;
+}
+
+// Title
+.title-icon {
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+// Stepper navigation
+.stepper-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 20px;
+  padding: 8px 0;
+}
+
+.step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: rgba(128, 128, 128, 0.08);
+  border: 1px solid transparent;
+
+  &.active {
+    background-color: rgba(33, 150, 243, 0.15);
+    border-color: rgba(33, 150, 243, 0.4);
+  }
+
+  &.completed:not(.active) {
+    background-color: rgba(76, 175, 80, 0.1);
+    border-color: rgba(76, 175, 80, 0.3);
+  }
+}
+
+.step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: rgba(128, 128, 128, 0.2);
+  font-size: 12px;
+  font-weight: 600;
+
+  .active & {
+    background-color: rgba(33, 150, 243, 0.8);
+    color: white;
+  }
+
+  .completed:not(.active) & {
+    background-color: rgba(76, 175, 80, 0.8);
+    color: white;
+  }
+}
+
+.step-label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.step-connector {
+  width: 24px;
+  height: 2px;
+  background-color: rgba(128, 128, 128, 0.2);
+  margin: 0 4px;
+
+  &.active {
+    background-color: rgba(33, 150, 243, 0.5);
+  }
+}
+
+// Step content
+.step-content {
+  min-height: 200px;
+}
+
+.step-title {
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.7;
+  margin-bottom: 16px;
+}
+
+.hint {
+  font-size: 12px;
+  opacity: 0.5;
+  font-weight: 400;
+}
+
+.step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.selected-size-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  background-color: rgba(76, 175, 80, 0.12);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s;
+
+  &:hover {
+    background-color: rgba(76, 175, 80, 0.2);
+  }
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  .edit-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    opacity: 0.5;
+  }
+}
+
+// Precio rango
+.precio-rango {
+  font-size: 13px;
+  opacity: 0.5;
+  margin-bottom: 12px;
+}
+
+// Size grid (Paso 1)
+.size-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.size-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px;
+  border-radius: 12px;
+  border: 2px solid rgba(128, 128, 128, 0.15);
+  background: rgba(128, 128, 128, 0.04);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: rgba(33, 150, 243, 0.3);
+    background: rgba(33, 150, 243, 0.05);
+  }
+
+  &.selected {
+    border-color: rgba(33, 150, 243, 0.6);
+    background: rgba(33, 150, 243, 0.1);
+  }
+}
+
+.size-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  opacity: 0.5;
+
+  .selected & {
+    opacity: 1;
+    color: #2196f3;
+  }
+}
+
+.size-nombre {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+// Sabores grid (Paso 2)
+.sabores-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.sabor-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 2px solid rgba(128, 128, 128, 0.15);
+  background: rgba(128, 128, 128, 0.04);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+
+  &:hover:not(.disabled) {
+    border-color: rgba(76, 175, 80, 0.3);
+    background: rgba(76, 175, 80, 0.05);
+  }
+
+  &.selected {
+    border-color: rgba(76, 175, 80, 0.6);
+    background: rgba(76, 175, 80, 0.1);
+  }
+
+  &.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+.sabor-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sabor-nombre {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sabor-precio {
+  font-size: 11px;
+  opacity: 0.5;
+}
+
+.sabor-sin-precio {
+  font-size: 10px;
+  color: #ef5350;
+}
+
+.check-icon {
+  color: #4caf50;
+  font-size: 20px;
+}
+
+// Sabores seleccionados
+.sabores-seleccionados {
+  margin-top: 12px;
+}
+
+.seleccionados-header {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  opacity: 0.5;
+  margin: 10px 0 8px;
+}
+
+.sabor-seleccionado-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.sabor-sel-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sabor-sel-proporcion {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.5;
+  min-width: 24px;
+}
+
+.sabor-sel-nombre {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.sabor-personalizado-badge {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background-color: rgba(255, 152, 0, 0.15);
+  color: #ffa726;
+
+  mat-icon {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+  }
+}
+
+.btn-personalizar {
+  font-size: 11px;
+  padding: 0 10px;
+  height: 30px;
+  line-height: 30px;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+  }
+}
+
+// Precio parcial
+.precio-parcial {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 8px;
+}
+
+.precio-estrategia {
+  font-size: 11px;
+  opacity: 0.4;
+}
+
+.precio-valor {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+// Step actions
+.step-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(128, 128, 128, 0.12);
+}
+
+// Empty state
+.empty-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 24px;
+  justify-content: center;
+  opacity: 0.5;
+}
+
+// Resumen (Paso 3)
+.resumen-card {
+  background: rgba(128, 128, 128, 0.05);
+  border: 1px solid rgba(128, 128, 128, 0.12);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.resumen-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.resumen-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  opacity: 0.5;
+  min-width: 100px;
+}
+
+.resumen-value {
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #4caf50;
+  }
+}
+
+.resumen-sabores {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: right;
+}
+
+.resumen-sabor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+  font-size: 13px;
+}
+
+.resumen-proporcion {
+  font-weight: 700;
+  opacity: 0.5;
+  font-size: 12px;
+}
+
+.resumen-personalizado {
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    color: #ffa726;
+  }
+}
+
+// Botón personalización general
+.btn-personalizacion-general {
+  width: 100%;
+  margin-bottom: 16px;
+  font-size: 12px;
+
+  mat-icon {
+    font-size: 18px;
+    margin-right: 4px;
+  }
+}
+
+// Footer bar
+.footer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  gap: 16px;
+}
+
+.cantidad-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cantidad-value {
+  font-size: 20px;
+  font-weight: bold;
+  min-width: 32px;
+  text-align: center;
+}
+
+.precio-info {
+  font-size: 13px;
+  opacity: 0.5;
+}
+
+.total-display {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.total-label {
+  font-size: 13px;
+  opacity: 0.5;
+}
+
+.total-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #4caf50;
+}
+
+.btn-confirmar {
+  min-height: 44px;
+  font-size: 15px;
+}

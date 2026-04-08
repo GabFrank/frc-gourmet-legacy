@@ -40,6 +40,7 @@ import { ComboProducto } from '../../src/app/database/entities/productos/combo-p
 import { Adicional } from '../../src/app/database/entities/productos/adicional.entity';
 import { TipoModificacionIngrediente } from '../../src/app/database/entities/ventas/venta-item-ingrediente-modificacion.entity';
 import { EstadoVentaItem } from '../../src/app/database/entities/ventas/venta-item.entity';
+import { VentaItemSabor } from '../../src/app/database/entities/ventas/venta-item-sabor.entity';
 
 export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: () => Usuario | null) {
   // Remove this line - get the current user in each handler instead
@@ -2526,6 +2527,53 @@ export function registerVentasHandlers(dataSource: DataSource, getCurrentUser: (
       return { success: true };
     } catch (error) {
       console.error(`Error reordering productos in atajo item ${atajoItemId}:`, error);
+      throw error;
+    }
+  });
+
+  // --- VentaItemSabor Handlers (multi-sabor / variaciones) ---
+
+  ipcMain.handle('createVentaItemSabor', async (_event: any, data: any) => {
+    try {
+      const repo = dataSource.getRepository(VentaItemSabor);
+      const entity = repo.create({
+        ventaItem: { id: data.ventaItemId },
+        recetaPresentacion: { id: data.recetaPresentacionId },
+        proporcion: data.proporcion,
+        precioReferencia: data.precioReferencia,
+        costoReferencia: data.costoReferencia,
+        activo: true
+      });
+      const saved = await repo.save(entity);
+      return await repo.findOne({
+        where: { id: saved.id },
+        relations: ['recetaPresentacion', 'recetaPresentacion.sabor', 'recetaPresentacion.presentacion']
+      });
+    } catch (error) {
+      console.error('Error creating VentaItemSabor:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('getVentaItemSabores', async (_event: any, ventaItemId: number) => {
+    try {
+      return await dataSource.getRepository(VentaItemSabor).find({
+        where: { ventaItem: { id: ventaItemId }, activo: true },
+        relations: ['recetaPresentacion', 'recetaPresentacion.sabor', 'recetaPresentacion.presentacion', 'recetaPresentacion.preciosVenta'],
+        order: { id: 'ASC' }
+      });
+    } catch (error) {
+      console.error(`Error getting VentaItemSabores for item ${ventaItemId}:`, error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('deleteVentaItemSaboresByItem', async (_event: any, ventaItemId: number) => {
+    try {
+      await dataSource.getRepository(VentaItemSabor).delete({ ventaItem: { id: ventaItemId } });
+      return { success: true };
+    } catch (error) {
+      console.error(`Error deleting VentaItemSabores for item ${ventaItemId}:`, error);
       throw error;
     }
   });

@@ -317,6 +317,38 @@ export const recetaPresentacionHandlers = {
     }
   },
 
+  // ✅ Obtener variaciones por producto y presentación (para diálogo de selección en PdV)
+  'get-variaciones-by-producto-and-presentacion': async (productoId: number, presentacionId: number): Promise<RecetaPresentacion[]> => {
+    try {
+      console.log(`📋 Getting variaciones for producto ${productoId} and presentacion ${presentacionId}`);
+
+      const variaciones = await dataSource.getRepository(RecetaPresentacion)
+        .createQueryBuilder('rp')
+        .leftJoinAndSelect('rp.receta', 'receta')
+        .leftJoinAndSelect('rp.presentacion', 'presentacion')
+        .leftJoinAndSelect('rp.sabor', 'sabor')
+        .leftJoinAndSelect('rp.preciosVenta', 'preciosVenta')
+        .leftJoinAndSelect('preciosVenta.moneda', 'moneda')
+        .leftJoinAndSelect('preciosVenta.tipoPrecio', 'tipoPrecio')
+        .leftJoinAndSelect('receta.ingredientes', 'ingredientes')
+        .leftJoinAndSelect('ingredientes.ingrediente', 'ingredienteProducto')
+        .leftJoinAndSelect('receta.adicionalesVinculados', 'adicionalesVinculados')
+        .leftJoinAndSelect('adicionalesVinculados.adicional', 'adicional')
+        .where('receta.producto_variacion_id = :productoId', { productoId })
+        .andWhere('rp.presentacion_id = :presentacionId', { presentacionId })
+        .andWhere('rp.activo = 1')
+        .orderBy('sabor.nombre', 'ASC')
+        .getMany();
+
+      console.log(`✅ Found ${variaciones.length} variaciones for producto ${productoId} + presentacion ${presentacionId}`);
+      return variaciones;
+
+    } catch (error) {
+      console.error('❌ Error getting variaciones by producto and presentacion:', error);
+      throw new Error(`Error al obtener variaciones: ${error.message}`);
+    }
+  },
+
   // ✅ Generar variaciones faltantes para un producto
   'generate-variaciones-faltantes': async (productoId: number): Promise<{
     success: boolean;
