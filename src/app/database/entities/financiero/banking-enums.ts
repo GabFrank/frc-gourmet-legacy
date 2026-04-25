@@ -1,0 +1,11 @@
+export enum TipoCuentaBancaria {
+  CORRIENTE = 'CORRIENTE',
+  AHORRO = 'AHORRO'
+}
+
+export enum AcreditacionPosEstado {
+  PENDIENTE = 'PENDIENTE',
+  ACREDITADO_AUTO = 'ACREDITADO_AUTO',
+  VERIFICADO = 'VERIFICADO',
+  CON_DIFERENCIA = 'CON_DIFERENCIA'
+}

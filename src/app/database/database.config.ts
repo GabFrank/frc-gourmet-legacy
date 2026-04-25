@@ -56,6 +56,27 @@ import { Caja } from './entities/financiero/caja.entity';
 import { CajaMoneda } from './entities/financiero/caja-moneda.entity';
 import { MonedaCambio } from './entities/financiero/moneda-cambio.entity';
 
+// Caja Mayor entities
+import { CajaMayor } from './entities/financiero/caja-mayor.entity';
+import { CajaMayorSaldo } from './entities/financiero/caja-mayor-saldo.entity';
+import { CajaMayorMovimiento } from './entities/financiero/caja-mayor-movimiento.entity';
+import { GastoCategoria } from './entities/financiero/gasto-categoria.entity';
+import { Gasto } from './entities/financiero/gasto.entity';
+import { RetiroCaja } from './entities/financiero/retiro-caja.entity';
+import { RetiroCajaDetalle } from './entities/financiero/retiro-caja-detalle.entity';
+import { GastoDetalle } from './entities/financiero/gasto-detalle.entity';
+
+// Banking entities (Fase 2)
+import { CuentaBancaria } from './entities/financiero/cuenta-bancaria.entity';
+import { MaquinaPos } from './entities/financiero/maquina-pos.entity';
+import { AcreditacionPos } from './entities/financiero/acreditacion-pos.entity';
+
+// Compras + CuentasPorPagar (Fase 3)
+import { CompraCategoria } from './entities/compras/compra-categoria.entity';
+import { CompraCuota } from './entities/compras/compra-cuota.entity';
+import { CuentaPorPagar } from './entities/financiero/cuenta-por-pagar.entity';
+import { CuentaPorPagarCuota } from './entities/financiero/cuenta-por-pagar-cuota.entity';
+
 // Import compras entities
 import { Proveedor } from './entities/compras/proveedor.entity';
 import { Pago } from './entities/compras/pago.entity';
@@ -122,6 +143,24 @@ export function getDataSourceOptions(userDataPath: string): DataSourceOptions {
       Caja,
       CajaMoneda,
       MonedaCambio,
+      // Caja Mayor entities
+      CajaMayor,
+      CajaMayorSaldo,
+      CajaMayorMovimiento,
+      GastoCategoria,
+      Gasto,
+      GastoDetalle,
+      RetiroCaja,
+      RetiroCajaDetalle,
+      // Banking (Fase 2)
+      CuentaBancaria,
+      MaquinaPos,
+      AcreditacionPos,
+      // CuentasPorPagar (Fase 3)
+      CompraCategoria,
+      CompraCuota,
+      CuentaPorPagar,
+      CuentaPorPagarCuota,
       // Productos entities
       Familia,
       Subfamilia,

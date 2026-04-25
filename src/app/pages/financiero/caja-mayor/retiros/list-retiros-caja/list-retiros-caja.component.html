@@ -1,0 +1,102 @@
+<div class="list-container">
+  <div class="header">
+    <h2>Retiros de Caja</h2>
+  </div>
+
+  <!-- Filter -->
+  <mat-card class="filter-card">
+    <div class="filter-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Estado</mat-label>
+        <mat-select [formControl]="estadoFilter">
+          <mat-option [value]="null">Todos</mat-option>
+          <mat-option *ngFor="let est of estadoOptions" [value]="est">{{est}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-actions">
+        <button mat-raised-button color="primary" (click)="aplicarFiltro()">
+          <mat-icon>filter_list</mat-icon>
+          Filtrar
+        </button>
+        <button mat-button (click)="limpiarFiltro()">Limpiar</button>
+      </div>
+    </div>
+  </mat-card>
+
+  <div *ngIf="loading" class="spinner-container">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <mat-card *ngIf="!loading">
+    <table mat-table [dataSource]="retiroRows" class="full-width">
+      <ng-container matColumnDef="id">
+        <th mat-header-cell *matHeaderCellDef>ID</th>
+        <td mat-cell *matCellDef="let row">{{row.retiro.id}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="caja">
+        <th mat-header-cell *matHeaderCellDef>Caja</th>
+        <td mat-cell *matCellDef="let row">{{row.retiro.caja?.dispositivo?.nombre || row.retiro.caja?.nombre || '-'}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="estado">
+        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let row">
+          <mat-chip-listbox>
+            <mat-chip [ngStyle]="{'background-color': row.retiro.estado === 'FLOTANTE' ? '#1976d2' : (row.retiro.estado === 'VINCULADO_PENDIENTE' ? '#ff9800' : '#4caf50'), 'color': 'white'}">
+              {{row.retiro.estado}}
+            </mat-chip>
+          </mat-chip-listbox>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="fechaRetiro">
+        <th mat-header-cell *matHeaderCellDef>Fecha Retiro</th>
+        <td mat-cell *matCellDef="let row">{{row.retiro.fechaRetiro | date:'dd/MM/yyyy HH:mm'}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="cajaMayor">
+        <th mat-header-cell *matHeaderCellDef>Caja Mayor</th>
+        <td mat-cell *matCellDef="let row">{{row.retiro.cajaMayor?.nombre || '-'}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="responsable">
+        <th mat-header-cell *matHeaderCellDef>Responsable</th>
+        <td mat-cell *matCellDef="let row">{{row.retiro.responsableRetiro?.nickname || '-'}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="total">
+        <th mat-header-cell *matHeaderCellDef>Total</th>
+        <td mat-cell *matCellDef="let row">{{row.totalRetiro | number:'1.0-2'}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let row">
+          <button mat-icon-button [matMenuTriggerFor]="menu">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #menu="matMenu">
+            <button mat-menu-item (click)="verDetalles(row)">
+              <mat-icon>visibility</mat-icon>
+              <span>Ver Detalles</span>
+            </button>
+            <button mat-menu-item (click)="ingresarACajaMayor(row)" *ngIf="row.retiro.estado === 'FLOTANTE' || row.retiro.estado === 'VINCULADO_PENDIENTE'">
+              <mat-icon>move_up</mat-icon>
+              <span>{{row.retiro.estado === 'VINCULADO_PENDIENTE' ? 'Verificar e Ingresar' : 'Ingresar a Caja Mayor'}}</span>
+            </button>
+          </mat-menu>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <div *ngIf="retiroRows.length === 0" class="empty-state">
+      <mat-icon>move_up</mat-icon>
+      <p>No hay retiros registrados</p>
+    </div>
+  </mat-card>
+</div>

@@ -31,6 +31,10 @@ import { registerComprasHandlers } from './electron/handlers/compras.handler';
 import { registerSystemHandlers } from './electron/handlers/system.handler';
 import { registerVentasHandlers } from './electron/handlers/ventas.handler';
 import { registerRecetasHandlers } from './electron/handlers/recetas.handler';
+import { registerCajaMayorHandlers } from './electron/handlers/caja-mayor.handler';
+import { registerBankingHandlers, startAcreditacionesScheduler } from './electron/handlers/banking.handler';
+import { registerCuentasPorPagarHandlers } from './electron/handlers/cuentas-por-pagar.handler';
+import { seedInitialData } from './electron/utils/seed-data';
 // ✅ NUEVOS HANDLERS PARA ARQUITECTURA CON VARIACIONES
 // Unificado en recetas.handler: sabores y variaciones
 
@@ -73,6 +77,15 @@ function initializeDatabase() {
       registerSystemHandlers(); // system handler doesn't need dataSource or user
       registerVentasHandlers(dataSource, getCurrentUser); // Register ventas handlers
       registerRecetasHandlers(dataSource, getCurrentUser); // Recetas + Sabores + Variaciones (unificado)
+      registerCajaMayorHandlers(dataSource, getCurrentUser); // Caja Mayor + Gastos + Retiros
+      registerBankingHandlers(dataSource, getCurrentUser); // CuentasBancarias + MaquinasPos + Acreditaciones
+      registerCuentasPorPagarHandlers(dataSource, getCurrentUser); // CompraCategoria + CompraCuota + CuentaPorPagar
+
+      // Scheduler: procesa acreditaciones POS pendientes cada 5 min (en main process)
+      startAcreditacionesScheduler(dataSource, 5);
+
+      // Seed initial data (idempotent - only inserts if tables are empty)
+      seedInitialData(dataSource);
     })
     .catch((error) => {
       console.error('Failed to initialize database:', error);

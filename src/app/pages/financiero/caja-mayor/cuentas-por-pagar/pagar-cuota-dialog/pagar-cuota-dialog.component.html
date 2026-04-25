@@ -1,0 +1,75 @@
+<h2 mat-dialog-title>Pagar Cuota #{{cuota?.numero}}</h2>
+
+<mat-dialog-content>
+  <div class="info-section">
+    <div class="info-row" *ngIf="contextoLabel"><span class="label">Contexto:</span><span>{{contextoLabel}}</span></div>
+    <div class="info-row"><span class="label">Vencimiento:</span><span>{{cuota?.fechaVencimiento | date:'dd/MM/yyyy'}}</span></div>
+    <div class="info-row"><span class="label">Monto cuota:</span><span>{{cuota?.monto | number:'1.0-2'}}</span></div>
+    <div class="info-row"><span class="label">Pagado:</span><span>{{cuota?.montoPagado | number:'1.0-2'}}</span></div>
+    <div class="info-row highlight"><span class="label">Restante:</span><strong>{{restante | number:'1.0-2'}}</strong></div>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <form [formGroup]="form" class="form-container">
+    <div class="fuente-section">
+      <label class="fuente-label">Fuente de pago:</label>
+      <mat-radio-group formControlName="fuente">
+        <mat-radio-button value="CAJA_MAYOR">Caja Mayor</mat-radio-button>
+        <mat-radio-button value="CUENTA_BANCARIA">Cuenta Bancaria</mat-radio-button>
+      </mat-radio-group>
+    </div>
+
+    <ng-container *ngIf="form.get('fuente')?.value === 'CAJA_MAYOR'">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Caja Mayor</mat-label>
+        <mat-select formControlName="cajaMayorId">
+          <mat-option *ngFor="let cm of cajasMayor" [value]="cm.id">{{cm.nombre}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <div class="row">
+        <mat-form-field appearance="outline" class="flex">
+          <mat-label>Moneda</mat-label>
+          <mat-select formControlName="monedaId">
+            <mat-option *ngFor="let m of monedas" [value]="m.id">{{m.simbolo}} {{m.denominacion}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="flex">
+          <mat-label>Forma de Pago</mat-label>
+          <mat-select formControlName="formaPagoId">
+            <mat-option *ngFor="let f of formasPago" [value]="f.id">{{f.nombre}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="form.get('fuente')?.value === 'CUENTA_BANCARIA'">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Cuenta Bancaria</mat-label>
+        <mat-select formControlName="cuentaBancariaId">
+          <mat-option *ngFor="let cb of cuentasBancarias" [value]="cb.id">
+            {{cb.nombre}} — {{cb.banco}} ({{cb.saldo | number:'1.0-2'}} {{cb.moneda?.simbolo}})
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </ng-container>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Monto a pagar</mat-label>
+      <input matInput type="number" formControlName="monto" min="0.01" step="0.01">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Observación (opcional)</mat-label>
+      <input matInput formControlName="observacion">
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="saving">Cancelar</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="form.invalid || saving">
+    <mat-spinner *ngIf="saving" diameter="20"></mat-spinner>
+    <span *ngIf="!saving">Pagar</span>
+  </button>
+</mat-dialog-actions>

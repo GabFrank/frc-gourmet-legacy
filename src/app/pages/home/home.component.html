@@ -1,10 +1,18 @@
-<div class="dashboard-container">  
-  <div *ngIf="isLoading" class="loading-container">
-    <mat-spinner></mat-spinner>
-    <p>Loading dashboard data...</p>
+<div class="dashboard-container">
+  <h2 class="dashboard-title">Accesos rapidos</h2>
+
+  <div class="accesos-grid">
+    <mat-card *ngFor="let acceso of accesosRapidos"
+              class="acceso-card"
+              (click)="abrir(acceso)"
+              [ngStyle]="{'border-left': '4px solid ' + acceso.color}">
+      <mat-card-header>
+        <div mat-card-avatar class="acceso-icon" [ngStyle]="{'background-color': acceso.color}">
+          <mat-icon>{{acceso.icono}}</mat-icon>
+        </div>
+        <mat-card-title>{{acceso.titulo}}</mat-card-title>
+        <mat-card-subtitle>{{acceso.descripcion}}</mat-card-subtitle>
+      </mat-card-header>
+    </mat-card>
   </div>
-  
-  <div *ngIf="!isLoading" class="dashboard-content">
-    
-  </div>
-</div> 
+</div>

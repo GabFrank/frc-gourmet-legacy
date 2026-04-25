@@ -495,3 +495,33 @@ mat-dialog-actions {
 .btn-cancelar {
   background-color: #b71c1c !important;
 }
+
+.maquina-pos-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-size: 11px;
+  border-radius: 3px;
+  background: rgba(63, 81, 181, 0.18);
+  color: #3949ab;
+}
+
+.cuenta-bancaria-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-size: 11px;
+  border-radius: 3px;
+  background: rgba(0, 150, 136, 0.18);
+  color: #00695c;
+}
+
+.dark-theme .maquina-pos-tag {
+  background: rgba(124, 77, 255, 0.18);
+  color: #b39ddb;
+}
+
+.dark-theme .cuenta-bancaria-tag {
+  background: rgba(0, 230, 201, 0.18);
+  color: #80cbc4;
+}

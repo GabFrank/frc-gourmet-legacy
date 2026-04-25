@@ -1,0 +1,71 @@
+<h2 mat-dialog-title>Registrar Egreso</h2>
+
+<mat-dialog-content>
+  <div *ngIf="loading" class="spinner-container">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <!-- Selector de tipo -->
+  <div *ngIf="!loading && !tipoSeleccionado" class="tipos-grid">
+    <mat-card *ngFor="let tipo of tiposEgreso"
+              class="tipo-card"
+              (click)="seleccionarTipo(tipo.tipo)"
+              [ngStyle]="{'border-left': '4px solid ' + tipo.color}">
+      <mat-card-header>
+        <div mat-card-avatar class="tipo-icon" [ngStyle]="{'background-color': tipo.color}">
+          <mat-icon>{{tipo.icono}}</mat-icon>
+        </div>
+        <mat-card-title>{{tipo.titulo}}</mat-card-title>
+        <mat-card-subtitle>{{tipo.descripcion}}</mat-card-subtitle>
+      </mat-card-header>
+    </mat-card>
+  </div>
+
+  <!-- Formulario de Ajuste Negativo -->
+  <div *ngIf="!loading && tipoSeleccionado === 'AJUSTE'">
+    <button mat-button (click)="volver()" class="back-btn">
+      <mat-icon>arrow_back</mat-icon> Volver
+    </button>
+    <h3>Ajuste de Saldo (Egreso)</h3>
+    <form [formGroup]="ajusteForm" class="ajuste-form">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Moneda</mat-label>
+        <mat-select formControlName="moneda">
+          <mat-option *ngFor="let m of monedas" [value]="m.id">
+            {{m.simbolo}} - {{m.denominacion}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Forma de Pago</mat-label>
+        <mat-select formControlName="formaPago">
+          <mat-option *ngFor="let fp of formasPago" [value]="fp.id">
+            {{fp.nombre}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Monto</mat-label>
+        <input matInput type="number" formControlName="monto" min="0.01">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Motivo</mat-label>
+        <input matInput formControlName="motivo" placeholder="Ej: FALTANTE CONTEO, CORRECCION...">
+      </mat-form-field>
+    </form>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">CANCELAR</button>
+  <button mat-raised-button color="warn"
+          *ngIf="tipoSeleccionado === 'AJUSTE'"
+          (click)="guardarAjuste()"
+          [disabled]="saving || ajusteForm.invalid">
+    <mat-spinner *ngIf="saving" diameter="20"></mat-spinner>
+    <span *ngIf="!saving">GUARDAR</span>
+  </button>
+</mat-dialog-actions>

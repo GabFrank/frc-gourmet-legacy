@@ -1,0 +1,136 @@
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+.tipos-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 450px;
+}
+
+.tipo-card {
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+
+  &:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  .tipo-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+.back-btn {
+  margin-bottom: 8px;
+}
+
+.ajuste-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+
+  .full-width {
+    width: 100%;
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 32px;
+  color: rgba(0,0,0,0.4);
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 8px;
+  }
+
+  &.small {
+    padding: 12px;
+    p {
+      margin: 0;
+      font-size: 13px;
+    }
+  }
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 8px;
+  font-size: 15px;
+  font-weight: 500;
+
+  .heading-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+
+    &.pendiente-icon {
+      color: #ff9800;
+    }
+
+    &.flotante-icon {
+      color: #1976d2;
+    }
+  }
+}
+
+.section-divider {
+  margin: 16px 0;
+}
+
+.pendiente-card {
+  background: rgba(255, 152, 0, 0.08);
+  border-left: 4px solid #ff9800;
+}
+
+.retiros-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.retiro-card {
+  .detalle-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+
+    .forma-pago-label {
+      color: rgba(0,0,0,0.6);
+      font-size: 13px;
+    }
+  }
+}
+
+:host-context(.dark-theme) {
+  .empty-state {
+    color: rgba(255,255,255,0.4);
+  }
+
+  .retiro-card .detalle-line .forma-pago-label {
+    color: rgba(255,255,255,0.6);
+  }
+}

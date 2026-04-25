@@ -1,0 +1,61 @@
+<h2 mat-dialog-title>{{isEditing ? 'Editar' : 'Nueva'}} Cuenta Bancaria</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="form-container">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nombre / Alias interno</mat-label>
+      <input matInput formControlName="nombre">
+    </mat-form-field>
+
+    <div class="row">
+      <mat-form-field appearance="outline" class="flex">
+        <mat-label>Banco</mat-label>
+        <input matInput formControlName="banco">
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="flex">
+        <mat-label>Numero de cuenta</mat-label>
+        <input matInput formControlName="numeroCuenta">
+      </mat-form-field>
+    </div>
+
+    <div class="row">
+      <mat-form-field appearance="outline" class="flex">
+        <mat-label>Tipo</mat-label>
+        <mat-select formControlName="tipoCuenta">
+          <mat-option *ngFor="let t of tipoCuentaOptions" [value]="t">{{t}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="flex">
+        <mat-label>Moneda</mat-label>
+        <mat-select formControlName="monedaId">
+          <mat-option *ngFor="let m of monedas" [value]="m.id">{{m.simbolo}} {{m.denominacion}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="row">
+      <mat-form-field appearance="outline" class="flex">
+        <mat-label>Titular</mat-label>
+        <input matInput formControlName="titular">
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="flex">
+        <mat-label>Alias bancario</mat-label>
+        <input matInput formControlName="alias">
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Saldo inicial</mat-label>
+      <input matInput type="number" formControlName="saldo" min="0">
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="saving">Cancelar</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="form.invalid || saving">
+    <mat-spinner *ngIf="saving" diameter="20"></mat-spinner>
+    <span *ngIf="!saving">{{isEditing ? 'Guardar' : 'Crear'}}</span>
+  </button>
+</mat-dialog-actions>

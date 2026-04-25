@@ -1,0 +1,184 @@
+<h2 mat-dialog-title>{{isEditing ? 'Editar Gasto' : 'Nuevo Gasto'}}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="form-container">
+
+    <!-- Categoria con autocomplete -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Categoria</mat-label>
+      <input matInput
+             [formControl]="categoriaFilter"
+             [matAutocomplete]="autoCategoria"
+             placeholder="Tipea para buscar categoria...">
+      <mat-autocomplete #autoCategoria="matAutocomplete"
+                        [displayWith]="displayCategoria"
+                        panelClass="caja-mayor-autocomplete-panel"
+                        (optionSelected)="onCategoriaSelected($event.option.value)">
+        <mat-option *ngFor="let cat of categoriasFiltradas" [value]="cat">
+          <span *ngIf="cat.padre" class="cat-padre">{{cat.padre.nombre}} > </span>{{cat.nombre}}
+        </mat-option>
+      </mat-autocomplete>
+      <mat-error *ngIf="form.get('gastoCategoriaId')?.hasError('required')">La categoria es requerida</mat-error>
+    </mat-form-field>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="flex-field">
+        <mat-label>Descripcion</mat-label>
+        <input matInput formControlName="descripcion" placeholder="Descripcion del gasto">
+        <mat-error>La descripcion es requerida</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="flex-field">
+        <mat-label>Fecha</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="fecha">
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <!-- Caja Mayor (oculto si viene del detalle) -->
+    <mat-form-field appearance="outline" class="full-width" *ngIf="!cajaMayorFijo">
+      <mat-label>Caja Mayor</mat-label>
+      <mat-select formControlName="cajaMayorId">
+        <mat-option *ngFor="let cm of cajasMayor" [value]="cm.id">{{cm.nombre}}</mat-option>
+      </mat-select>
+      <mat-error>La caja mayor es requerida</mat-error>
+    </mat-form-field>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="flex-field">
+        <mat-label>Proveedor (opcional)</mat-label>
+        <input matInput
+               [formControl]="proveedorFilter"
+               [matAutocomplete]="autoProveedor"
+               placeholder="Tipea para buscar proveedor...">
+        <button mat-icon-button matSuffix *ngIf="form.get('proveedorId')?.value" (click)="limpiarProveedor()">
+          <mat-icon>close</mat-icon>
+        </button>
+        <mat-autocomplete #autoProveedor="matAutocomplete"
+                          [displayWith]="displayProveedor"
+                          panelClass="caja-mayor-autocomplete-panel"
+                          (optionSelected)="onProveedorSelected($event.option.value)">
+          <mat-option *ngFor="let p of proveedoresFiltrados" [value]="p">{{p.nombre}}</mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="flex-field">
+        <mat-label>Tipo Boleta</mat-label>
+        <mat-select formControlName="tipoBoleta">
+          <mat-option [value]="null">Sin especificar</mat-option>
+          <mat-option *ngFor="let tb of tipoBoletaOptions" [value]="tb">{{tb}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nro. Comprobante (opcional)</mat-label>
+      <input matInput formControlName="numeroComprobante">
+    </mat-form-field>
+
+    <mat-divider></mat-divider>
+
+    <!-- Seccion de pagos / detalles -->
+    <h3 class="section-title">Detalle de Pago</h3>
+
+    <div class="detalle-form-row" [formGroup]="detalleForm">
+      <mat-form-field appearance="outline" class="det-field">
+        <mat-label>Moneda</mat-label>
+        <mat-select formControlName="monedaId">
+          <mat-option *ngFor="let m of monedas" [value]="m.id">{{m.simbolo}} {{m.denominacion}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="det-field">
+        <mat-label>Forma de Pago</mat-label>
+        <mat-select formControlName="formaPagoId">
+          <mat-option *ngFor="let fp of formasPago" [value]="fp.id">{{fp.nombre}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="det-field-monto">
+        <mat-label>Monto</mat-label>
+        <input matInput type="number" formControlName="monto" min="0.01">
+      </mat-form-field>
+
+      <button mat-mini-fab color="primary"
+              (click)="agregarDetalle()"
+              [disabled]="detalleForm.invalid"
+              matTooltip="Agregar">
+        <mat-icon>add</mat-icon>
+      </button>
+    </div>
+
+    <!-- Tabla de detalles -->
+    <table mat-table [dataSource]="detalles" class="full-width detalles-table" *ngIf="detalles.length > 0">
+      <ng-container matColumnDef="moneda">
+        <th mat-header-cell *matHeaderCellDef>Moneda</th>
+        <td mat-cell *matCellDef="let row">{{row.monedaSimbolo}} {{row.monedaDenominacion}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="formaPago">
+        <th mat-header-cell *matHeaderCellDef>Forma de Pago</th>
+        <td mat-cell *matCellDef="let row">{{row.formaPagoNombre}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="monto">
+        <th mat-header-cell *matHeaderCellDef>Monto</th>
+        <td mat-cell *matCellDef="let row">{{row.monto | number:'1.0-2'}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let row; let i = index">
+          <button mat-icon-button color="warn" (click)="eliminarDetalle(i)" matTooltip="Eliminar">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="detallesColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: detallesColumns;"></tr>
+    </table>
+
+    <div *ngIf="detalles.length === 0" class="empty-detalles">
+      Agregue al menos un detalle de pago
+    </div>
+
+    <div *ngIf="detalles.length > 0" class="total-row">
+      <span *ngFor="let t of totalesPorMoneda" class="total-moneda">
+        <strong>{{t.simbolo}} {{t.total | number:'1.0-2'}}</strong>
+      </span>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Recurrente -->
+    <mat-slide-toggle formControlName="esRecurrente" (change)="onRecurrenteChange()" class="recurrente-toggle">
+      Gasto Recurrente
+    </mat-slide-toggle>
+
+    <div class="form-row" *ngIf="esRecurrente">
+      <mat-form-field appearance="outline" class="flex-field">
+        <mat-label>Frecuencia</mat-label>
+        <mat-select formControlName="frecuencia">
+          <mat-option *ngFor="let f of frecuenciaOptions" [value]="f">{{f}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="flex-field">
+        <mat-label>Proximo Vencimiento</mat-label>
+        <input matInput [matDatepicker]="pickerVenc" formControlName="proximoVencimiento">
+        <mat-datepicker-toggle matSuffix [for]="pickerVenc"></mat-datepicker-toggle>
+        <mat-datepicker #pickerVenc></mat-datepicker>
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="saving">Cancelar</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="form.invalid || detalles.length === 0 || saving">
+    <mat-spinner *ngIf="saving" diameter="20" class="inline-spinner"></mat-spinner>
+    <span *ngIf="!saving">{{isEditing ? 'Guardar' : 'Registrar'}}</span>
+  </button>
+</mat-dialog-actions>

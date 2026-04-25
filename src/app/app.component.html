@@ -229,6 +229,10 @@
               <mat-icon matListItemIcon>sell</mat-icon>
               <span matListItemTitle *ngIf="isMenuExpanded">Tipos de Precio</span>
             </a>
+            <a mat-list-item (click)="openCajaMayorTab()">
+              <mat-icon matListItemIcon>account_balance</mat-icon>
+              <span matListItemTitle *ngIf="isMenuExpanded">Caja Mayor</span>
+            </a>
           </div>
         </mat-expansion-panel>
 

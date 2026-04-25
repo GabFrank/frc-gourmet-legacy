@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { DatabaseService } from '../../services/database.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -8,8 +7,16 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { RepositoryService } from 'src/app/database/repository.service';
-import { Persona } from 'src/app/database/entities/personas/persona.entity';
+import { TabsService } from 'src/app/services/tabs.service';
+import { CajaMayorDashboardComponent } from 'src/app/pages/financiero/caja-mayor/dashboard/caja-mayor-dashboard.component';
+
+interface AccesoRapido {
+  titulo: string;
+  descripcion: string;
+  icono: string;
+  color: string;
+  key: string;
+}
 
 @Component({
   selector: 'app-home',
@@ -24,25 +31,29 @@ import { Persona } from 'src/app/database/entities/personas/persona.entity';
     MatIconModule,
     MatListModule,
     MatTableModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
   ]
 })
 export class HomeComponent implements OnInit {
-  isLoading = true;
-  personas: Persona[] = [];
-  constructor(private repositoryService: RepositoryService) { }
+  accesosRapidos: AccesoRapido[] = [
+    {
+      titulo: 'Caja Mayor',
+      descripcion: 'Control financiero, gastos, retiros y movimientos',
+      icono: 'account_balance',
+      color: '#1b5e20',
+      key: 'caja-mayor',
+    },
+  ];
 
-  ngOnInit(): void {
-    this.loadData();
-  }
+  constructor(private tabsService: TabsService) {}
 
-  async loadData(): Promise<void> {
-    
-  }
+  ngOnInit(): void {}
 
-  // Method required by the tab container
-  setData(data: any): void {
-    // Handle any data passed from tab container
-    console.log('Home component received data:', data);
+  setData(_data: any): void {}
+
+  abrir(acceso: AccesoRapido): void {
+    if (acceso.key === 'caja-mayor') {
+      this.tabsService.openTab('Caja Mayor', CajaMayorDashboardComponent);
+    }
   }
-} 
+}

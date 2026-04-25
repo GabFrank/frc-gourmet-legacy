@@ -444,6 +444,13 @@ export function registerComprasHandlers(dataSource: DataSource, getCurrentUser: 
       const formasPagoRepository = dataSource.getRepository(FormasPago);
       return await formasPagoRepository.find({
         where: { activo: true },
+        relations: [
+          'maquinasPos',
+          'maquinasPos.cuentaBancaria',
+          'maquinasPos.cuentaBancaria.moneda',
+          'cuentasBancarias',
+          'cuentasBancarias.moneda',
+        ],
       });
     } catch (error) {
       console.error('Error getting formas de pago:', error);
@@ -464,7 +471,14 @@ export function registerComprasHandlers(dataSource: DataSource, getCurrentUser: 
   ipcMain.handle('createFormaPago', async (_event: any, data: any) => {
     try {
       const formasPagoRepository = dataSource.getRepository(FormasPago);
-      const entity = formasPagoRepository.create(data);
+      const { maquinasPosIds, cuentasBancariasIds, ...rest } = data || {};
+      const entity = formasPagoRepository.create(rest);
+      if (Array.isArray(maquinasPosIds)) {
+        (entity as any).maquinasPos = maquinasPosIds.map((id: number) => ({ id }));
+      }
+      if (Array.isArray(cuentasBancariasIds)) {
+        (entity as any).cuentasBancarias = cuentasBancariasIds.map((id: number) => ({ id }));
+      }
       await setEntityUserTracking(dataSource, entity, getCurrentUser()?.id, false);
       return await formasPagoRepository.save(entity);
     } catch (error) {
@@ -476,9 +490,19 @@ export function registerComprasHandlers(dataSource: DataSource, getCurrentUser: 
   ipcMain.handle('updateFormaPago', async (_event: any, id: number, data: any) => {
     try {
       const formasPagoRepository = dataSource.getRepository(FormasPago);
-      const entity = await formasPagoRepository.findOneBy({ id });
+      const entity = await formasPagoRepository.findOne({
+        where: { id },
+        relations: ['maquinasPos', 'cuentasBancarias'],
+      });
       if (!entity) throw new Error(`FormaPago ID ${id} not found`);
-      formasPagoRepository.merge(entity, data);
+      const { maquinasPosIds, cuentasBancariasIds, ...rest } = data || {};
+      formasPagoRepository.merge(entity, rest);
+      if (Array.isArray(maquinasPosIds)) {
+        (entity as any).maquinasPos = maquinasPosIds.map((mid: number) => ({ id: mid }));
+      }
+      if (Array.isArray(cuentasBancariasIds)) {
+        (entity as any).cuentasBancarias = cuentasBancariasIds.map((cid: number) => ({ id: cid }));
+      }
       await setEntityUserTracking(dataSource, entity, getCurrentUser()?.id, true);
       return await formasPagoRepository.save(entity);
     } catch (error) {

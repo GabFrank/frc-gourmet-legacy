@@ -44,6 +44,10 @@ interface DetalleRow {
   tipoLabel: string;
   observacion?: string;
   valorDisplay: string; // pre-formatted: "PYG 40,000" or "USD 6.35"
+  maquinaPosId?: number; // máquina POS elegida para esta línea (si la formaPago tiene maquinasPos)
+  maquinaPosNombre?: string;
+  cuentaBancariaId?: number; // cuenta bancaria elegida (transferencia / PIX). Acreditacion instantanea.
+  cuentaBancariaNombre?: string;
 }
 
 interface CurrencyDisplay {
@@ -87,6 +91,8 @@ export class CobrarVentaDialogComponent implements OnInit, AfterViewInit {
   // Selections
   selectedMoneda: Moneda | null = null;
   selectedFormaPago: FormasPago | null = null;
+  selectedMaquinaPosId: number | null = null;
+  selectedCuentaBancariaId: number | null = null;
   valorInput = 0;
   observacionInput = '';
 
@@ -188,6 +194,82 @@ export class CobrarVentaDialogComponent implements OnInit, AfterViewInit {
     if (this.formasPago.length > 0) {
       this.selectedFormaPago = this.formasPago.find(fp => fp.principal) || this.formasPago[0];
     }
+    this.onFormaPagoChange();
+  }
+
+  // Cuando cambia la forma de pago, autoselecciona maquina POS / cuenta bancaria si solo hay 1
+  onFormaPagoChange(): void {
+    const maquinas = this.maquinasPosDisponibles;
+    if (maquinas.length === 1) {
+      this.selectedMaquinaPosId = maquinas[0].id;
+      this.aplicarMonedaDeMaquinaPos(maquinas[0]);
+    } else {
+      this.selectedMaquinaPosId = null;
+    }
+
+    const cuentas = this.cuentasBancariasDisponibles;
+    if (cuentas.length === 1) {
+      this.selectedCuentaBancariaId = cuentas[0].id;
+      this.aplicarMonedaDeCuentaBancaria(cuentas[0]);
+    } else {
+      this.selectedCuentaBancariaId = null;
+    }
+  }
+
+  onMaquinaPosSelected(mp: any): void {
+    this.selectedMaquinaPosId = mp.id;
+    this.aplicarMonedaDeMaquinaPos(mp);
+  }
+
+  onCuentaBancariaSelected(cb: any): void {
+    this.selectedCuentaBancariaId = cb.id;
+    this.aplicarMonedaDeCuentaBancaria(cb);
+  }
+
+  // Cambia la moneda seleccionada para que coincida con la de la cuenta bancaria de la maquina POS.
+  // Busca la moneda en la lista habilitada (data.monedas); si no esta, deja la actual.
+  private aplicarMonedaDeMaquinaPos(mp: any): void {
+    const monedaId = mp?.cuentaBancaria?.moneda?.id;
+    if (!monedaId) return;
+    const m = this.data.monedas.find(x => x.id === monedaId);
+    if (m) {
+      this.selectedMoneda = m;
+      this.autoFillValor();
+    }
+  }
+
+  private aplicarMonedaDeCuentaBancaria(cb: any): void {
+    const monedaId = cb?.moneda?.id;
+    if (!monedaId) return;
+    const m = this.data.monedas.find(x => x.id === monedaId);
+    if (m) {
+      this.selectedMoneda = m;
+      this.autoFillValor();
+    }
+  }
+
+  get maquinasPosDisponibles(): any[] {
+    return (this.selectedFormaPago as any)?.maquinasPos || [];
+  }
+
+  get cuentasBancariasDisponibles(): any[] {
+    return (this.selectedFormaPago as any)?.cuentasBancarias || [];
+  }
+
+  get requiereSeleccionMaquinaPos(): boolean {
+    return this.maquinasPosDisponibles.length >= 2;
+  }
+
+  get requiereSeleccionCuentaBancaria(): boolean {
+    return this.cuentasBancariasDisponibles.length >= 2;
+  }
+
+  get muestraSelectorMaquinaPos(): boolean {
+    return this.maquinasPosDisponibles.length >= 1;
+  }
+
+  get muestraSelectorCuentaBancaria(): boolean {
+    return this.cuentasBancariasDisponibles.length >= 1;
   }
 
   private calculateTotals(): void {
@@ -327,9 +409,28 @@ export class CobrarVentaDialogComponent implements OnInit, AfterViewInit {
 
   async addDetalle(): Promise<void> {
     if (!this.selectedMoneda || !this.selectedFormaPago || this.valorInput <= 0 || this.addingLine) return;
-    this.addingLine = true;
 
     const tipo = this.currentLineType === 'VUELTO' ? TipoDetalle.VUELTO : TipoDetalle.PAGO;
+
+    // Si la formaPago tiene maquinasPos vinculadas y no se eligió una, bloquear
+    if (tipo === TipoDetalle.PAGO && this.maquinasPosDisponibles.length > 0 && !this.selectedMaquinaPosId) {
+      if (this.maquinasPosDisponibles.length === 1) {
+        this.selectedMaquinaPosId = this.maquinasPosDisponibles[0].id;
+      } else {
+        return;
+      }
+    }
+
+    // Si la formaPago tiene cuentasBancarias vinculadas y no se eligió una, bloquear
+    if (tipo === TipoDetalle.PAGO && this.cuentasBancariasDisponibles.length > 0 && !this.selectedCuentaBancariaId) {
+      if (this.cuentasBancariasDisponibles.length === 1) {
+        this.selectedCuentaBancariaId = this.cuentasBancariasDisponibles[0].id;
+      } else {
+        return;
+      }
+    }
+
+    this.addingLine = true;
     const descripcion = tipo === TipoDetalle.VUELTO ? 'VUELTO' : 'COBRO DE VENTA';
 
     try {
@@ -357,6 +458,9 @@ export class CobrarVentaDialogComponent implements OnInit, AfterViewInit {
         observacion: obs,
       }));
 
+      const maquinaSeleccionada = this.maquinasPosDisponibles.find(m => m.id === this.selectedMaquinaPosId);
+      const cuentaSeleccionada = this.cuentasBancariasDisponibles.find(c => c.id === this.selectedCuentaBancariaId);
+
       this.detalleRows = [...this.detalleRows, {
         id: detalle.id,
         moneda: this.selectedMoneda,
@@ -366,6 +470,10 @@ export class CobrarVentaDialogComponent implements OnInit, AfterViewInit {
         tipoLabel: this.currentLineType,
         observacion: obs,
         valorDisplay: this.formatValor(this.valorInput, this.selectedMoneda),
+        maquinaPosId: tipo === TipoDetalle.PAGO ? (this.selectedMaquinaPosId || undefined) : undefined,
+        maquinaPosNombre: tipo === TipoDetalle.PAGO ? (maquinaSeleccionada?.nombre || undefined) : undefined,
+        cuentaBancariaId: tipo === TipoDetalle.PAGO ? (this.selectedCuentaBancariaId || undefined) : undefined,
+        cuentaBancariaNombre: tipo === TipoDetalle.PAGO ? (cuentaSeleccionada?.nombre || undefined) : undefined,
       }];
 
       this.observacionInput = '';
@@ -597,6 +705,40 @@ export class CobrarVentaDialogComponent implements OnInit, AfterViewInit {
         pago: this.pago!,
         fechaCierre: new Date(),
       }));
+
+      // 1) Crear AcreditacionPos por cada detalle con maquina POS elegida (tipo=PAGO).
+      //    Las acreditaciones se procesan al cumplir los minutos configurados.
+      try {
+        const pagosConMaquina = this.detalleRows.filter(
+          (d) => d.tipo === TipoDetalle.PAGO && d.maquinaPosId,
+        );
+        for (const det of pagosConMaquina) {
+          await firstValueFrom(this.repositoryService.createAcreditacionPos({
+            maquinaPosId: det.maquinaPosId!,
+            montoOriginal: det.valor,
+            ventaId: this.data.venta.id,
+            fechaTransaccion: new Date(),
+          }));
+        }
+      } catch (e) {
+        console.error('Error creando acreditacion(es) POS (no-blocking):', e);
+      }
+
+      // 2) Acreditar instantaneamente cada detalle con cuenta bancaria elegida (transferencia/PIX).
+      //    Sin comision, sin demora.
+      try {
+        const transferencias = this.detalleRows.filter(
+          (d) => d.tipo === TipoDetalle.PAGO && d.cuentaBancariaId,
+        );
+        for (const det of transferencias) {
+          await firstValueFrom(this.repositoryService.acreditarTransferenciaBancaria({
+            cuentaBancariaId: det.cuentaBancariaId!,
+            monto: det.valor,
+          }));
+        }
+      } catch (e) {
+        console.error('Error acreditando transferencia(s) bancaria(s) (no-blocking):', e);
+      }
 
       // Procesar stock (fire-and-forget, no bloquea la venta)
       this.repositoryService.procesarStockVenta(this.data.venta.id).subscribe({

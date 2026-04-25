@@ -1,5 +1,6 @@
 export enum TipoBoleta {
   LEGAL = 'LEGAL',
   COMUN = 'COMUN',
-  OTRO = 'OTRO'
+  OTRO = 'OTRO',
+  SIN_COMPROBANTE = 'SIN_COMPROBANTE'
 } 

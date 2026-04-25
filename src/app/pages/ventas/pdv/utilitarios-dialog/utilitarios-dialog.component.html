@@ -1,0 +1,23 @@
+<h2 mat-dialog-title>Utilitarios{{cajaNombre ? ' — ' + cajaNombre : ''}}</h2>
+
+<mat-dialog-content>
+  <div class="opciones-grid">
+    <mat-card *ngFor="let opt of opciones"
+              class="opcion-card"
+              [class.disabled]="opt.disabled"
+              (click)="seleccionar(opt)"
+              [ngStyle]="{'border-left': '4px solid ' + opt.color}">
+      <mat-card-header>
+        <div mat-card-avatar class="opcion-icon" [ngStyle]="{'background-color': opt.color}">
+          <mat-icon>{{opt.icono}}</mat-icon>
+        </div>
+        <mat-card-title>{{opt.titulo}}</mat-card-title>
+        <mat-card-subtitle>{{opt.descripcion}}</mat-card-subtitle>
+      </mat-card-header>
+    </mat-card>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Cerrar</button>
+</mat-dialog-actions>

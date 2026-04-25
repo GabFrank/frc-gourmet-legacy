@@ -602,6 +602,77 @@ interface ElectronAPI {
   assignProductoToAtajoItem: (atajoItemId: number, productoId: number, data?: any) => Promise<any>;
   removeProductoFromAtajoItem: (id: number) => Promise<any>;
   reorderProductosInAtajoItem: (atajoItemId: number, orderedIds: number[]) => Promise<any>;
+
+  // Caja Mayor
+  getCajasMayor: () => Promise<any[]>;
+  getCajaMayor: (id: number) => Promise<any>;
+  createCajaMayor: (data: any) => Promise<any>;
+  updateCajaMayor: (id: number, data: any) => Promise<any>;
+  cerrarCajaMayor: (id: number) => Promise<any>;
+  getCajaMayorSaldos: (cajaMayorId: number) => Promise<any[]>;
+  recalcularSaldos: (cajaMayorId: number) => Promise<any>;
+  getCajaMayorMovimientos: (cajaMayorId: number, filtros?: any) => Promise<any>;
+  createCajaMayorMovimiento: (data: any) => Promise<any>;
+  anularCajaMayorMovimiento: (id: number, motivo: string) => Promise<any>;
+  getGastoCategorias: () => Promise<any[]>;
+  getGastoCategoria: (id: number) => Promise<any>;
+  createGastoCategoria: (data: any) => Promise<any>;
+  updateGastoCategoria: (id: number, data: any) => Promise<any>;
+  deleteGastoCategoria: (id: number) => Promise<any>;
+  getGastos: (filtros?: any) => Promise<any[]>;
+  getGasto: (id: number) => Promise<any>;
+  createGasto: (data: any) => Promise<any>;
+  anularGasto: (id: number, motivo: string) => Promise<any>;
+  editGasto: (gastoId: number, data: any) => Promise<any>;
+  editCajaMayorMovimiento: (movId: number, data: any) => Promise<any>;
+  getGastosProgramados: () => Promise<any[]>;
+  getRetirosCaja: (filtros?: any) => Promise<any[]>;
+  getRetiroCaja: (id: number) => Promise<any>;
+  createRetiroCaja: (data: any) => Promise<any>;
+  ingresarRetiroCaja: (retiroId: number, cajaMayorId: number) => Promise<any>;
+
+  // Banking - CuentasBancarias
+  getCuentasBancarias: () => Promise<any[]>;
+  getCuentaBancaria: (id: number) => Promise<any>;
+  createCuentaBancaria: (data: any) => Promise<any>;
+  updateCuentaBancaria: (id: number, data: any) => Promise<any>;
+  deleteCuentaBancaria: (id: number) => Promise<any>;
+
+  // Banking - MaquinasPos
+  getMaquinasPos: () => Promise<any[]>;
+  getMaquinaPos: (id: number) => Promise<any>;
+  createMaquinaPos: (data: any) => Promise<any>;
+  updateMaquinaPos: (id: number, data: any) => Promise<any>;
+  deleteMaquinaPos: (id: number) => Promise<any>;
+
+  // Banking - AcreditacionesPos
+  getAcreditacionesPos: (filtros?: any) => Promise<any>;
+  getAcreditacionPos: (id: number) => Promise<any>;
+  createAcreditacionPos: (data: any) => Promise<any>;
+  procesarAcreditacionesAuto: () => Promise<any>;
+  verificarAcreditacionPos: (id: number, montoAcreditado: number) => Promise<any>;
+  getAcreditacionesPendientes: () => Promise<any[]>;
+  acreditarTransferenciaBancaria: (payload: any) => Promise<any>;
+
+  // Compra Categorias (Fase 3)
+  getCompraCategorias: () => Promise<any[]>;
+  createCompraCategoria: (data: any) => Promise<any>;
+  updateCompraCategoria: (id: number, data: any) => Promise<any>;
+  deleteCompraCategoria: (id: number) => Promise<any>;
+
+  // Compra Cuotas
+  getCompraCuotas: (compraId: number) => Promise<any[]>;
+  setCompraCuotas: (compraId: number, cuotas: any[]) => Promise<any[]>;
+  pagarCompraCuota: (payload: any) => Promise<any>;
+
+  // Cuentas Por Pagar
+  getCuentasPorPagar: (filtros?: any) => Promise<any>;
+  getCuentaPorPagar: (id: number) => Promise<any>;
+  createCuentaPorPagar: (data: any) => Promise<any>;
+  updateCuentaPorPagar: (id: number, data: any) => Promise<any>;
+  cancelarCuentaPorPagar: (id: number) => Promise<any>;
+  getCuentaPorPagarCuotas: (cppId: number) => Promise<any[]>;
+  pagarCppCuota: (payload: any) => Promise<any>;
 }
 
 
@@ -2413,6 +2484,199 @@ export class RepositoryService {
   }
   reorderProductosInAtajoItem(atajoItemId: number, orderedIds: number[]): Observable<any> {
     return from(this.api.reorderProductosInAtajoItem(atajoItemId, orderedIds));
+  }
+
+  // =============================================
+  // Caja Mayor
+  // =============================================
+  getCajasMayor(): Observable<any[]> {
+    return from(this.api.getCajasMayor());
+  }
+  getCajaMayor(id: number): Observable<any> {
+    return from(this.api.getCajaMayor(id));
+  }
+  createCajaMayor(data: any): Observable<any> {
+    return from(this.api.createCajaMayor(data));
+  }
+  updateCajaMayor(id: number, data: any): Observable<any> {
+    return from(this.api.updateCajaMayor(id, data));
+  }
+  cerrarCajaMayor(id: number): Observable<any> {
+    return from(this.api.cerrarCajaMayor(id));
+  }
+
+  // Caja Mayor Saldos
+  getCajaMayorSaldos(cajaMayorId: number): Observable<any[]> {
+    return from(this.api.getCajaMayorSaldos(cajaMayorId));
+  }
+  recalcularSaldos(cajaMayorId: number): Observable<any> {
+    return from(this.api.recalcularSaldos(cajaMayorId));
+  }
+
+  // Caja Mayor Movimientos
+  getCajaMayorMovimientos(cajaMayorId: number, filtros?: any): Observable<any> {
+    return from(this.api.getCajaMayorMovimientos(cajaMayorId, filtros));
+  }
+  createCajaMayorMovimiento(data: any): Observable<any> {
+    return from(this.api.createCajaMayorMovimiento(data));
+  }
+  anularCajaMayorMovimiento(id: number, motivo: string): Observable<any> {
+    return from(this.api.anularCajaMayorMovimiento(id, motivo));
+  }
+
+  // Gasto Categorias
+  getGastoCategorias(): Observable<any[]> {
+    return from(this.api.getGastoCategorias());
+  }
+  getGastoCategoria(id: number): Observable<any> {
+    return from(this.api.getGastoCategoria(id));
+  }
+  createGastoCategoria(data: any): Observable<any> {
+    return from(this.api.createGastoCategoria(data));
+  }
+  updateGastoCategoria(id: number, data: any): Observable<any> {
+    return from(this.api.updateGastoCategoria(id, data));
+  }
+  deleteGastoCategoria(id: number): Observable<any> {
+    return from(this.api.deleteGastoCategoria(id));
+  }
+
+  // Gastos
+  getGastos(filtros?: any): Observable<any[]> {
+    return from(this.api.getGastos(filtros));
+  }
+  getGasto(id: number): Observable<any> {
+    return from(this.api.getGasto(id));
+  }
+  createGasto(data: any): Observable<any> {
+    return from(this.api.createGasto(data));
+  }
+  anularGasto(id: number, motivo: string): Observable<any> {
+    return from(this.api.anularGasto(id, motivo));
+  }
+  editGasto(gastoId: number, data: any): Observable<any> {
+    return from(this.api.editGasto(gastoId, data));
+  }
+  editCajaMayorMovimiento(movId: number, data: any): Observable<any> {
+    return from(this.api.editCajaMayorMovimiento(movId, data));
+  }
+  getGastosProgramados(): Observable<any[]> {
+    return from(this.api.getGastosProgramados());
+  }
+
+  // Retiros de Caja
+  getRetirosCaja(filtros?: any): Observable<any[]> {
+    return from(this.api.getRetirosCaja(filtros));
+  }
+  getRetiroCaja(id: number): Observable<any> {
+    return from(this.api.getRetiroCaja(id));
+  }
+  createRetiroCaja(data: any): Observable<any> {
+    return from(this.api.createRetiroCaja(data));
+  }
+  ingresarRetiroCaja(retiroId: number, cajaMayorId: number): Observable<any> {
+    return from(this.api.ingresarRetiroCaja(retiroId, cajaMayorId));
+  }
+
+  // ===================== BANKING =====================
+  getCuentasBancarias(): Observable<any[]> {
+    return from(this.api.getCuentasBancarias());
+  }
+  getCuentaBancaria(id: number): Observable<any> {
+    return from(this.api.getCuentaBancaria(id));
+  }
+  createCuentaBancaria(data: any): Observable<any> {
+    return from(this.api.createCuentaBancaria(data));
+  }
+  updateCuentaBancaria(id: number, data: any): Observable<any> {
+    return from(this.api.updateCuentaBancaria(id, data));
+  }
+  deleteCuentaBancaria(id: number): Observable<any> {
+    return from(this.api.deleteCuentaBancaria(id));
+  }
+
+  getMaquinasPos(): Observable<any[]> {
+    return from(this.api.getMaquinasPos());
+  }
+  getMaquinaPos(id: number): Observable<any> {
+    return from(this.api.getMaquinaPos(id));
+  }
+  createMaquinaPos(data: any): Observable<any> {
+    return from(this.api.createMaquinaPos(data));
+  }
+  updateMaquinaPos(id: number, data: any): Observable<any> {
+    return from(this.api.updateMaquinaPos(id, data));
+  }
+  deleteMaquinaPos(id: number): Observable<any> {
+    return from(this.api.deleteMaquinaPos(id));
+  }
+
+  getAcreditacionesPos(filtros?: any): Observable<any> {
+    return from(this.api.getAcreditacionesPos(filtros));
+  }
+  getAcreditacionPos(id: number): Observable<any> {
+    return from(this.api.getAcreditacionPos(id));
+  }
+  createAcreditacionPos(data: any): Observable<any> {
+    return from(this.api.createAcreditacionPos(data));
+  }
+  procesarAcreditacionesAuto(): Observable<any> {
+    return from(this.api.procesarAcreditacionesAuto());
+  }
+  verificarAcreditacionPos(id: number, montoAcreditado: number): Observable<any> {
+    return from(this.api.verificarAcreditacionPos(id, montoAcreditado));
+  }
+  getAcreditacionesPendientes(): Observable<any[]> {
+    return from(this.api.getAcreditacionesPendientes());
+  }
+  acreditarTransferenciaBancaria(payload: any): Observable<any> {
+    return from(this.api.acreditarTransferenciaBancaria(payload));
+  }
+
+  // ===================== CUENTAS POR PAGAR (FASE 3) =====================
+  getCompraCategorias(): Observable<any[]> {
+    return from(this.api.getCompraCategorias());
+  }
+  createCompraCategoria(data: any): Observable<any> {
+    return from(this.api.createCompraCategoria(data));
+  }
+  updateCompraCategoria(id: number, data: any): Observable<any> {
+    return from(this.api.updateCompraCategoria(id, data));
+  }
+  deleteCompraCategoria(id: number): Observable<any> {
+    return from(this.api.deleteCompraCategoria(id));
+  }
+
+  getCompraCuotas(compraId: number): Observable<any[]> {
+    return from(this.api.getCompraCuotas(compraId));
+  }
+  setCompraCuotas(compraId: number, cuotas: any[]): Observable<any[]> {
+    return from(this.api.setCompraCuotas(compraId, cuotas));
+  }
+  pagarCompraCuota(payload: any): Observable<any> {
+    return from(this.api.pagarCompraCuota(payload));
+  }
+
+  getCuentasPorPagar(filtros?: any): Observable<any> {
+    return from(this.api.getCuentasPorPagar(filtros));
+  }
+  getCuentaPorPagar(id: number): Observable<any> {
+    return from(this.api.getCuentaPorPagar(id));
+  }
+  createCuentaPorPagar(data: any): Observable<any> {
+    return from(this.api.createCuentaPorPagar(data));
+  }
+  updateCuentaPorPagar(id: number, data: any): Observable<any> {
+    return from(this.api.updateCuentaPorPagar(id, data));
+  }
+  cancelarCuentaPorPagar(id: number): Observable<any> {
+    return from(this.api.cancelarCuentaPorPagar(id));
+  }
+  getCuentaPorPagarCuotas(cppId: number): Observable<any[]> {
+    return from(this.api.getCuentaPorPagarCuotas(cppId));
+  }
+  pagarCppCuota(payload: any): Observable<any> {
+    return from(this.api.pagarCppCuota(payload));
   }
 
 }

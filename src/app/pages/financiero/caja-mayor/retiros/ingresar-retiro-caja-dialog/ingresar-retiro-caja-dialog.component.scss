@@ -1,0 +1,37 @@
+.retiro-info {
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  background: rgba(0,0,0,0.04);
+
+  p {
+    margin: 4px 0;
+  }
+}
+
+.detalles-section {
+  margin-bottom: 20px;
+
+  h3 {
+    font-weight: 400;
+    margin-bottom: 8px;
+  }
+}
+
+.form-section {
+  margin-top: 16px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.inline-spinner {
+  display: inline-block;
+}
+
+:host-context(.dark-theme) {
+  .retiro-info {
+    background: rgba(255,255,255,0.08);
+  }
+}

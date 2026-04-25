@@ -1,0 +1,57 @@
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+.tipos-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 450px;
+}
+
+.tipo-card {
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+
+  &:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  .tipo-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+.back-btn {
+  margin-bottom: 8px;
+}
+
+.ajuste-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+
+  .full-width {
+    width: 100%;
+  }
+}
+
+:host-context(.dark-theme) {
+  // Dark theme inherits Material dark styles
+}

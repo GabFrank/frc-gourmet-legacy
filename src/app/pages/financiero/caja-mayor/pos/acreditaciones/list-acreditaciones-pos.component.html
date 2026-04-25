@@ -1,0 +1,114 @@
+<div class="page-container">
+  <div class="page-header">
+    <h2>Acreditaciones POS</h2>
+    <div class="header-actions">
+      <button mat-stroked-button (click)="toggleFiltros()">
+        <mat-icon>{{showFiltros ? 'expand_less' : 'filter_list'}}</mat-icon> Filtros
+      </button>
+      <button mat-raised-button color="primary" (click)="procesarAuto()" [disabled]="procesando">
+        <mat-icon>autorenew</mat-icon> Procesar Auto
+      </button>
+    </div>
+  </div>
+
+  <div class="filtros-bar" *ngIf="showFiltros" [formGroup]="filtrosForm">
+    <mat-form-field appearance="outline" class="f-field">
+      <mat-label>Estado</mat-label>
+      <mat-select formControlName="estado">
+        <mat-option [value]="null">Todos</mat-option>
+        <mat-option *ngFor="let e of estadoOptions" [value]="e">{{e}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="f-field">
+      <mat-label>Maquina</mat-label>
+      <mat-select formControlName="maquinaPosId">
+        <mat-option [value]="null">Todas</mat-option>
+        <mat-option *ngFor="let m of maquinasPos" [value]="m.id">{{m.nombre}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="f-field">
+      <mat-label>Desde</mat-label>
+      <input matInput [matDatepicker]="pkDesde" formControlName="fechaDesde">
+      <mat-datepicker-toggle matSuffix [for]="pkDesde"></mat-datepicker-toggle>
+      <mat-datepicker #pkDesde></mat-datepicker>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="f-field">
+      <mat-label>Hasta</mat-label>
+      <input matInput [matDatepicker]="pkHasta" formControlName="fechaHasta">
+      <mat-datepicker-toggle matSuffix [for]="pkHasta"></mat-datepicker-toggle>
+      <mat-datepicker #pkHasta></mat-datepicker>
+    </mat-form-field>
+    <div class="f-actions">
+      <button mat-flat-button color="primary" (click)="aplicarFiltros()"><mat-icon>search</mat-icon> Aplicar</button>
+      <button mat-stroked-button (click)="limpiarFiltros()"><mat-icon>clear</mat-icon> Limpiar</button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="spinner-container">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <mat-card *ngIf="!loading">
+    <table mat-table [dataSource]="acreditaciones" class="full-width">
+      <ng-container matColumnDef="fechaTransaccion">
+        <th mat-header-cell *matHeaderCellDef>Fecha</th>
+        <td mat-cell *matCellDef="let r">{{r.fechaTransaccion | date:'dd/MM/yyyy HH:mm'}}</td>
+      </ng-container>
+      <ng-container matColumnDef="maquina">
+        <th mat-header-cell *matHeaderCellDef>Maquina</th>
+        <td mat-cell *matCellDef="let r">{{r.maquinaPos?.nombre}}</td>
+      </ng-container>
+      <ng-container matColumnDef="cuenta">
+        <th mat-header-cell *matHeaderCellDef>Cuenta</th>
+        <td mat-cell *matCellDef="let r">{{r.cuentaBancaria?.nombre}}</td>
+      </ng-container>
+      <ng-container matColumnDef="montoOriginal">
+        <th mat-header-cell *matHeaderCellDef>Original</th>
+        <td mat-cell *matCellDef="let r">{{r.montoOriginal | number:'1.0-2'}}</td>
+      </ng-container>
+      <ng-container matColumnDef="comision">
+        <th mat-header-cell *matHeaderCellDef>Comisión</th>
+        <td mat-cell *matCellDef="let r">{{r.montoComision | number:'1.0-2'}}</td>
+      </ng-container>
+      <ng-container matColumnDef="montoEsperado">
+        <th mat-header-cell *matHeaderCellDef>Esperado</th>
+        <td mat-cell *matCellDef="let r">{{r.montoEsperado | number:'1.0-2'}}</td>
+      </ng-container>
+      <ng-container matColumnDef="montoAcreditado">
+        <th mat-header-cell *matHeaderCellDef>Acreditado</th>
+        <td mat-cell *matCellDef="let r">{{r.montoAcreditado != null ? (r.montoAcreditado | number:'1.0-2') : '-'}}</td>
+      </ng-container>
+      <ng-container matColumnDef="fechaAcred">
+        <th mat-header-cell *matHeaderCellDef>F. acred.</th>
+        <td mat-cell *matCellDef="let r">{{r.fechaAcreditacionReal ? (r.fechaAcreditacionReal | date:'dd/MM/yyyy HH:mm') : (r.fechaEsperadaAcreditacion | date:'dd/MM/yyyy HH:mm')}}</td>
+      </ng-container>
+      <ng-container matColumnDef="estado">
+        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let r">
+          <mat-chip-listbox>
+            <mat-chip [ngStyle]="{'background-color': estadoColor(r.estado), 'color': 'white'}">{{r.estado}}</mat-chip>
+          </mat-chip-listbox>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let r">
+          <button mat-icon-button [matMenuTriggerFor]="m" *ngIf="r.estado !== 'VERIFICADO'"><mat-icon>more_vert</mat-icon></button>
+          <mat-menu #m="matMenu">
+            <button mat-menu-item (click)="verificar(r)"><mat-icon>verified</mat-icon><span>Verificar</span></button>
+          </mat-menu>
+        </td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+    <div *ngIf="acreditaciones.length === 0" class="empty-state">No hay acreditaciones</div>
+    <mat-paginator
+      [length]="total"
+      [pageSize]="pageSize"
+      [pageIndex]="pageIndex"
+      [pageSizeOptions]="[15, 30, 50]"
+      (page)="onPageChange($event)"
+      showFirstLastButtons></mat-paginator>
+  </mat-card>
+</div>

@@ -1,0 +1,50 @@
+<h2 mat-dialog-title>Ingresar Retiro a Caja Mayor</h2>
+
+<mat-dialog-content>
+  <div class="retiro-info" *ngIf="retiro">
+    <p><strong>Retiro #{{retiro.id}}</strong></p>
+    <p>Caja: {{retiro.caja?.dispositivo?.nombre || retiro.caja?.nombre || '-'}}</p>
+  </div>
+
+  <!-- Detalles table -->
+  <div class="detalles-section" *ngIf="detalles.length > 0">
+    <h3>Detalles del Retiro</h3>
+    <table mat-table [dataSource]="detalles" class="full-width">
+      <ng-container matColumnDef="moneda">
+        <th mat-header-cell *matHeaderCellDef>Moneda</th>
+        <td mat-cell *matCellDef="let row">{{row.moneda?.nombre || row.monedaNombre || '-'}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="formaPago">
+        <th mat-header-cell *matHeaderCellDef>Forma de Pago</th>
+        <td mat-cell *matCellDef="let row">{{row.formaPago?.nombre || row.formaPagoNombre || '-'}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="monto">
+        <th mat-header-cell *matHeaderCellDef>Monto</th>
+        <td mat-cell *matCellDef="let row">{{row.monto | number:'1.0-2'}}</td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="detallesColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: detallesColumns;"></tr>
+    </table>
+  </div>
+
+  <form [formGroup]="form" class="form-section">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Caja Mayor Destino</mat-label>
+      <mat-select formControlName="cajaMayorId">
+        <mat-option *ngFor="let cm of cajasMayor" [value]="cm.id">{{cm.nombre}}</mat-option>
+      </mat-select>
+      <mat-error>Debe seleccionar una caja mayor</mat-error>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="saving">Cancelar</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="form.invalid || saving">
+    <mat-spinner *ngIf="saving" diameter="20" class="inline-spinner"></mat-spinner>
+    <span *ngIf="!saving">Ingresar</span>
+  </button>
+</mat-dialog-actions>

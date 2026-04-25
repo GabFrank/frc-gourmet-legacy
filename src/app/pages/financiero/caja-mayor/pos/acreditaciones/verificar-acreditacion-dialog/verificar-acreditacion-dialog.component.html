@@ -1,0 +1,44 @@
+<h2 mat-dialog-title>Verificar Acreditacion #{{acreditacion?.id}}</h2>
+
+<mat-dialog-content>
+  <div class="info-row">
+    <span class="label">Maquina:</span>
+    <span>{{acreditacion?.maquinaPos?.nombre}}</span>
+  </div>
+  <div class="info-row">
+    <span class="label">Cuenta:</span>
+    <span>{{acreditacion?.cuentaBancaria?.nombre}}</span>
+  </div>
+  <div class="info-row">
+    <span class="label">Monto original:</span>
+    <span>{{acreditacion?.montoOriginal | number:'1.0-2'}}</span>
+  </div>
+  <div class="info-row">
+    <span class="label">Comisión:</span>
+    <span>{{acreditacion?.montoComision | number:'1.0-2'}}</span>
+  </div>
+  <div class="info-row highlight">
+    <span class="label">Monto esperado:</span>
+    <span>{{acreditacion?.montoEsperado | number:'1.0-2'}}</span>
+  </div>
+
+  <form [formGroup]="form" class="form-container">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Monto realmente acreditado</mat-label>
+      <input matInput type="number" formControlName="montoAcreditado" min="0" step="0.01">
+    </mat-form-field>
+
+    <div class="diferencia-row" [ngClass]="{'positiva': diferencia > 0, 'negativa': diferencia < 0}">
+      <span>Diferencia:</span>
+      <strong>{{diferencia | number:'1.0-2'}}</strong>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="saving">Cancelar</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="form.invalid || saving">
+    <mat-spinner *ngIf="saving" diameter="20"></mat-spinner>
+    <span *ngIf="!saving">Verificar</span>
+  </button>
+</mat-dialog-actions>

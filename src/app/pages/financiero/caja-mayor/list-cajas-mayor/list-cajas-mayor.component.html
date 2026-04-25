@@ -1,0 +1,80 @@
+<div class="list-container">
+  <div class="header">
+    <h2>Cajas Mayor</h2>
+    <button mat-raised-button color="primary" (click)="openCreateDialog()">
+      <mat-icon>add</mat-icon>
+      Nueva Caja Mayor
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="spinner-container">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <mat-card *ngIf="!loading">
+    <table mat-table [dataSource]="cajasMayor" class="full-width">
+      <ng-container matColumnDef="id">
+        <th mat-header-cell *matHeaderCellDef>ID</th>
+        <td mat-cell *matCellDef="let row">{{row.id}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="nombre">
+        <th mat-header-cell *matHeaderCellDef>Nombre</th>
+        <td mat-cell *matCellDef="let row">{{row.nombre}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="estado">
+        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let row">
+          <mat-chip-listbox>
+            <mat-chip [ngStyle]="{'background-color': row.estado === 'ABIERTA' ? '#4caf50' : '#f44336', 'color': 'white'}">
+              {{row.estado}}
+            </mat-chip>
+          </mat-chip-listbox>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="fechaApertura">
+        <th mat-header-cell *matHeaderCellDef>Fecha Apertura</th>
+        <td mat-cell *matCellDef="let row">{{row.fechaApertura | date:'dd/MM/yyyy HH:mm'}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="fechaCierre">
+        <th mat-header-cell *matHeaderCellDef>Fecha Cierre</th>
+        <td mat-cell *matCellDef="let row">{{row.fechaCierre ? (row.fechaCierre | date:'dd/MM/yyyy HH:mm') : '-'}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="responsable">
+        <th mat-header-cell *matHeaderCellDef>Responsable</th>
+        <td mat-cell *matCellDef="let row">{{row.responsable?.nickname || '-'}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let row">
+          <button mat-icon-button [matMenuTriggerFor]="menu">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #menu="matMenu">
+            <button mat-menu-item (click)="verDetalle(row)">
+              <mat-icon>visibility</mat-icon>
+              <span>Ver Detalle</span>
+            </button>
+            <button mat-menu-item (click)="cerrarCaja(row)" *ngIf="row.estado === 'ABIERTA'">
+              <mat-icon>lock</mat-icon>
+              <span>Cerrar Caja</span>
+            </button>
+          </mat-menu>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <div *ngIf="cajasMayor.length === 0" class="empty-state">
+      <mat-icon>account_balance</mat-icon>
+      <p>No hay cajas mayor registradas</p>
+    </div>
+  </mat-card>
+</div>

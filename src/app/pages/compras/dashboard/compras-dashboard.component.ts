@@ -7,6 +7,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { Router } from '@angular/router';
 import { TabsService } from '../../../services/tabs.service';
 import { ListProveedoresComponent } from '../proveedores/list-proveedores.component';
+import { ListCompraCategoriasComponent } from '../categorias/list-compra-categorias.component';
 
 @Component({
   selector: 'app-compras-dashboard',
@@ -44,6 +45,13 @@ export class ComprasDashboardComponent implements OnInit {
       icon: 'payments',
       route: 'pagos',
       color: '#f44336'
+    },
+    {
+      title: 'Categorías de Compra',
+      description: 'Administrar categorías para clasificar compras',
+      icon: 'category',
+      route: 'compra-categorias',
+      color: '#5d4037'
     }
   ];
 
@@ -75,6 +83,11 @@ export class ComprasDashboardComponent implements OnInit {
         { source: 'dashboard' },
         'proveedores-tab',
         true
+      );
+    } else if (route === 'compra-categorias') {
+      this.tabsService.openTab(
+        'Categorías de Compra',
+        ListCompraCategoriasComponent,
       );
     }
   }

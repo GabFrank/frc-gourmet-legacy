@@ -1,0 +1,38 @@
+<h2 mat-dialog-title>Editar Movimiento</h2>
+
+<mat-dialog-content>
+  <p class="tipo-label">{{tipoMovimiento}}</p>
+  <form [formGroup]="form" class="form-container">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Moneda</mat-label>
+      <mat-select formControlName="monedaId">
+        <mat-option *ngFor="let m of monedas" [value]="m.id">{{m.simbolo}} {{m.denominacion}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Forma de Pago</mat-label>
+      <mat-select formControlName="formaPagoId">
+        <mat-option *ngFor="let fp of formasPago" [value]="fp.id">{{fp.nombre}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Monto</mat-label>
+      <input matInput type="number" formControlName="monto" min="0.01">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Observacion</mat-label>
+      <input matInput formControlName="observacion">
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">CANCELAR</button>
+  <button mat-raised-button color="primary" (click)="guardar()" [disabled]="form.invalid || saving">
+    <mat-spinner *ngIf="saving" diameter="20"></mat-spinner>
+    <span *ngIf="!saving">GUARDAR</span>
+  </button>
+</mat-dialog-actions>

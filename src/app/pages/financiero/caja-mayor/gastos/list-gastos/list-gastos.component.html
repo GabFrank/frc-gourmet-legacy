@@ -1,0 +1,128 @@
+<div class="list-container">
+  <div class="header">
+    <h2>Gastos</h2>
+    <button mat-raised-button color="primary" (click)="openCreateDialog()">
+      <mat-icon>add</mat-icon>
+      Nuevo Gasto
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <mat-card class="filter-card">
+    <form [formGroup]="filterForm" class="filter-form">
+      <mat-form-field appearance="outline">
+        <mat-label>Fecha Desde</mat-label>
+        <input matInput [matDatepicker]="pickerDesde" formControlName="fechaDesde">
+        <mat-datepicker-toggle matSuffix [for]="pickerDesde"></mat-datepicker-toggle>
+        <mat-datepicker #pickerDesde></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Fecha Hasta</mat-label>
+        <input matInput [matDatepicker]="pickerHasta" formControlName="fechaHasta">
+        <mat-datepicker-toggle matSuffix [for]="pickerHasta"></mat-datepicker-toggle>
+        <mat-datepicker #pickerHasta></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Categoria</mat-label>
+        <mat-select formControlName="gastoCategoriaId">
+          <mat-option [value]="null">Todas</mat-option>
+          <mat-option *ngFor="let cat of gastoCategorias" [value]="cat.id">{{cat.nombre}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Estado</mat-label>
+        <mat-select formControlName="estado">
+          <mat-option [value]="null">Todos</mat-option>
+          <mat-option *ngFor="let est of estadoOptions" [value]="est">{{est}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-actions">
+        <button mat-raised-button color="primary" (click)="aplicarFiltros()">
+          <mat-icon>filter_list</mat-icon>
+          Filtrar
+        </button>
+        <button mat-button (click)="limpiarFiltros()">Limpiar</button>
+      </div>
+    </form>
+  </mat-card>
+
+  <div *ngIf="loading" class="spinner-container">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <mat-card *ngIf="!loading">
+    <table mat-table [dataSource]="gastos" class="full-width">
+      <ng-container matColumnDef="fecha">
+        <th mat-header-cell *matHeaderCellDef>Fecha</th>
+        <td mat-cell *matCellDef="let row">{{row.fecha | date:'dd/MM/yyyy'}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="descripcion">
+        <th mat-header-cell *matHeaderCellDef>Descripcion</th>
+        <td mat-cell *matCellDef="let row">{{row.descripcion}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="categoria">
+        <th mat-header-cell *matHeaderCellDef>Categoria</th>
+        <td mat-cell *matCellDef="let row">{{row.gastoCategoria?.nombre || '-'}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="monto">
+        <th mat-header-cell *matHeaderCellDef>Monto</th>
+        <td mat-cell *matCellDef="let row">{{row.monto | number:'1.0-2'}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="moneda">
+        <th mat-header-cell *matHeaderCellDef>Moneda</th>
+        <td mat-cell *matCellDef="let row">{{row.moneda?.simbolo || '-'}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="formaPago">
+        <th mat-header-cell *matHeaderCellDef>Forma Pago</th>
+        <td mat-cell *matCellDef="let row">{{row.formaPago?.nombre || '-'}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="estado">
+        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let row">
+          <mat-chip-listbox>
+            <mat-chip [ngStyle]="{'background-color': row.estado === 'ACTIVO' ? '#4caf50' : '#f44336', 'color': 'white'}">
+              {{row.estado}}
+            </mat-chip>
+          </mat-chip-listbox>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let row">
+          <button mat-icon-button [matMenuTriggerFor]="menu">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #menu="matMenu">
+            <button mat-menu-item (click)="verDetalle(row)">
+              <mat-icon>visibility</mat-icon>
+              <span>Ver Detalle</span>
+            </button>
+            <button mat-menu-item (click)="anularGasto(row)" *ngIf="row.estado === 'ACTIVO'">
+              <mat-icon>cancel</mat-icon>
+              <span>Anular</span>
+            </button>
+          </mat-menu>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <div *ngIf="gastos.length === 0" class="empty-state">
+      <mat-icon>receipt_long</mat-icon>
+      <p>No hay gastos registrados</p>
+    </div>
+  </mat-card>
+</div>

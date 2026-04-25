@@ -2277,4 +2277,201 @@ contextBridge.exposeInMainWorld('api', {
     return await ipcRenderer.invoke('reorderProductosInAtajoItem', atajoItemId, orderedIds);
   },
 
+  // =============================================
+  // Caja Mayor
+  // =============================================
+  getCajasMayor: async (): Promise<any[]> => {
+    return await ipcRenderer.invoke('get-cajas-mayor');
+  },
+  getCajaMayor: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('get-caja-mayor', id);
+  },
+  createCajaMayor: async (data: any): Promise<any> => {
+    return await ipcRenderer.invoke('create-caja-mayor', data);
+  },
+  updateCajaMayor: async (id: number, data: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-caja-mayor', id, data);
+  },
+  cerrarCajaMayor: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('cerrar-caja-mayor', id);
+  },
+
+  // Caja Mayor Saldos
+  getCajaMayorSaldos: async (cajaMayorId: number): Promise<any[]> => {
+    return await ipcRenderer.invoke('get-caja-mayor-saldos', cajaMayorId);
+  },
+  recalcularSaldos: async (cajaMayorId: number): Promise<any> => {
+    return await ipcRenderer.invoke('recalcular-saldos', cajaMayorId);
+  },
+
+  // Caja Mayor Movimientos
+  getCajaMayorMovimientos: async (cajaMayorId: number, filtros?: any): Promise<any> => {
+    return await ipcRenderer.invoke('get-caja-mayor-movimientos', cajaMayorId, filtros);
+  },
+  createCajaMayorMovimiento: async (data: any): Promise<any> => {
+    return await ipcRenderer.invoke('create-caja-mayor-movimiento', data);
+  },
+  anularCajaMayorMovimiento: async (id: number, motivo: string): Promise<any> => {
+    return await ipcRenderer.invoke('anular-caja-mayor-movimiento', id, motivo);
+  },
+
+  // Gasto Categorias
+  getGastoCategorias: async (): Promise<any[]> => {
+    return await ipcRenderer.invoke('get-gasto-categorias');
+  },
+  getGastoCategoria: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('get-gasto-categoria', id);
+  },
+  createGastoCategoria: async (data: any): Promise<any> => {
+    return await ipcRenderer.invoke('create-gasto-categoria', data);
+  },
+  updateGastoCategoria: async (id: number, data: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-gasto-categoria', id, data);
+  },
+  deleteGastoCategoria: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-gasto-categoria', id);
+  },
+
+  // Gastos
+  getGastos: async (filtros?: any): Promise<any[]> => {
+    return await ipcRenderer.invoke('get-gastos', filtros);
+  },
+  getGasto: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('get-gasto', id);
+  },
+  createGasto: async (data: any): Promise<any> => {
+    return await ipcRenderer.invoke('create-gasto', data);
+  },
+  anularGasto: async (id: number, motivo: string): Promise<any> => {
+    return await ipcRenderer.invoke('anular-gasto', id, motivo);
+  },
+  editGasto: async (gastoId: number, data: any): Promise<any> => {
+    return await ipcRenderer.invoke('edit-gasto', gastoId, data);
+  },
+  editCajaMayorMovimiento: async (movId: number, data: any): Promise<any> => {
+    return await ipcRenderer.invoke('edit-caja-mayor-movimiento', movId, data);
+  },
+  getGastosProgramados: async (): Promise<any[]> => {
+    return await ipcRenderer.invoke('get-gastos-programados');
+  },
+
+  // Retiros de Caja
+  getRetirosCaja: async (filtros?: any): Promise<any[]> => {
+    return await ipcRenderer.invoke('get-retiros-caja', filtros);
+  },
+  getRetiroCaja: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('get-retiro-caja', id);
+  },
+  createRetiroCaja: async (data: any): Promise<any> => {
+    return await ipcRenderer.invoke('create-retiro-caja', data);
+  },
+  ingresarRetiroCaja: async (retiroId: number, cajaMayorId: number): Promise<any> => {
+    return await ipcRenderer.invoke('ingresar-retiro-caja', retiroId, cajaMayorId);
+  },
+
+  // Banking - Cuentas Bancarias
+  getCuentasBancarias: async (): Promise<any[]> => {
+    return await ipcRenderer.invoke('get-cuentas-bancarias');
+  },
+  getCuentaBancaria: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('get-cuenta-bancaria', id);
+  },
+  createCuentaBancaria: async (data: any): Promise<any> => {
+    return await ipcRenderer.invoke('create-cuenta-bancaria', data);
+  },
+  updateCuentaBancaria: async (id: number, data: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-cuenta-bancaria', id, data);
+  },
+  deleteCuentaBancaria: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-cuenta-bancaria', id);
+  },
+
+  // Banking - Maquinas POS
+  getMaquinasPos: async (): Promise<any[]> => {
+    return await ipcRenderer.invoke('get-maquinas-pos');
+  },
+  getMaquinaPos: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('get-maquina-pos', id);
+  },
+  createMaquinaPos: async (data: any): Promise<any> => {
+    return await ipcRenderer.invoke('create-maquina-pos', data);
+  },
+  updateMaquinaPos: async (id: number, data: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-maquina-pos', id, data);
+  },
+  deleteMaquinaPos: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-maquina-pos', id);
+  },
+
+  // Banking - Acreditaciones POS
+  getAcreditacionesPos: async (filtros?: any): Promise<any> => {
+    return await ipcRenderer.invoke('get-acreditaciones-pos', filtros);
+  },
+  getAcreditacionPos: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('get-acreditacion-pos', id);
+  },
+  createAcreditacionPos: async (data: any): Promise<any> => {
+    return await ipcRenderer.invoke('create-acreditacion-pos', data);
+  },
+  procesarAcreditacionesAuto: async (): Promise<any> => {
+    return await ipcRenderer.invoke('procesar-acreditaciones-auto');
+  },
+  verificarAcreditacionPos: async (id: number, montoAcreditado: number): Promise<any> => {
+    return await ipcRenderer.invoke('verificar-acreditacion-pos', id, montoAcreditado);
+  },
+  getAcreditacionesPendientes: async (): Promise<any[]> => {
+    return await ipcRenderer.invoke('get-acreditaciones-pendientes');
+  },
+  acreditarTransferenciaBancaria: async (payload: any): Promise<any> => {
+    return await ipcRenderer.invoke('acreditar-transferencia-bancaria', payload);
+  },
+
+  // Compra Categorias
+  getCompraCategorias: async (): Promise<any[]> => {
+    return await ipcRenderer.invoke('get-compra-categorias');
+  },
+  createCompraCategoria: async (data: any): Promise<any> => {
+    return await ipcRenderer.invoke('create-compra-categoria', data);
+  },
+  updateCompraCategoria: async (id: number, data: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-compra-categoria', id, data);
+  },
+  deleteCompraCategoria: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('delete-compra-categoria', id);
+  },
+
+  // Compra Cuotas
+  getCompraCuotas: async (compraId: number): Promise<any[]> => {
+    return await ipcRenderer.invoke('get-compra-cuotas', compraId);
+  },
+  setCompraCuotas: async (compraId: number, cuotas: any[]): Promise<any[]> => {
+    return await ipcRenderer.invoke('set-compra-cuotas', compraId, cuotas);
+  },
+  pagarCompraCuota: async (payload: any): Promise<any> => {
+    return await ipcRenderer.invoke('pagar-compra-cuota', payload);
+  },
+
+  // Cuentas Por Pagar
+  getCuentasPorPagar: async (filtros?: any): Promise<any> => {
+    return await ipcRenderer.invoke('get-cuentas-por-pagar', filtros);
+  },
+  getCuentaPorPagar: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('get-cuenta-por-pagar', id);
+  },
+  createCuentaPorPagar: async (data: any): Promise<any> => {
+    return await ipcRenderer.invoke('create-cuenta-por-pagar', data);
+  },
+  updateCuentaPorPagar: async (id: number, data: any): Promise<any> => {
+    return await ipcRenderer.invoke('update-cuenta-por-pagar', id, data);
+  },
+  cancelarCuentaPorPagar: async (id: number): Promise<any> => {
+    return await ipcRenderer.invoke('cancelar-cuenta-por-pagar', id);
+  },
+  getCuentaPorPagarCuotas: async (cppId: number): Promise<any[]> => {
+    return await ipcRenderer.invoke('get-cuenta-por-pagar-cuotas', cppId);
+  },
+  pagarCppCuota: async (payload: any): Promise<any> => {
+    return await ipcRenderer.invoke('pagar-cpp-cuota', payload);
+  },
+
 });

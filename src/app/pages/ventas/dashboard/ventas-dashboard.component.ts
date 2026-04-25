@@ -20,6 +20,7 @@ import { PdvConfigDialogComponent } from 'src/app/shared/components/pdv-config-d
 import { PdvMesaDialogComponent } from 'src/app/shared/components/pdv-mesa-dialog/pdv-mesa-dialog.component';
 import { ComandaAbmDialogComponent } from 'src/app/shared/components/comanda-abm-dialog/comanda-abm-dialog.component';
 import { AtajoConfigDialogComponent } from 'src/app/shared/components/atajo-config-dialog/atajo-config-dialog.component';
+import { CajaMayorDashboardComponent } from '../../financiero/caja-mayor/dashboard/caja-mayor-dashboard.component';
 
 interface CajaAbierta {
   id: number;
@@ -122,6 +123,12 @@ export class VentasDashboardComponent implements OnInit {
       icon: 'bar_chart',
       action: 'reportes',
       color: '#009688'
+    },
+    {
+      title: 'Caja Mayor',
+      icon: 'account_balance',
+      action: 'caja-mayor',
+      color: '#1b5e20'
     }
   ];
 
@@ -273,6 +280,9 @@ export class VentasDashboardComponent implements OnInit {
         break;
       case 'ventas-list':
         this.tabsService.openTab('Historial de Ventas', ListVentasComponent);
+        break;
+      case 'caja-mayor':
+        this.tabsService.openTab('Caja Mayor', CajaMayorDashboardComponent);
         break;
       default:
         break;

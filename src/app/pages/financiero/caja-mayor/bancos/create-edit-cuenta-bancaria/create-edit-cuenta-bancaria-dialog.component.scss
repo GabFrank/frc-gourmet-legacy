@@ -1,0 +1,16 @@
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 500px;
+}
+.row {
+  display: flex;
+  gap: 12px;
+  .flex {
+    flex: 1;
+  }
+}
+.full-width {
+  width: 100%;
+}

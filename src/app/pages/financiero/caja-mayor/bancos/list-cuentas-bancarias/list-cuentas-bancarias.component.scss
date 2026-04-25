@@ -1,0 +1,37 @@
+.page-container {
+  padding: 20px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0;
+    font-weight: 400;
+  }
+}
+
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 24px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+:host-context(.dark-theme) {
+  .empty-state {
+    color: rgba(255, 255, 255, 0.45);
+  }
+}

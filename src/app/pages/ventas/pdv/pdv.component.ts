@@ -58,6 +58,7 @@ import { SeleccionarVariacionDialogComponent, SeleccionarVariacionDialogData, Se
 import { ProductoTipo } from 'src/app/database/entities/productos/producto-tipo.enum';
 import { AbrirComandaDialogComponent, AbrirComandaDialogData, AbrirComandaDialogResult } from 'src/app/shared/components/abrir-comanda-dialog/abrir-comanda-dialog.component';
 import { Comanda, ComandaEstado } from 'src/app/database/entities/ventas/comanda.entity';
+import { UtilitariosDialogComponent } from './utilitarios-dialog/utilitarios-dialog.component';
 
 interface MonedaWithTotal {
   moneda: Moneda;
@@ -1875,10 +1876,16 @@ export class PdvComponent implements OnInit, OnDestroy {
   }
 
   openUtilitarios(): void {
-    // TODO: Abrir diálogo con opciones: gastos, retiros, últimas ventas, etc.
-    this.dialog.open(ConfirmationDialogComponent, {
-      width: '400px',
-      data: { title: 'UTILITARIOS', message: 'Módulo de utilitarios será implementado próximamente.\n\n• Gastos\n• Retiros\n• Últimas ventas\n• Cierre parcial', confirmText: 'CERRAR', showCancel: false },
+    if (!this.caja) {
+      this.dialog.open(ConfirmationDialogComponent, {
+        width: '400px',
+        data: { title: 'UTILITARIOS', message: 'No hay una caja abierta.', confirmText: 'CERRAR', showCancel: false },
+      });
+      return;
+    }
+    this.dialog.open(UtilitariosDialogComponent, {
+      width: '600px',
+      data: { cajaId: this.caja.id, cajaNombre: `Caja #${this.caja.id}` },
     });
   }
 

@@ -1,0 +1,24 @@
+<h2 mat-dialog-title>Nueva Caja Mayor</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="form-container">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nombre</mat-label>
+      <input matInput formControlName="nombre" placeholder="Nombre de la caja mayor">
+      <mat-error *ngIf="form.get('nombre')?.hasError('required')">El nombre es requerido</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Descripcion</mat-label>
+      <textarea matInput formControlName="descripcion" placeholder="Descripcion opcional" rows="3"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="saving">Cancelar</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="form.invalid || saving">
+    <mat-spinner *ngIf="saving" diameter="20" class="inline-spinner"></mat-spinner>
+    <span *ngIf="!saving">Crear</span>
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,230 @@
+.detalle-container {
+  padding: 20px;
+
+  .header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+
+    .header-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      h1 {
+        margin: 0;
+        font-weight: 300;
+      }
+
+      .fecha-apertura {
+        color: rgba(0,0,0,0.6);
+        font-size: 14px;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+  }
+
+  .spinner-container {
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+  }
+
+  .content-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .saldos-section {
+    .section-title {
+      margin: 0 0 12px;
+      font-weight: 400;
+      font-size: 18px;
+    }
+  }
+
+  .saldos-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .saldo-card {
+    min-width: 200px;
+    flex: 1;
+    max-width: 280px;
+
+    .saldo-icon {
+      color: rgba(0,0,0,0.5);
+      font-size: 24px;
+    }
+
+    .saldo-moneda-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    .saldo-moneda-label {
+      color: rgba(0,0,0,0.6);
+      font-size: 13px;
+    }
+
+    .saldo-moneda-valor {
+      font-weight: 600;
+      font-size: 15px;
+
+      &.negativo {
+        color: #f44336;
+      }
+    }
+  }
+
+  .section-card {
+    .full-width {
+      width: 100%;
+    }
+  }
+
+  .movimientos-header {
+    display: flex;
+    flex-direction: row !important;
+    justify-content: space-between;
+    align-items: center;
+    flex: 1;
+
+    .filtros-toggle {
+      font-size: 12px;
+      line-height: 28px;
+      min-height: 30px;
+      padding: 0 10px;
+    }
+  }
+
+  .filtros-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 8px 16px 0;
+
+    .f-field {
+      margin: 0;
+      ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+        display: none;
+      }
+      ::ng-deep .mdc-text-field {
+        padding: 0 8px;
+      }
+    }
+
+    .f-fecha {
+      width: 130px;
+    }
+
+    .f-tipo {
+      width: 200px;
+    }
+
+    .f-proveedor,
+    .f-responsable {
+      width: 170px;
+    }
+
+    .f-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      padding-top: 4px;
+
+      button {
+        font-size: 12px;
+        line-height: 32px;
+        min-height: 34px;
+        padding: 0 10px;
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          margin-right: 2px;
+        }
+      }
+    }
+  }
+
+  .movimientos-loading {
+    display: flex;
+    justify-content: center;
+    padding: 12px 0;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 20px;
+    color: rgba(0,0,0,0.4);
+  }
+
+  .anulado-row {
+    opacity: 0.5;
+    text-decoration: line-through;
+  }
+
+  .detalle-line {
+    display: flex;
+    gap: 8px;
+    padding: 2px 0;
+
+    .det-monto {
+      font-weight: 500;
+    }
+
+    .det-fp {
+      color: rgba(0,0,0,0.5);
+      font-size: 13px;
+    }
+  }
+}
+
+:host-context(.dark-theme) {
+  .header-section .header-info .fecha-apertura {
+    color: rgba(255,255,255,0.6);
+  }
+
+  .empty-state {
+    color: rgba(255,255,255,0.4);
+  }
+
+  .detalle-line .det-fp {
+    color: rgba(255,255,255,0.5);
+  }
+
+  .saldo-card {
+    .saldo-icon {
+      color: rgba(255,255,255,0.5);
+    }
+
+    .saldo-moneda-row {
+      border-bottom-color: rgba(255,255,255,0.06);
+    }
+
+    .saldo-moneda-label {
+      color: rgba(255,255,255,0.6);
+    }
+  }
+}

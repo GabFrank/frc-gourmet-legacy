@@ -48,7 +48,11 @@
 
           <ng-container matColumnDef="formaPago">
             <th mat-header-cell *matHeaderCellDef>Forma Pago</th>
-            <td mat-cell *matCellDef="let row">{{ row.formaPago.nombre }}</td>
+            <td mat-cell *matCellDef="let row">
+              {{ row.formaPago.nombre }}
+              <span *ngIf="row.maquinaPosNombre" class="maquina-pos-tag">{{ row.maquinaPosNombre }}</span>
+              <span *ngIf="row.cuentaBancariaNombre" class="cuenta-bancaria-tag">{{ row.cuentaBancariaNombre }}</span>
+            </td>
           </ng-container>
 
           <ng-container matColumnDef="valor">
@@ -129,10 +133,43 @@
               mat-raised-button
               type="button"
               [class.selected]="selectedFormaPago?.id === fp.id"
-              (click)="selectedFormaPago = fp"
+              (click)="selectedFormaPago = fp; onFormaPagoChange()"
             >
               <span class="btn-label">{{ fp.nombre }}</span>
               <span class="btn-shortcut">(F{{ i + 4 }})</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Selector de Maquina POS (visible solo si la formaPago tiene maquinas vinculadas) -->
+        <div class="selection-group" *ngIf="muestraSelectorMaquinaPos">
+          <span class="selection-label">Maquina POS</span>
+          <div class="selection-buttons fp-buttons">
+            <button
+              *ngFor="let mp of maquinasPosDisponibles"
+              mat-raised-button
+              type="button"
+              [class.selected]="selectedMaquinaPosId === mp.id"
+              (click)="onMaquinaPosSelected(mp)"
+            >
+              <span class="btn-label">{{ mp.nombre }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Selector de Cuenta Bancaria (visible solo si la formaPago tiene cuentas vinculadas) -->
+        <div class="selection-group" *ngIf="muestraSelectorCuentaBancaria">
+          <span class="selection-label">Cuenta Bancaria</span>
+          <div class="selection-buttons fp-buttons">
+            <button
+              *ngFor="let cb of cuentasBancariasDisponibles"
+              mat-raised-button
+              type="button"
+              [class.selected]="selectedCuentaBancariaId === cb.id"
+              (click)="onCuentaBancariaSelected(cb)"
+            >
+              <span class="btn-label">{{ cb.nombre }}</span>
+              <span class="btn-shortcut" *ngIf="cb.moneda">{{ cb.moneda.simbolo }}</span>
             </button>
           </div>
         </div>
@@ -166,7 +203,7 @@
 
       <mat-form-field appearance="outline" class="input-col fp-select">
         <mat-label>Forma de Pago</mat-label>
-        <mat-select [(ngModel)]="selectedFormaPago" (keydown.enter)="onFpSelectEnter()">
+        <mat-select [(ngModel)]="selectedFormaPago" (ngModelChange)="onFormaPagoChange()" (keydown.enter)="onFpSelectEnter()">
           <mat-option *ngFor="let fp of formasPago" [value]="fp">{{ fp.nombre }}</mat-option>
         </mat-select>
       </mat-form-field>
@@ -182,7 +219,11 @@
           [class.indicator-vuelto]="currentLineType === 'VUELTO'">
           {{ currentLineType }}
         </span>
-        <button mat-mini-fab color="primary" (click)="addDetalle()" [disabled]="!selectedMoneda || !selectedFormaPago || valorInput <= 0 || addingLine" matTooltip="Agregar (Enter)">
+        <button mat-mini-fab color="primary" (click)="addDetalle()"
+          [disabled]="!selectedMoneda || !selectedFormaPago || valorInput <= 0 || addingLine
+            || (currentLineType === 'PAGO' && requiereSeleccionMaquinaPos && !selectedMaquinaPosId)
+            || (currentLineType === 'PAGO' && requiereSeleccionCuentaBancaria && !selectedCuentaBancariaId)"
+          matTooltip="Agregar (Enter)">
           <mat-icon>check</mat-icon>
         </button>
       </div>

@@ -1,0 +1,103 @@
+<h2 mat-dialog-title>Retiro de Caja {{cajaNombre ? '— ' + cajaNombre : ''}}</h2>
+
+<mat-dialog-content>
+  <div *ngIf="loading" class="spinner-container">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <form *ngIf="!loading" [formGroup]="form" class="form-container">
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="flex-field">
+        <mat-label>Caja Mayor destino (opcional)</mat-label>
+        <mat-select formControlName="cajaMayorId">
+          <mat-option [value]="null">Dejar como FLOTANTE</mat-option>
+          <mat-option *ngFor="let cm of cajasMayor" [value]="cm.id">{{cm.nombre}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Observacion (opcional)</mat-label>
+      <input matInput formControlName="observacion" placeholder="Motivo del retiro...">
+    </mat-form-field>
+
+    <mat-divider></mat-divider>
+
+    <h3 class="section-title">Detalle del retiro</h3>
+
+    <div class="detalle-form-row" [formGroup]="detalleForm">
+      <mat-form-field appearance="outline" class="det-field">
+        <mat-label>Moneda</mat-label>
+        <mat-select formControlName="monedaId">
+          <mat-option *ngFor="let m of monedas" [value]="m.id">{{m.simbolo}} {{m.denominacion}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="det-field">
+        <mat-label>Forma de Pago</mat-label>
+        <mat-select formControlName="formaPagoId">
+          <mat-option *ngFor="let fp of formasPagoEfectivo" [value]="fp.id">{{fp.nombre}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="det-field-monto">
+        <mat-label>Monto</mat-label>
+        <input matInput type="number" formControlName="monto" min="0.01">
+      </mat-form-field>
+
+      <button mat-mini-fab color="primary"
+              (click)="agregarDetalle()"
+              [disabled]="detalleForm.invalid"
+              matTooltip="Agregar">
+        <mat-icon>add</mat-icon>
+      </button>
+    </div>
+
+    <table mat-table [dataSource]="detalles" class="full-width detalles-table" *ngIf="detalles.length > 0">
+      <ng-container matColumnDef="moneda">
+        <th mat-header-cell *matHeaderCellDef>Moneda</th>
+        <td mat-cell *matCellDef="let row">{{row.monedaSimbolo}} {{row.monedaDenominacion}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="formaPago">
+        <th mat-header-cell *matHeaderCellDef>Forma de Pago</th>
+        <td mat-cell *matCellDef="let row">{{row.formaPagoNombre}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="monto">
+        <th mat-header-cell *matHeaderCellDef>Monto</th>
+        <td mat-cell *matCellDef="let row">{{row.monto | number:'1.0-2'}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let row; let i = index">
+          <button mat-icon-button color="warn" (click)="eliminarDetalle(i)" matTooltip="Eliminar">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="detallesColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: detallesColumns;"></tr>
+    </table>
+
+    <div *ngIf="detalles.length === 0" class="empty-detalles">
+      Agregue al menos un detalle
+    </div>
+
+    <div *ngIf="detalles.length > 0" class="total-row">
+      <span *ngFor="let t of totalesPorMoneda" class="total-moneda">
+        <strong>{{t.simbolo}} {{t.total | number:'1.0-2'}}</strong>
+      </span>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="saving">Cancelar</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="detalles.length === 0 || saving">
+    <mat-spinner *ngIf="saving" diameter="20" class="inline-spinner"></mat-spinner>
+    <span *ngIf="!saving">Registrar Retiro</span>
+  </button>
+</mat-dialog-actions>

@@ -72,4 +72,11 @@ export class Compra extends BaseModel {
 
   @OneToMany('CompraDetalle', 'compra')
   detalles!: CompraDetalle[];
+
+  @ManyToOne('CompraCategoria', { nullable: true, createForeignKeyConstraints: false })
+  @JoinColumn({ name: 'compra_categoria_id' })
+  compraCategoria?: any;
+
+  @OneToMany('CompraCuota', 'compra')
+  cuotas?: any[];
 }

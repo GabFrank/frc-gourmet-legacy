@@ -1,0 +1,193 @@
+<div class="detalle-container">
+  <!-- Header -->
+  <div class="header-section">
+    <div class="header-info">
+      <h1>{{cajaMayor?.nombre}}</h1>
+      <mat-chip-listbox>
+        <mat-chip [ngStyle]="{'background-color': cajaMayor?.estado === 'ABIERTA' ? '#4caf50' : '#f44336', 'color': 'white'}">
+          {{cajaMayor?.estado}}
+        </mat-chip>
+      </mat-chip-listbox>
+      <span class="fecha-apertura">Apertura: {{cajaMayor?.fechaApertura | date:'dd/MM/yyyy HH:mm'}}</span>
+    </div>
+    <div class="header-actions" *ngIf="cajaMayor?.estado === 'ABIERTA'">
+      <button mat-raised-button color="primary" (click)="registrarIngreso()">
+        <mat-icon>add_circle</mat-icon>
+        Registrar Ingreso
+      </button>
+      <button mat-raised-button color="accent" (click)="registrarEgreso()">
+        <mat-icon>remove_circle</mat-icon>
+        Registrar Egreso
+      </button>
+      <button mat-raised-button color="warn" (click)="cerrarCajaMayor()">
+        <mat-icon>lock</mat-icon>
+        Cerrar Caja Mayor
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="spinner-container">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <div *ngIf="!loading" class="content-section">
+    <!-- Saldos por Forma de Pago -->
+    <div class="saldos-section">
+      <h3 class="section-title">Saldo en Caja</h3>
+      <div class="saldos-cards" *ngIf="saldosPorFormaPago.length > 0">
+        <mat-card *ngFor="let grupo of saldosPorFormaPago" class="saldo-card">
+          <mat-card-header>
+            <mat-icon mat-card-avatar class="saldo-icon">account_balance_wallet</mat-icon>
+            <mat-card-title>{{grupo.formaPagoNombre}}</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div *ngFor="let m of grupo.monedas" class="saldo-moneda-row">
+              <span class="saldo-moneda-label">{{m.simbolo}} {{m.denominacion}}</span>
+              <span class="saldo-moneda-valor" [ngClass]="{'negativo': m.saldo < 0}">{{m.saldo | number:'1.0-2'}}</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+      <div *ngIf="saldosPorFormaPago.length === 0" class="empty-state">
+        <p>No hay saldos registrados</p>
+      </div>
+    </div>
+
+    <!-- Movimientos -->
+    <mat-card class="section-card">
+      <mat-card-header class="movimientos-header">
+        <mat-card-title>Movimientos</mat-card-title>
+        <button mat-stroked-button (click)="toggleFiltros()" class="filtros-toggle">
+          <mat-icon>{{showFiltros ? 'expand_less' : 'filter_list'}}</mat-icon>
+          Filtros
+        </button>
+      </mat-card-header>
+
+      <!-- Barra de filtros compacta -->
+      <div class="filtros-bar" *ngIf="showFiltros" [formGroup]="filtrosForm">
+        <mat-form-field appearance="outline" class="f-field f-fecha">
+          <mat-label>Desde</mat-label>
+          <input matInput [matDatepicker]="pkDesde" formControlName="fechaDesde">
+          <mat-datepicker-toggle matSuffix [for]="pkDesde"></mat-datepicker-toggle>
+          <mat-datepicker #pkDesde></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="f-field f-fecha">
+          <mat-label>Hasta</mat-label>
+          <input matInput [matDatepicker]="pkHasta" formControlName="fechaHasta">
+          <mat-datepicker-toggle matSuffix [for]="pkHasta"></mat-datepicker-toggle>
+          <mat-datepicker #pkHasta></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="f-field f-tipo">
+          <mat-label>Tipo</mat-label>
+          <mat-select formControlName="tipoMovimiento">
+            <mat-option [value]="null">Todos</mat-option>
+            <mat-option *ngFor="let t of tipoMovimientoOptions" [value]="t">{{t}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="f-field f-proveedor">
+          <mat-label>Proveedor</mat-label>
+          <mat-select formControlName="proveedorId">
+            <mat-option [value]="null">Todos</mat-option>
+            <mat-option *ngFor="let p of proveedores" [value]="p.id">{{p.nombre}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="f-field f-responsable">
+          <mat-label>Responsable</mat-label>
+          <mat-select formControlName="responsableId">
+            <mat-option [value]="null">Todos</mat-option>
+            <mat-option *ngFor="let r of responsables" [value]="r.id">{{r.persona?.nombre || r.nickname}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="f-actions">
+          <button mat-flat-button color="primary" (click)="aplicarFiltros()" [disabled]="loadingMovimientos">
+            <mat-icon>search</mat-icon> Aplicar
+          </button>
+          <button mat-stroked-button (click)="limpiarFiltros()" [disabled]="loadingMovimientos">
+            <mat-icon>clear</mat-icon> Limpiar
+          </button>
+        </div>
+      </div>
+
+      <mat-card-content>
+        <div *ngIf="loadingMovimientos" class="movimientos-loading">
+          <mat-spinner diameter="28"></mat-spinner>
+        </div>
+        <table mat-table [dataSource]="movimientosConsolidados" class="full-width" *ngIf="movimientosConsolidados.length > 0">
+          <ng-container matColumnDef="fecha">
+            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+            <td mat-cell *matCellDef="let row">{{row.fecha | date:'dd/MM/yyyy HH:mm'}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="tipoMovimiento">
+            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+            <td mat-cell *matCellDef="let row">
+              <mat-chip-listbox>
+                <mat-chip [ngStyle]="{'background-color': row.tipoMovimiento.startsWith('INGRESO') || row.tipoMovimiento.startsWith('AJUSTE_POS') || row.tipoMovimiento.startsWith('TRANSFERENCIA_E') ? '#4caf50' : '#f44336', 'color': 'white'}">
+                  {{row.tipoMovimiento}}
+                </mat-chip>
+              </mat-chip-listbox>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="detalles">
+            <th mat-header-cell *matHeaderCellDef>Detalle</th>
+            <td mat-cell *matCellDef="let row">
+              <div *ngFor="let d of row.detalles" class="detalle-line">
+                <span class="det-monto">{{d.monedaSimbolo}} {{d.monto | number:'1.0-2'}}</span>
+                <span class="det-fp">{{d.formaPagoNombre}}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="responsable">
+            <th mat-header-cell *matHeaderCellDef>Responsable</th>
+            <td mat-cell *matCellDef="let row">{{row.responsableNombre}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="observacion">
+            <th mat-header-cell *matHeaderCellDef>Observacion</th>
+            <td mat-cell *matCellDef="let row">{{row.observacion}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let row">
+              <button mat-icon-button [matMenuTriggerFor]="movMenu" *ngIf="!row.esAnulacion && cajaMayor?.estado === 'ABIERTA'">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #movMenu="matMenu">
+                <button mat-menu-item (click)="editarMovimiento(row)">
+                  <mat-icon>edit</mat-icon>
+                  <span>Editar</span>
+                </button>
+                <button mat-menu-item (click)="anularMovimiento(row)">
+                  <mat-icon color="warn">block</mat-icon>
+                  <span>Anular</span>
+                </button>
+              </mat-menu>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="movimientosColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: movimientosColumns;" [ngClass]="{'anulado-row': row.esAnulacion}"></tr>
+        </table>
+        <div *ngIf="!loadingMovimientos && movimientosConsolidados.length === 0" class="empty-state">
+          <p>No hay movimientos para los filtros aplicados</p>
+        </div>
+
+        <mat-paginator
+          [length]="total"
+          [pageSize]="pageSize"
+          [pageIndex]="pageIndex"
+          [pageSizeOptions]="[15, 30, 50]"
+          (page)="onPageChange($event)"
+          showFirstLastButtons></mat-paginator>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

@@ -52,6 +52,7 @@ import { ListAdicionalesComponent } from './pages/gestion-recetas/list-adicional
 import { ListProductosComponent } from './pages/productos/list-productos/list-productos.component';
 import { ListSaboresComponent } from './pages/gestion-sabores/list-sabores/list-sabores.component';
 import { VentasDashboardComponent } from './pages/ventas/dashboard/ventas-dashboard.component';
+import { CajaMayorDashboardComponent } from './pages/financiero/caja-mayor/dashboard/caja-mayor-dashboard.component';
 
 @Component({
   selector: 'app-root',
@@ -460,6 +461,17 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       ListDispositivosComponent,
       { source: 'navigation' },
       'dispositivos-tab',
+      true
+    );
+    this.closeMenu();
+  }
+
+  openCajaMayorTab() {
+    this.tabsService.openTab(
+      'Caja Mayor',
+      CajaMayorDashboardComponent,
+      { source: 'navigation' },
+      'caja-mayor-tab',
       true
     );
     this.closeMenu();

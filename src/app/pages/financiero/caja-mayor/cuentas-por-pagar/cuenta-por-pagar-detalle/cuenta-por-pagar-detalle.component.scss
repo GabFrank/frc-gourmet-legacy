@@ -1,0 +1,48 @@
+.detalle-container { padding: 20px; }
+
+.header {
+  margin-bottom: 16px;
+  .header-info h2 { margin: 0; font-weight: 400; }
+  .meta {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 4px;
+    color: rgba(0,0,0,0.6);
+    font-size: 14px;
+
+    .tipo-chip {
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.08);
+      font-size: 12px;
+      font-weight: 500;
+    }
+  }
+}
+
+.resumen-cards {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.resumen-card {
+  flex: 1;
+  min-width: 180px;
+  .rc-label { font-size: 12px; color: rgba(0,0,0,0.6); }
+  .rc-valor { font-size: 22px; font-weight: 500; margin-top: 4px; }
+  &.success .rc-valor { color: #2e7d32; }
+  &.warn .rc-valor { color: #c62828; }
+}
+
+.full-width { width: 100%; }
+.empty-state { text-align: center; padding: 24px; color: rgba(0,0,0,0.45); }
+.spinner-container { display: flex; justify-content: center; padding: 40px; }
+
+:host-context(.dark-theme) {
+  .header .meta { color: rgba(255,255,255,0.6); }
+  .header .meta .tipo-chip { background: rgba(255,255,255,0.08); }
+  .resumen-card .rc-label { color: rgba(255,255,255,0.6); }
+  .empty-state { color: rgba(255,255,255,0.45); }
+}

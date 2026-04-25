@@ -14,6 +14,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatSelectModule } from '@angular/material/select';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { firstValueFrom } from 'rxjs';
 
@@ -40,6 +41,7 @@ import { FormasPago } from '../../../database/entities';
     MatCardModule,
     MatProgressSpinnerModule,
     MatMenuModule,
+    MatSelectModule,
     DragDropModule
   ],
   template: `
@@ -79,6 +81,26 @@ import { FormasPago } from '../../../database/entities';
                 <mat-checkbox formControlName="activo" color="primary">
                   Activo
                 </mat-checkbox>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Maquinas POS habilitadas (para tarjetas)</mat-label>
+                  <mat-select formControlName="maquinasPosIds" multiple>
+                    <mat-option *ngFor="let mp of maquinasPos" [value]="mp.id">{{mp.nombre}}</mat-option>
+                  </mat-select>
+                  <mat-hint>Si hay más de una, se elige al cobrar</mat-hint>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Cuentas Bancarias habilitadas (para transferencias / PIX)</mat-label>
+                  <mat-select formControlName="cuentasBancariasIds" multiple>
+                    <mat-option *ngFor="let cb of cuentasBancarias" [value]="cb.id">{{cb.nombre}} — {{cb.banco}}</mat-option>
+                  </mat-select>
+                  <mat-hint>Acreditación instantánea sin comisión. Si hay más de una, se elige al cobrar</mat-hint>
+                </mat-form-field>
               </div>
 
               <div class="actions-row">
@@ -315,6 +337,9 @@ export class CreateEditFormaPagoComponent implements OnInit {
   isLoading = false;
   isSaving = false;
 
+  cuentasBancarias: any[] = [];
+  maquinasPos: any[] = [];
+
   constructor(
     private dialogRef: MatDialogRef<CreateEditFormaPagoComponent>,
     private fb: FormBuilder,
@@ -325,17 +350,33 @@ export class CreateEditFormaPagoComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadLookups();
     this.loadFormasPago();
   }
 
-  createFormaPagoForm(formaPago?: FormasPago): FormGroup {
+  async loadLookups(): Promise<void> {
+    try {
+      const [cb, mp] = await Promise.all([
+        firstValueFrom(this.repositoryService.getCuentasBancarias()),
+        firstValueFrom(this.repositoryService.getMaquinasPos()),
+      ]);
+      this.cuentasBancarias = (cb || []).filter((x: any) => x.activo !== false);
+      this.maquinasPos = (mp || []).filter((x: any) => x.activo !== false);
+    } catch (error) {
+      console.error('Error loading banking lookups:', error);
+    }
+  }
+
+  createFormaPagoForm(formaPago?: any): FormGroup {
     return this.fb.group({
       id: [formaPago?.id || null],
       nombre: [formaPago?.nombre || '', Validators.required],
       movimentaCaja: [formaPago?.movimentaCaja || false],
       principal: [formaPago?.principal || false],
       activo: [formaPago?.activo !== undefined ? formaPago.activo : true],
-      orden: [formaPago?.orden || 0]
+      orden: [formaPago?.orden || 0],
+      maquinasPosIds: [(formaPago?.maquinasPos || []).map((m: any) => m.id)],
+      cuentasBancariasIds: [(formaPago?.cuentasBancarias || []).map((c: any) => c.id)]
     });
   }
 
@@ -380,7 +421,17 @@ export class CreateEditFormaPagoComponent implements OnInit {
       this.isSaving = true;
       //set nombre to uppercase
       this.formaPagoForm.get('nombre')?.setValue(this.formaPagoForm.get('nombre')?.value.toUpperCase());
-      const formaPagoData = this.formaPagoForm.value;
+      const raw = this.formaPagoForm.value;
+      const formaPagoData: any = {
+        id: raw.id,
+        nombre: raw.nombre,
+        movimentaCaja: raw.movimentaCaja,
+        principal: raw.principal,
+        activo: raw.activo,
+        orden: raw.orden,
+        maquinasPosIds: Array.isArray(raw.maquinasPosIds) ? raw.maquinasPosIds : [],
+        cuentasBancariasIds: Array.isArray(raw.cuentasBancariasIds) ? raw.cuentasBancariasIds : [],
+      };
 
       // If we're setting this as principal, we may need to update other forms
       // This would typically be handled on the server side

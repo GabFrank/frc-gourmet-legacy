@@ -1,0 +1,42 @@
+<h2 mat-dialog-title>{{isEditing ? 'Editar' : 'Nueva'}} Maquina POS</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="form-container">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nombre</mat-label>
+      <input matInput formControlName="nombre">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Cuenta Bancaria destino</mat-label>
+      <mat-select formControlName="cuentaBancariaId">
+        <mat-option *ngFor="let c of cuentas" [value]="c.id">{{c.nombre}} — {{c.banco}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Proveedor (Bancard, Visanet, etc.)</mat-label>
+      <input matInput formControlName="proveedor">
+    </mat-form-field>
+
+    <div class="row">
+      <mat-form-field appearance="outline" class="flex">
+        <mat-label>Comisión %</mat-label>
+        <input matInput type="number" formControlName="porcentajeComision" min="0" max="100" step="0.01">
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="flex">
+        <mat-label>Minutos para acreditacion</mat-label>
+        <input matInput type="number" formControlName="minutosAcreditacion" min="0">
+        <mat-hint>Ej: 1440 = 24h, 2160 = 36h, 2 = test</mat-hint>
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="saving">Cancelar</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="form.invalid || saving">
+    <mat-spinner *ngIf="saving" diameter="20"></mat-spinner>
+    <span *ngIf="!saving">{{isEditing ? 'Guardar' : 'Crear'}}</span>
+  </button>
+</mat-dialog-actions>

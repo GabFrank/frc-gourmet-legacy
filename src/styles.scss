@@ -1672,6 +1672,20 @@ input.mat-input-element {
   border-radius: 4px !important;
 }
 
+// Caja mayor autocomplete: cat-padre legible en ambos temas
+.caja-mayor-autocomplete-panel {
+  .cat-padre {
+    color: rgba(0, 0, 0, 0.55);
+    font-size: 13px;
+  }
+}
+
+.dark-theme .caja-mayor-autocomplete-panel {
+  .cat-padre {
+    color: rgba(255, 255, 255, 0.6);
+  }
+}
+
 // Diálogos con footer fijo — flex layout
 .atajo-productos-dialog-container,
 .atajo-config-dialog-container {

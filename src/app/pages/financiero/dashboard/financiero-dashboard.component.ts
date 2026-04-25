@@ -15,6 +15,7 @@ import { ListCajasComponent } from '../cajas/list-cajas.component';
 import { ListDispositivosComponent } from '../dispositivos/list-dispositivos.component';
 import { ListMonedasComponent } from '../monedas/list-monedas/list-monedas.component';
 import { CreateEditFormaPagoComponent } from '../formas-pago/create-edit-forma-pago.component';
+import { CajaMayorDashboardComponent } from '../caja-mayor/dashboard/caja-mayor-dashboard.component';
 
 @Component({
   selector: 'app-financiero-dashboard',
@@ -76,6 +77,13 @@ export class FinancieroDashboardComponent implements OnInit {
       icon: 'payments',
       route: 'formas-pago',
       color: '#e91e63'
+    },
+    {
+      title: 'Caja Mayor',
+      description: 'Control financiero, gastos, retiros y movimientos',
+      icon: 'account_balance',
+      route: 'caja-mayor',
+      color: '#1b5e20'
     }
   ];
 
@@ -108,6 +116,9 @@ export class FinancieroDashboardComponent implements OnInit {
         break;
       case 'formas-pago':
         this.openFormasPagoDialog();
+        break;
+      case 'caja-mayor':
+        this.tabsService.openTab('Caja Mayor', CajaMayorDashboardComponent);
         break;
       default:
         break;
